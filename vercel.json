@@ -20,11 +20,15 @@
       "dest": "backend/uploads/$1"
     },
     {
+      "src": "/(.*)\\.(js|css|png|jpg|svg|ico|json)$",
+      "dest": "/$1.$2"
+    },
+    {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/index.html"
+      "dest": "/index.html"
     }
   ]
 }
