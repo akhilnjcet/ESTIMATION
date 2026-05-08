@@ -45,6 +45,10 @@ const transactionSchema = new mongoose.Schema({
     enum: ['Cleared', 'Pending', 'Due', 'Approved'],
     default: 'Cleared'
   },
+  editCount: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -53,15 +53,20 @@ const restrictToView = (req, res, next) => {
 
 const verifyProgramAccess = (req, res, next) => {
   try {
-    if (req.user.role === 'admin') return next();
-    
     if (!req.programId) {
       return res.status(400).json({ message: 'No program ID provided in headers' });
     }
 
-    const hasAccess = req.user.programAccess.some(pId => pId.toString() === req.programId.toString());
+    // Check if user is owner or has explicit access
+    const Program = require('../models/Program');
+    const program = await Program.findById(req.programId);
     
-    if (hasAccess) {
+    if (!program) return res.status(404).json({ message: 'Program not found' });
+
+    const isOwner = program.owner.toString() === req.user._id.toString();
+    const hasExplicitAccess = req.user.programAccess.some(pId => pId.toString() === req.programId.toString());
+    
+    if (isOwner || hasExplicitAccess) {
       next();
     } else {
       res.status(403).json({ message: 'Access denied to this program' });

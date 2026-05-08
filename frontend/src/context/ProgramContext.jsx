@@ -9,14 +9,15 @@ export const ProgramProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     const fetchPrograms = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
         const { data } = await api.get('/programs');
         setPrograms(data);
         
@@ -41,7 +42,12 @@ export const ProgramProvider = ({ children }) => {
     };
 
     fetchPrograms();
-  }, [localStorage.getItem('token')]);
+    
+    // Listen for storage changes (login/logout in other tabs)
+    const handleStorage = () => fetchPrograms();
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const selectProgram = (program) => {
     setSelectedProgram(program);

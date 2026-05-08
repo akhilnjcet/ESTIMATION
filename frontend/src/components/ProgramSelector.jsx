@@ -26,7 +26,9 @@ const ProgramSelector = () => {
           }}
           style={{ appearance: 'none', paddingRight: '2.5rem', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: '8px', fontWeight: 'bold' }}
         >
-          {programs?.length > 0 ? (
+          {loading ? (
+            <option disabled value="">Loading Programs...</option>
+          ) : programs?.length > 0 ? (
             programs.map(p => (
               <option key={p._id} value={p._id} style={{ color: '#000' }}>{p.name}</option>
             ))

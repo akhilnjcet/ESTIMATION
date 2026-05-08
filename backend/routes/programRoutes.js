@@ -7,11 +7,12 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     let programs;
-    if (req.user.role === 'admin') {
-      programs = await Program.find({ owner: req.user._id });
-    } else {
-      programs = await Program.find({ _id: { $in: req.user.programAccess } });
-    }
+    const programs = await Program.find({
+      $or: [
+        { owner: req.user._id },
+        { _id: { $in: req.user.programAccess } }
+      ]
+    });
     res.json(programs);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

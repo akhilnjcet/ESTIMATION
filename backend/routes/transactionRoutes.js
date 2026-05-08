@@ -55,4 +55,65 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const oldTransaction = await Transaction.findById(req.params.id);
+    if (!oldTransaction) return res.status(404).json({ message: 'Transaction not found' });
+
+    const { amount, account, type } = req.body;
+    
+    // If amount or account or type changed, we need to revert old balance and apply new
+    if (amount !== undefined || account !== undefined || type !== undefined) {
+      const acc = await Account.findById(oldTransaction.account);
+      if (acc) {
+        // Revert old
+        if (oldTransaction.type === 'Income') acc.balance -= oldTransaction.amount;
+        else acc.balance += oldTransaction.amount;
+        await acc.save();
+      }
+
+      // Apply new
+      const targetAccId = account || oldTransaction.account;
+      const targetAcc = await Account.findById(targetAccId);
+      if (targetAcc) {
+        const targetType = type || oldTransaction.type;
+        const targetAmount = amount !== undefined ? Number(amount) : oldTransaction.amount;
+        
+        if (targetType === 'Income') targetAcc.balance += targetAmount;
+        else targetAcc.balance -= targetAmount;
+        await targetAcc.save();
+      }
+    }
+
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body, $inc: { editCount: 1 } },
+      { new: true }
+    );
+
+    res.json(updatedTransaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+    if (!transaction) return res.status(404).json({ message: 'Not found' });
+
+    const acc = await Account.findById(transaction.account);
+    if (acc) {
+      if (transaction.type === 'Income') acc.balance -= transaction.amount;
+      else acc.balance += transaction.amount;
+      await acc.save();
+    }
+
+    await Transaction.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

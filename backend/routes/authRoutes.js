@@ -27,19 +27,33 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
+    const user = new User({
       name,
       email,
       password: hashedPassword,
     });
 
-    if (user) {
+    const savedUser = await user.save();
+
+    // Create default program for the new user
+    const Program = require('../models/Program');
+    const defaultProgram = await Program.create({
+      name: `${name}'s Program`,
+      owner: savedUser._id,
+      email: savedUser.email
+    });
+
+    // Link program to user
+    savedUser.programAccess = [defaultProgram._id];
+    await savedUser.save();
+
+    if (savedUser) {
       res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
+        _id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+        role: savedUser.role,
+        token: generateToken(savedUser._id),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });

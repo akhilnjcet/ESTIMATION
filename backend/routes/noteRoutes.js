@@ -21,6 +21,19 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const note = await Note.findByIdAndUpdate(
+      req.params.id, 
+      { $set: req.body, $inc: { editCount: 1 } }, 
+      { new: true }
+    );
+    res.json(note);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.delete('/:id', protect, async (req, res) => {
   try {
     await Note.findByIdAndDelete(req.params.id);

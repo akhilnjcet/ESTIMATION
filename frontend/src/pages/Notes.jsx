@@ -9,6 +9,8 @@ const Notes = () => {
     fetchNotes();
   }, []);
 
+  const [editingNote, setEditingNote] = useState(null);
+
   const fetchNotes = async () => {
     try {
       const { data } = await api.get('/notes');
@@ -20,10 +22,21 @@ const Notes = () => {
     e.preventDefault();
     if (!formData.amount || !formData.description) return alert('Amount and description required');
     try {
-      await api.post('/notes', formData);
+      if (editingNote) {
+        await api.put(`/notes/${editingNote._id}`, formData);
+        setEditingNote(null);
+      } else {
+        await api.post('/notes', formData);
+      }
       setFormData({ type: 'Income', amount: '', description: '' });
       fetchNotes();
     } catch (err) { console.error(err); }
+  };
+
+  const handleEdit = (note) => {
+    setEditingNote(note);
+    setFormData({ type: note.type, amount: note.amount, description: note.description });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
@@ -59,8 +72,8 @@ const Notes = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', alignItems: 'start' }}>
-        <div className="card" style={{ position: 'sticky', top: '1rem' }}>
-          <h2 className="text-xl font-bold mb-4">Add Note</h2>
+        <div className="card" style={{ position: 'sticky', top: '1rem', border: editingNote ? '2px solid var(--primary)' : 'none' }}>
+          <h2 className="text-xl font-bold mb-4">{editingNote ? 'Edit Note' : 'Add Note'}</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Type</label>
@@ -77,9 +90,16 @@ const Notes = () => {
               <label className="form-label">Description</label>
               <textarea className="form-control" rows="3" required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What was this for?"></textarea>
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', background: formData.type === 'Income' ? 'var(--secondary)' : 'var(--danger)' }}>
-              Save {formData.type} Note
-            </button>
+            <div className="flex gap-2">
+              <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '1rem', background: formData.type === 'Income' ? 'var(--secondary)' : 'var(--danger)' }}>
+                {editingNote ? 'Update' : 'Save'} {formData.type} Note
+              </button>
+              {editingNote && (
+                <button type="button" onClick={() => { setEditingNote(null); setFormData({ type: 'Income', amount: '', description: '' }); }} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
@@ -100,7 +120,14 @@ const Notes = () => {
                 {notes.map(note => (
                   <tr key={note._id}>
                     <td style={{fontSize:'0.85rem', color:'gray'}}>{new Date(note.date).toLocaleString()}</td>
-                    <td><strong>{note.description}</strong></td>
+                    <td>
+                      <strong>{note.description}</strong>
+                      {note.editCount > 3 && (
+                        <span style={{ marginLeft: '8px', padding: '2px 6px', background: '#fee2e2', color: '#ef4444', fontSize: '10px', borderRadius: '4px', fontWeight: 'bold', border: '1px solid #fecaca' }}>
+                          EDITED
+                        </span>
+                      )}
+                    </td>
                     <td style={{textAlign:'right', color:'var(--secondary)', fontWeight:'bold'}}>
                       {note.type === 'Income' ? `+₹ ${note.amount.toLocaleString()}` : '-'}
                     </td>
@@ -108,7 +135,10 @@ const Notes = () => {
                       {note.type === 'Expense' ? `-₹ ${note.amount.toLocaleString()}` : '-'}
                     </td>
                     <td>
-                      <button className="admin-only" onClick={() => handleDelete(note._id)} style={{color:'red', fontSize:'0.8rem', padding:'0.2rem'}}>Delete</button>
+                      <div className="flex gap-2">
+                        <button className="admin-only" onClick={() => handleEdit(note)} style={{color:'var(--primary)', fontSize:'0.8rem'}}>Edit</button>
+                        <button className="admin-only" onClick={() => handleDelete(note._id)} style={{color:'red', fontSize:'0.8rem'}}>Delete</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
