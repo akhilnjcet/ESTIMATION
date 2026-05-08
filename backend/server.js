@@ -6,6 +6,15 @@ const path = require('path');
 
 const app = express();
 
+// Health Check (moved up)
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    mongo_uri_exists: !!process.env.MONGO_URI
+  });
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -28,6 +37,15 @@ app.use('/api/quotations', protect, restrictToView, verifyProgramAccess, require
 app.use('/api/invoices', protect, restrictToView, verifyProgramAccess, require('./routes/invoiceRoutes'));
 app.use('/api/settings', protect, restrictToView, require('./routes/settingsRoutes'));
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
+
+// Health Check for Debugging
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    mongo_uri_exists: !!process.env.MONGO_URI
+  });
+});
 
 // Database connection
 const PORT = process.env.PORT || 5000;
