@@ -6,12 +6,13 @@ const path = require('path');
 
 const app = express();
 
-// Health Check (moved up)
+// Health Check for Debugging
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-    mongo_uri_exists: !!process.env.MONGO_URI
+    mongo_uri_exists: !!process.env.MONGO_URI,
+    node_version: process.version
   });
 });
 
@@ -38,18 +39,15 @@ app.use('/api/invoices', protect, restrictToView, verifyProgramAccess, require('
 app.use('/api/settings', protect, restrictToView, require('./routes/settingsRoutes'));
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
 
-// Health Check for Debugging
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-    mongo_uri_exists: !!process.env.MONGO_URI
-  });
-});
+
 
 // Database connection
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/estimation_app';
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error('--- CRITICAL ERROR: MONGO_URI NOT FOUND ---');
+}
 
 // Global Error Logger (Must be after all routes)
 app.use((err, req, res, next) => {
