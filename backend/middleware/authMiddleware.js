@@ -51,7 +51,7 @@ const restrictToView = (req, res, next) => {
   next();
 };
 
-const verifyProgramAccess = (req, res, next) => {
+const verifyProgramAccess = async (req, res, next) => {
   try {
     if (!req.programId) {
       return res.status(400).json({ message: 'No program ID provided in headers' });

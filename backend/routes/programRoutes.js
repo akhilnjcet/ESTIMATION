@@ -6,7 +6,6 @@ const { protect } = require('../middleware/authMiddleware');
 // Get all programs for the logged-in user
 router.get('/', protect, async (req, res) => {
   try {
-    let programs;
     const programs = await Program.find({
       $or: [
         { owner: req.user._id },
