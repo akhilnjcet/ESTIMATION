@@ -1,0 +1,137 @@
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import { Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+
+const Accounts = () => {
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
+
+  useEffect(() => {
+    fetchAccounts();
+    fetchTransactions();
+  }, []);
+
+  const fetchAccounts = async () => {
+    try {
+      const { data } = await api.get('/accounts');
+      setAccounts(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const { data } = await api.get('/transactions');
+      setTransactions(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/accounts', formData);
+      setFormData({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
+      setShowForm(false);
+      fetchAccounts();
+      alert('Account saved successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save account: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
+  const totalIncome = transactions.filter(t => t.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Accounts & Balances</h1>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel' : 'Add Account'}
+        </button>
+      </div>
+
+      {/* Financial Overview Cards */}
+      <div className="dashboard-grid mb-8">
+        <div className="card flex items-center gap-4" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', color: 'white', border: 'none' }}>
+          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%' }}>
+            <Wallet size={28} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Total Available Balance</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>₹ {totalBalance.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div className="card flex items-center gap-4" style={{ borderLeft: '4px solid var(--secondary)' }}>
+          <div style={{ padding: '1rem', background: '#ecfdf5', color: 'var(--secondary)', borderRadius: '50%' }}>
+            <ArrowUpRight size={24} />
+          </div>
+          <div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Business Income</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--secondary)' }}>₹ {totalIncome.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div className="card flex items-center gap-4" style={{ borderLeft: '4px solid var(--danger)' }}>
+          <div style={{ padding: '1rem', background: '#fef2f2', color: 'var(--danger)', borderRadius: '50%' }}>
+            <ArrowDownRight size={24} />
+          </div>
+          <div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Business Expense</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>₹ {totalExpense.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--text-secondary)' }}>Individual Accounts</h2>
+
+      <div className="dashboard-grid">
+        {accounts.map(acc => (
+          <div key={acc._id} className="card flex justify-between items-center" style={{ borderTop: acc.balance < 0 ? '4px solid var(--danger)' : '4px solid #94a3b8' }}>
+            <div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{acc.type} • {acc.name}</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: acc.balance < 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
+                ₹ {acc.balance.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        ))}
+        {accounts.length === 0 && <div className="card" style={{gridColumn: '1 / -1', textAlign: 'center', color: '#64748b'}}>No accounts found. Please click "Add Account".</div>}
+      </div>
+
+      {showForm && (
+        <div className="card mb-4 mt-6">
+          <h2 className="text-xl font-bold mb-4">Add New Account</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="dashboard-grid">
+              <div className="form-group">
+                <label className="form-label">Account Name</label>
+                <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Main HDFC Account" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Account Type</label>
+                <select className="form-control" required value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                  <option value="Cash">Cash On Hand</option>
+                  <option value="Bank">Bank Account</option>
+                  <option value="UPI">UPI Wallet</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Opening Balance (₹)</label>
+                <input type="number" className="form-control" required value={formData.balance} onChange={e => setFormData({...formData, balance: e.target.value})} />
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary">Save Account</button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Accounts;

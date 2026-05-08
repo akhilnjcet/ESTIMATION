@@ -1,0 +1,148 @@
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import { useProgram } from '../context/ProgramContext';
+import { Building2, Plus, Edit2, Trash2, Globe, Phone, Mail, MapPin, Hash, Palette } from 'lucide-react';
+
+const Settings = () => {
+  const { programs, setPrograms } = useProgram();
+  const [editingProgram, setEditingProgram] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: ''
+  });
+  const [showForm, setShowForm] = useState(false);
+
+  const fetchPrograms = async () => {
+    try {
+      const { data } = await api.get('/programs');
+      setPrograms(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingProgram) {
+        await api.put(`/programs/${editingProgram._id}`, formData);
+      } else {
+        await api.post('/programs', formData);
+      }
+      setFormData({ name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '' });
+      setEditingProgram(null);
+      setShowForm(false);
+      fetchPrograms();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleEdit = (prog) => {
+    setEditingProgram(prog);
+    setFormData(prog);
+    setShowForm(true);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">Program Management</h1>
+          <p className="text-gray-500">Add or edit independent clubs, organizations, and business units</p>
+        </div>
+        <button className="btn btn-primary flex items-center gap-2" onClick={() => { setShowForm(!showForm); setEditingProgram(null); }}>
+          <Plus size={18} />
+          {showForm ? 'Cancel' : 'Create New Program'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card mb-8 max-w-4xl animate-in fade-in slide-in-from-top-4">
+          <h2 className="text-xl font-bold mb-6">{editingProgram ? `Edit ${editingProgram.name}` : 'Setup New Program'}</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="form-group">
+                <label className="form-label">Program Name (e.g. Football Club)</label>
+                <div className="flex items-center gap-2">
+                  <Building2 size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Theme Color</label>
+                <div className="flex items-center gap-2">
+                  <Palette size={18} className="text-gray-400" />
+                  <input type="color" className="form-control h-10 p-1" value={formData.themeColor} onChange={e => setFormData({...formData, themeColor: e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Phone Number</label>
+                <div className="flex items-center gap-2">
+                  <Phone size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <div className="flex items-center gap-2">
+                  <Mail size={18} className="text-gray-400" />
+                  <input type="email" className="form-control" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">GST Number (Optional)</label>
+                <div className="flex items-center gap-2">
+                  <Hash size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group mb-6">
+              <label className="form-label">Full Address (for Print Header)</label>
+              <div className="flex items-start gap-2">
+                <MapPin size={18} className="text-gray-400 mt-2" />
+                <textarea className="form-control" rows="3" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary px-8">
+              {editingProgram ? 'Update Program' : 'Create Program'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {programs.map(prog => (
+          <div key={prog._id} className="card relative group">
+            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+              <button onClick={() => handleEdit(prog)} className="p-2 bg-white shadow-sm border rounded-lg text-gray-400 hover:text-primary">
+                <Edit2 size={14} />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: prog.themeColor || 'var(--primary)' }}>
+                {prog.name[0]}
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">{prog.name}</h3>
+                <p className="text-xs text-gray-400 font-medium">Program ID: {prog._id.slice(-6).toUpperCase()}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-600 mb-4">
+              <div className="flex items-center gap-2"><Phone size={14} /> {prog.phone}</div>
+              <div className="flex items-center gap-2"><Mail size={14} /> {prog.email}</div>
+              <div className="flex items-center gap-2 line-clamp-1"><MapPin size={14} /> {prog.address}</div>
+            </div>
+
+            <div className="pt-4 border-t flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase text-gray-400">Branding Color</span>
+              <div className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: prog.themeColor }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Settings;
