@@ -4,7 +4,7 @@ import { ChevronDown, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ProgramSelector = () => {
-  const { programs, selectedProgram, selectProgram } = useProgram();
+  const { programs, selectedProgram, selectProgram, loading } = useProgram();
   const navigate = useNavigate();
 
   return (
