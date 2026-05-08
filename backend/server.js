@@ -70,7 +70,7 @@ if (process.env.NODE_ENV !== 'production') {
 // For production (Vercel)
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(MONGO_URI);
+  await mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
   
   // Seed Admin & Program if they don't exist
   const User = require('./models/User');
