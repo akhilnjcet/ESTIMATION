@@ -16,7 +16,8 @@ const itemSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   taxPercentage: {
     type: Number,
@@ -24,7 +25,8 @@ const itemSchema = new mongoose.Schema({
   },
   total: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   }
 });
 
@@ -43,19 +45,23 @@ const quotationSchema = new mongoose.Schema({
   items: [itemSchema],
   subTotal: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   taxAmount: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   discount: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   totalAmount: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   notes: String,
   terms: String,

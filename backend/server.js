@@ -33,15 +33,22 @@ app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./r
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/estimation_app';
 
-const User = require('./models/User');
-const Program = require('./models/Program');
-const bcrypt = require('bcryptjs');
+// Global Error Logger (Must be after all routes)
+app.use((err, req, res, next) => {
+  console.error('--- GLOBAL SERVER ERROR ---');
+  console.error(err.stack);
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
+});
 
 mongoose.connect(MONGO_URI)
   .then(async () => {
     console.log('Connected to MongoDB');
     
     // Seed Admin Account
+    const User = require('./models/User');
+    const Program = require('./models/Program');
+    const bcrypt = require('bcryptjs');
+
     const adminEmail = 'admin@krishna.com';
     let admin = await User.findOne({ email: adminEmail });
     if (!admin) {
@@ -67,13 +74,6 @@ mongoose.connect(MONGO_URI)
       });
       console.log('Default program created');
     }
-
-    // Global Error Logger
-    app.use((err, req, res, next) => {
-      console.error('--- SERVER ERROR ---');
-      console.error(err.stack);
-      res.status(500).json({ message: err.message || 'Internal Server Error' });
-    });
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

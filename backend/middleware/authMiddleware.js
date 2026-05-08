@@ -22,14 +22,15 @@ const protect = async (req, res, next) => {
       } else {
         req.programId = null;
       }
-      next();
+      return next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error('AUTH_PROTECT_ERROR:', error);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
@@ -51,12 +52,23 @@ const restrictToView = (req, res, next) => {
 };
 
 const verifyProgramAccess = (req, res, next) => {
-  if (req.user.role === 'admin') return next();
-  
-  if (req.programId && req.user.programAccess.includes(req.programId)) {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied to this program' });
+  try {
+    if (req.user.role === 'admin') return next();
+    
+    if (!req.programId) {
+      return res.status(400).json({ message: 'No program ID provided in headers' });
+    }
+
+    const hasAccess = req.user.programAccess.some(pId => pId.toString() === req.programId.toString());
+    
+    if (hasAccess) {
+      next();
+    } else {
+      res.status(403).json({ message: 'Access denied to this program' });
+    }
+  } catch (error) {
+    console.error('VERIFY_PROGRAM_ACCESS_ERROR:', error);
+    res.status(500).json({ message: 'Internal Server error in access verification' });
   }
 };
 

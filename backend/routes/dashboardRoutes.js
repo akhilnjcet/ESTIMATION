@@ -41,6 +41,8 @@ router.get('/combined', protect, async (req, res) => {
     // Program-wise Summary
     const programSummaries = await Promise.all(programIds.map(async (id) => {
       const prog = await Program.findById(id);
+      if (!prog) return null;
+
       const progIncome = await Transaction.aggregate([
         { $match: { programId: id, type: 'Income' } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
@@ -68,11 +70,11 @@ router.get('/combined', protect, async (req, res) => {
         bankBalance,
         upiBalance
       },
-      programSummaries
+      programSummaries: programSummaries.filter(p => p !== null)
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('DASHBOARD_ERROR:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 

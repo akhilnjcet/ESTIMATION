@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-
 import { useProgram } from '../context/ProgramContext';
+import { Edit2, Printer, Trash2, Plus, X, Eye } from 'lucide-react';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -10,6 +10,7 @@ const Invoices = () => {
   const { selectedProgram } = useProgram();
   const [showForm, setShowForm] = useState(false);
   const [previewData, setPreviewData] = useState(null); 
+  const [editingId, setEditingId] = useState(null);
   
   const [formData, setFormData] = useState({ customer: '', notes: '', terms: '' });
   const [items, setItems] = useState([]);
@@ -18,16 +19,38 @@ const Invoices = () => {
     fetchInvoices();
     fetchCustomers();
     fetchProducts();
-  }, []);
+  }, [selectedProgram]);
 
   const fetchInvoices = async () => {
     try { const { data } = await api.get('/invoices'); setInvoices(data); } catch (err) {}
   };
   const fetchCustomers = async () => {
-    try { const { data } = await api.get('/customers'); setCustomers(data); if(data.length > 0) setFormData(f => ({...f, customer: data[0]._id})); } catch (err) {}
+    try { const { data } = await api.get('/customers'); setCustomers(data); } catch (err) {}
   };
   const fetchProducts = async () => {
     try { const { data } = await api.get('/products'); setProducts(data); } catch (err) {}
+  };
+
+  const resetForm = () => {
+    setFormData({ customer: '', notes: '', terms: '' });
+    setItems([]);
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (inv) => {
+    setEditingId(inv._id);
+    setFormData({
+      customer: inv.customer?._id || inv.customer,
+      notes: inv.notes || '',
+      terms: inv.terms || ''
+    });
+    setItems(inv.items.map(item => ({
+      ...item,
+      product: item.product?._id || item.product
+    })));
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const addItem = () => {
@@ -63,28 +86,19 @@ const Invoices = () => {
     e.preventDefault();
     if (items.length === 0) return alert('Please add at least one item');
     
-    for (let item of items) {
-      if (!item.productName) return alert('Product name is required for all items');
-    }
-
     const { subTotal, taxAmount, totalAmount } = getTotals();
-    
-    const cleanedItems = items.map(item => {
-      const { product, ...rest } = item;
-      return product ? item : rest;
-    });
-
-    const payload = { ...formData, items: cleanedItems, subTotal, taxAmount, discount: 0, totalAmount };
+    const payload = { ...formData, items, subTotal, taxAmount, discount: 0, totalAmount };
     
     try {
-      await api.post('/invoices', payload);
-      setFormData({ customer: customers[0]?._id, notes: '', terms: '' });
-      setItems([]);
-      setShowForm(false);
+      if (editingId) {
+        await api.put(`/invoices/${editingId}`, payload);
+      } else {
+        await api.post('/invoices', payload);
+      }
+      resetForm();
       fetchInvoices();
     } catch (err) {
-      alert('Failed to save invoice: ' + (err.response?.data?.message || err.message));
-      console.error(err);
+      alert('Failed to save: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -97,7 +111,7 @@ const Invoices = () => {
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
             body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; }
-            .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); font-size: 16px; line-height: 24px; color: #555; }
+            .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 16px; line-height: 24px; color: #555; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${selectedProgram?.themeColor || '#4f46e5'}; padding-bottom: 20px; margin-bottom: 30px; }
             .business-info h1 { margin: 0; color: ${selectedProgram?.themeColor || '#4f46e5'}; font-size: 28px; }
             .business-info p { margin: 2px 0; font-size: 12px; color: #64748b; }
@@ -137,12 +151,10 @@ const Invoices = () => {
                 <p style="font-size: 18px;">${docData.customer?.customerName}</p>
                 <p style="font-weight: normal; color: #64748b;">${docData.customer?.phone || ''}</p>
                 <p style="font-weight: normal; color: #64748b;">${docData.customer?.email || ''}</p>
-                ${docData.customer?.gstNumber ? `<p style="font-weight: normal; color: #64748b;">GST: ${docData.customer?.gstNumber}</p>` : ''}
               </div>
               <div style="text-align: right">
                 <h3>Invoice Details:</h3>
                 <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt).toLocaleDateString()}</strong></p>
-                <p style="font-weight: normal">Due Date: <strong>${new Date(new Date(docData.createdAt).getTime() + 7*24*60*60*1000).toLocaleDateString()}</strong></p>
               </div>
             </div>
 
@@ -171,26 +183,11 @@ const Invoices = () => {
             </table>
 
             <div class="totals">
-              <div class="total-row">
-                <span>Subtotal:</span>
-                <span>₹${docData.subTotal.toLocaleString()}</span>
-              </div>
-              <div class="total-row">
-                <span>Tax Amount:</span>
-                <span>₹${docData.taxAmount.toLocaleString()}</span>
-              </div>
               <div class="total-row grand-total">
                 <span>Total Amount:</span>
                 <span>₹${docData.totalAmount.toLocaleString()}</span>
               </div>
             </div>
-
-            ${docData.notes ? `
-              <div style="margin-top: 50px; font-size: 12px;">
-                <h3 style="font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px;">Notes:</h3>
-                <p>${docData.notes}</p>
-              </div>
-            ` : ''}
 
             <div class="footer">
               <p>Thank you for your business!</p>
@@ -209,236 +206,259 @@ const Invoices = () => {
   const renderPreviewDocument = (docData, isLive = false) => {
     return (
       <div className="card" style={{ background: '#fff', padding: isLive ? '1.5rem' : '3rem', color: '#000', margin: '0 auto', maxWidth: '800px', transform: isLive ? 'scale(0.95)' : 'none', transformOrigin: 'top center' }}>
-        <div className="flex justify-between items-start mb-6 border-b pb-4" style={{ borderBottom: '2px solid #e2e8f0' }}>
+        <div className="flex justify-between items-start mb-6 border-b pb-4">
           <div>
             <h1 style={{ fontSize: isLive ? '1.8rem' : '2.5rem', color: 'var(--secondary)', margin: 0 }}>INVOICE</h1>
-            <p style={{ color: '#64748b', margin: 0 }}>#{docData.invoiceNumber || docData.quotationNumber}</p>
+            <p style={{ color: '#64748b', margin: 0 }}>#{docData.invoiceNumber || 'DRAFT'}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h2 style={{ margin: 0, fontSize: isLive ? '1.2rem' : '1.5rem', color: selectedProgram?.themeColor || 'var(--secondary)' }}>{selectedProgram?.name || 'Program Name'}</h2>
-            <p style={{ margin: 0, color: '#64748b', fontSize: isLive ? '0.8rem' : '1rem' }}>{selectedProgram?.address || 'Address not set'}</p>
-            <p style={{ margin: 0, color: '#64748b', fontSize: isLive ? '0.8rem' : '1rem' }}>{selectedProgram?.email || 'email@example.com'} • {selectedProgram?.phone}</p>
-            {selectedProgram?.gstNumber && <p style={{ margin: 0, color: '#64748b', fontSize: isLive ? '0.8rem' : '1rem' }}>GST: {selectedProgram?.gstNumber}</p>}
+            <h2 style={{ margin: 0, color: selectedProgram?.themeColor || 'var(--secondary)' }}>{selectedProgram?.name}</h2>
+            <p style={{ margin: 0, color: '#64748b' }}>{selectedProgram?.address}</p>
           </div>
         </div>
 
         <div className="flex justify-between mb-6">
           <div>
-            <h3 style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem' }}>Billed To:</h3>
-            <p style={{ fontWeight: 'bold', fontSize: isLive ? '1.1rem' : '1.25rem', margin: 0 }}>{docData.customer?.customerName || 'Customer Name'}</p>
-            <p style={{ margin: 0, fontSize: isLive ? '0.85rem' : '1rem' }}>{docData.customer?.email}</p>
-            <p style={{ margin: 0, fontSize: isLive ? '0.85rem' : '1rem' }}>{docData.customer?.phone}</p>
-            {docData.customer?.gstNumber && <p style={{ margin: 0, fontSize: isLive ? '0.85rem' : '1rem' }}>GST: {docData.customer?.gstNumber}</p>}
+            <h3 className="text-xs uppercase text-gray-400">Billed To:</h3>
+            <p className="font-bold">{docData.customer?.customerName || 'Select Customer'}</p>
           </div>
-          <div style={{ textAlign: 'right', fontSize: isLive ? '0.85rem' : '1rem' }}>
-            <p style={{ margin: 0 }}><strong>Date:</strong> {new Date(docData.createdAt).toLocaleDateString()}</p>
-            <p style={{ margin: 0 }}><strong>Due Date:</strong> {new Date(new Date(docData.createdAt).getTime() + 7*24*60*60*1000).toLocaleDateString()}</p>
+          <div className="text-right">
+            <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem', fontSize: isLive ? '0.85rem' : '1rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
-              <th style={{ padding: '0.75rem', textAlign: 'center' }}>Qty</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Price</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Tax</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total</th>
+            <tr className="bg-gray-50 border-b">
+              <th className="p-3 text-left">Item</th>
+              <th className="p-3 text-center">Qty</th>
+              <th className="p-3 text-right">Price</th>
+              <th className="p-3 text-right">Total</th>
             </tr>
           </thead>
           <tbody>
             {docData.items.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.75rem' }}>
-                  <div style={{ fontWeight: 'bold' }}>{item.productName || 'Item Name'}</div>
-                  {item.description && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.description}</div>}
+              <tr key={idx} className="border-b">
+                <td className="p-3">
+                  <div className="font-bold">{item.productName || 'Item'}</div>
                 </td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.quantity}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>₹{(item.price || 0).toLocaleString()}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>{item.taxPercentage || 0}%</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>₹{(item.total || 0).toLocaleString()}</td>
+                <td className="p-3 text-center">{item.quantity}</td>
+                <td className="p-3 text-right">₹{(item.price || 0).toLocaleString()}</td>
+                <td className="p-3 text-right font-bold">₹{(item.total || 0).toLocaleString()}</td>
               </tr>
             ))}
-            {docData.items.length === 0 && (
-              <tr><td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: '#cbd5e1' }}>Add items to see them here</td></tr>
-            )}
           </tbody>
         </table>
 
-        <div style={{ width: isLive ? '250px' : '300px', marginLeft: 'auto', fontSize: isLive ? '0.85rem' : '1rem' }}>
-          <div className="flex justify-between mb-2">
-            <span style={{ color: '#64748b' }}>Subtotal:</span>
-            <span>₹{(docData.subTotal || 0).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between mb-2">
-            <span style={{ color: '#64748b' }}>Tax:</span>
-            <span>₹{(docData.taxAmount || 0).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between mt-3 pt-3" style={{ borderTop: '2px solid #e2e8f0', fontSize: isLive ? '1.1rem' : '1.25rem', fontWeight: 'bold' }}>
+        <div className="w-64 ml-auto">
+          <div className="flex justify-between text-xl font-bold border-t-2 pt-3">
             <span>Total:</span>
-            <span style={{ color: 'var(--secondary)' }}>₹{(docData.totalAmount || 0).toLocaleString()}</span>
+            <span className="text-primary">₹{(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
-
-        {(docData.notes || docData.terms) && (
-          <div style={{ marginTop: '3rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: isLive ? '0.8rem' : '0.9rem' }}>
-            {docData.notes && <div className="mb-2"><strong>Notes:</strong> {docData.notes}</div>}
-            {docData.terms && <div><strong>Terms & Conditions:</strong> {docData.terms}</div>}
-          </div>
-        )}
       </div>
     );
   };
 
   if (previewData) {
     return (
-      <div className="preview-overlay" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '2rem' }}>
-        <div className="flex justify-between items-center mb-4 print-hide">
-          <button className="btn btn-secondary" onClick={() => setPreviewData(null)}>← Back</button>
-          <button className="btn btn-primary" onClick={() => handlePrint(previewData)} style={{ backgroundColor: 'var(--secondary)' }}>Print PDF</button>
+      <div className="preview-overlay bg-gray-100 min-h-screen p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <button className="btn btn-secondary flex items-center gap-2" onClick={() => setPreviewData(null)}>
+              <X size={18} /> Close
+            </button>
+            <button className="btn btn-primary flex items-center gap-2" onClick={() => handlePrint(previewData)}>
+              <Printer size={18} /> Print PDF
+            </button>
+          </div>
+          {renderPreviewDocument(previewData, false)}
         </div>
-        {renderPreviewDocument(previewData, false)}
       </div>
     );
   }
 
   const totals = getTotals();
-  const liveSelectedCustomer = customers.find(c => c._id === formData.customer);
-  
   const livePreviewData = {
-    invoiceNumber: 'DRAFT',
-    createdAt: new Date(),
-    customer: liveSelectedCustomer,
+    customer: customers.find(c => c._id === formData.customer),
     items: items,
-    subTotal: totals.subTotal,
-    taxAmount: totals.taxAmount,
-    totalAmount: totals.totalAmount,
-    notes: formData.notes,
-    terms: formData.terms
+    totalAmount: totals.totalAmount
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--secondary)' }}>Invoices</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ backgroundColor: 'var(--secondary)' }}>{showForm ? 'Cancel' : 'Create Invoice'}</button>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+        <button 
+          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2`}
+          onClick={() => {
+            if (showForm) resetForm();
+            else setShowForm(true);
+          }}
+        >
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? 'Cancel' : 'Create New Invoice'}
+        </button>
       </div>
       
       {showForm && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem', alignItems: 'start' }}>
-          
-          <div className="card" style={{ borderTop: '4px solid var(--secondary)', position: 'sticky', top: '1rem' }}>
-            <h2 className="text-xl font-bold mb-4">Invoice Details</h2>
-            {customers.length === 0 ? <p style={{color:'red'}}>Please add a customer first!</p> : (
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label className="form-label">Select Customer</label>
-                  <select className="form-control" required value={formData.customer} onChange={e => setFormData({...formData, customer: e.target.value})}>
-                    <option value="" disabled>Select a customer...</option>
-                    {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                  </select>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 animate-in fade-in slide-in-from-top-4">
+          <div className="card shadow-2xl border-t-4 border-primary">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
+              {editingId ? 'Update Invoice' : 'Invoice Details'}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group mb-6">
+                <label className="form-label">Select Customer</label>
+                <select 
+                  className="form-control" 
+                  required 
+                  value={formData.customer} 
+                  onChange={e => setFormData({...formData, customer: e.target.value})}
+                >
+                  <option value="">Select a customer...</option>
+                  {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                </select>
+              </div>
+
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-700">Line Items</h3>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}>+ Add Item</button>
                 </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold">Items</h3>
-                    <button type="button" className="btn btn-secondary" onClick={addItem} style={{padding:'0.5rem', fontSize:'0.75rem'}}>+ Add Item</button>
-                  </div>
-                  
-                  {items.length === 0 && <div style={{padding:'1rem', textAlign:'center', background:'#f8fafc', borderRadius:'8px', color:'gray', fontSize:'0.875rem'}}>Click "+ Add Item" to begin</div>}
-
+                
+                <div className="space-y-4">
                   {items.map((item, index) => (
-                    <div key={index} style={{background:'#f8fafc', padding:'1rem', borderRadius:'8px', marginBottom:'1rem', border:'1px solid var(--border)'}}>
-                      <div className="flex gap-2 mb-2">
-                        <div style={{flex: 2}}>
-                          <label className="form-label" style={{fontSize:'0.75rem', marginBottom:'0.2rem'}}>Product / Service</label>
-                          <input type="text" className="form-control" style={{padding:'0.5rem'}} required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" placeholder="Name..." />
-                          <datalist id="product-list">
-                            {products.map(p => <option key={p._id} value={p._id}>{p.productName}</option>)}
-                          </datalist>
+                    <div key={index} className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
+                      <button 
+                        type="button" 
+                        onClick={() => removeItem(index)} 
+                        className="absolute -top-2 -right-2 bg-white text-rose-500 rounded-full p-1 shadow-md border hover:bg-rose-50"
+                      >
+                        <X size={14} />
+                      </button>
+                      <div className="grid grid-cols-12 gap-3 mb-3">
+                        <div className="col-span-12 md:col-span-6">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Product / Service</label>
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            required 
+                            value={item.productName} 
+                            onChange={e => updateItem(index, 'product', e.target.value)} 
+                            list="product-list" 
+                            placeholder="Name..." 
+                          />
                         </div>
-                        <div style={{flex: 1}}>
-                          <label className="form-label" style={{fontSize:'0.75rem', marginBottom:'0.2rem'}}>Qty</label>
-                          <input type="number" className="form-control" style={{padding:'0.5rem'}} required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
+                        <div className="col-span-4 md:col-span-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Qty</label>
+                          <input type="number" className="form-control" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
                         </div>
-                        <div style={{flex: 1}}>
-                          <label className="form-label" style={{fontSize:'0.75rem', marginBottom:'0.2rem'}}>Price</label>
-                          <input type="number" className="form-control" style={{padding:'0.5rem'}} required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                        <div className="col-span-4 md:col-span-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
+                          <input type="number" className="form-control" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
                         </div>
-                        <div style={{flex: 1}}>
-                          <label className="form-label" style={{fontSize:'0.75rem', marginBottom:'0.2rem'}}>Tax %</label>
-                          <input type="number" className="form-control" style={{padding:'0.5rem'}} value={item.taxPercentage} onChange={e => updateItem(index, 'taxPercentage', e.target.value)} />
+                        <div className="col-span-4 md:col-span-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Total</label>
+                          <div className="h-[38px] flex items-center font-bold text-primary">₹{item.total.toLocaleString()}</div>
                         </div>
-                      </div>
-                      
-                      <div className="flex gap-2 items-end">
-                        <div style={{flex: 1}}>
-                          <label className="form-label" style={{fontSize:'0.75rem', marginBottom:'0.2rem'}}>Description</label>
-                          <input type="text" className="form-control" style={{padding:'0.5rem'}} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Details..." />
-                        </div>
-                        <button type="button" onClick={() => removeItem(index)} className="btn btn-secondary" style={{color:'red', borderColor:'red', height:'35px', padding:'0 0.5rem'}}>X</button>
                       </div>
                     </div>
                   ))}
+                  {items.length === 0 && (
+                    <div className="text-center py-8 text-gray-400 italic bg-gray-50 rounded-xl border border-dashed">
+                      No items added yet.
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                <div className="dashboard-grid">
-                  <div className="form-group">
-                    <label className="form-label">Notes</label>
-                    <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Thank you for your business..." />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Terms</label>
-                    <input type="text" className="form-control" value={formData.terms} onChange={e => setFormData({...formData, terms: e.target.value})} placeholder="Payment due on receipt..." />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="form-group">
+                  <label className="form-label">Notes</label>
+                  <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Internal notes..." />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Terms</label>
+                  <input type="text" className="form-control" value={formData.terms} onChange={e => setFormData({...formData, terms: e.target.value})} placeholder="Payment terms..." />
+                </div>
+              </div>
 
-                <button type="submit" className="btn btn-primary" style={{width:'100%', padding:'1rem', fontSize:'1rem', backgroundColor: 'var(--secondary)'}}>Save & Generate Invoice</button>
-              </form>
-            )}
+              <button type="submit" className="btn btn-primary w-full py-4 text-lg shadow-xl hover:scale-[1.01] transition-transform">
+                {editingId ? 'Update & Save Changes' : 'Save & Generate Invoice'}
+              </button>
+            </form>
           </div>
 
-          <div style={{ position: 'sticky', top: '1rem' }}>
-            <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--text-secondary)' }}>Live Preview</h2>
-            <div style={{ border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+          <div className="hidden lg:block sticky top-8">
+            <h2 className="text-xl font-bold mb-6 text-gray-400">Document Preview</h2>
+            <div className="shadow-2xl rounded-2xl overflow-hidden border">
               {renderPreviewDocument(livePreviewData, true)}
             </div>
           </div>
-          
         </div>
       )}
 
-      <div className="card">
-        <div className="table-container">
+      <div className="card shadow-xl border-none">
+        <div className="table-container border-none shadow-none">
           <table className="data-table">
-            <thead>
+            <thead className="bg-gray-50">
               <tr>
-                <th>Invoice No</th>
-                <th>Customer Name</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th className="py-4">Invoice No</th>
+                <th className="py-4">Customer</th>
+                <th className="py-4">Date</th>
+                <th className="py-4">Amount</th>
+                <th className="py-4 text-center">Status</th>
+                <th className="py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {invoices.map(inv => (
-                <tr key={inv._id}>
-                  <td><strong style={{ color: 'var(--secondary)' }}>{inv.invoiceNumber}</strong></td>
-                  <td>{inv.customer?.customerName || 'Unknown'}</td>
-                  <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
-                  <td>₹ {inv.totalAmount?.toLocaleString()}</td>
-                  <td><span style={{ color: 'var(--danger)', padding: '0.2rem 0.5rem', background: '#fef2f2', borderRadius: '4px' }}>{inv.status}</span></td>
-                  <td>
-                    <button className="btn btn-secondary" onClick={() => setPreviewData(inv)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>View / Print</button>
+                <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="py-4 font-bold text-primary">{inv.invoiceNumber}</td>
+                  <td className="py-4">
+                    <div className="font-bold text-gray-900">{inv.customer?.customerName || 'Unknown'}</div>
+                  </td>
+                  <td className="py-4 text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                  <td className="py-4 font-bold text-gray-900">₹ {inv.totalAmount?.toLocaleString()}</td>
+                  <td className="py-4 text-center">
+                    <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                      {inv.status}
+                    </span>
+                  </td>
+                  <td className="py-4">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        className="p-2 text-gray-400 hover:text-primary transition-colors bg-white border rounded-lg shadow-sm"
+                        onClick={() => setPreviewData(inv)}
+                        title="View / Print"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button 
+                        className="p-2 text-gray-400 hover:text-emerald-600 transition-colors bg-white border rounded-lg shadow-sm"
+                        onClick={() => handleEdit(inv)}
+                        title="Edit Invoice"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
-              {invoices.length === 0 && <tr><td colSpan="6" style={{textAlign:'center'}}>No invoices found.</td></tr>}
+              {invoices.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center text-gray-400">No invoices found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <datalist id="product-list">
+        {products.map(p => <option key={p._id} value={p._id}>{p.productName}</option>)}
+      </datalist>
     </div>
   );
 };
