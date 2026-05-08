@@ -7,14 +7,15 @@
     },
     {
       "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "use": "@vercel/static-build"
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "backend/server.js" },
     { "src": "/uploads/(.*)", "dest": "backend/uploads/$1" },
+    { "src": "/assets/(.*)", "dest": "frontend/assets/$1" },
+    { "src": "/(.*)\\.(js|css|ico|png|svg|json)$", "dest": "frontend/$1" },
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/frontend/index.html" }
+    { "src": "/(.*)", "dest": "frontend/index.html" }
   ]
 }
