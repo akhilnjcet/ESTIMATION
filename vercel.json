@@ -2,13 +2,13 @@
   "version": 2,
   "functions": {
     "backend/server.js": {
-      "runtime": "@vercel/node",
+      "runtime": "nodejs20.x",
       "includeFiles": "uploads/**"
     }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/backend/server.js" },
-    { "source": "/uploads/(.*)", "destination": "/api/uploads/$1" },
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/uploads/(.*)", "destination": "/backend/server.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
