@@ -7,15 +7,30 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const isMobile = window.innerWidth < 1024;
   
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
-      <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+    <>
+      {/* Floating Toggle Tab (Visible when sidebar is closed) */}
+      {!isOpen && (
         <button 
-          onClick={() => setIsOpen(false)}
-          style={{ position: 'absolute', right: '1rem', top: '1.5rem', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: isMobile ? 'block' : 'none' }}
+          onClick={() => setIsOpen(true)}
+          className="sidebar-toggle-tab"
+          title="Open Menu"
         >
-          ✕
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      )}
+
+      <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
+        <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="sidebar-close-btn"
+            title="Close Menu"
+          >
+            ✕
+          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <h1 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, color: '#fff', lineHeight: '1.2' }}>
             Welcome to <br /> Krishna Accounting
           </h1>

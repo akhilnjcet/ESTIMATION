@@ -128,7 +128,67 @@ button {
   border-radius: 2px;
 }
 
+/* Sidebar Controls */
+.sidebar-toggle-tab {
+  position: fixed;
+  left: 0;
+  top: 20px;
+  background: var(--primary);
+  color: white;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+  transition: padding 0.2s ease;
+}
+
+.sidebar-toggle-tab:hover {
+  padding-left: 12px;
+}
+
+.sidebar-toggle-tab span {
+  display: block;
+  width: 15px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+}
+
+.sidebar-close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1.5rem;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
 @media (max-width: 1024px) {
+  .sidebar-toggle-tab {
+    top: 12px;
+    left: 12px;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
   .mobile-header {
     display: flex; /* Only show on mobile/tablet */
   }
