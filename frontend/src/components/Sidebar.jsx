@@ -3,10 +3,17 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon } from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+        <button 
+          onClick={() => setIsOpen(false)}
+          style={{ position: 'absolute', right: '1rem', top: '1.5rem', background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
+          className="lg:hidden" // Only show on mobile
+        >
+          ✕
+        </button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <h1 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, color: '#fff', lineHeight: '1.2' }}>
             Welcome to <br /> Krishna Accounting
