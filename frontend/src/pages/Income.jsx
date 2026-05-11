@@ -32,7 +32,13 @@ const Income = () => {
     try {
       const { data } = await api.get('/accounts');
       setAccounts(data);
-      if (data.length > 0 && !editingIncome) setFormData(f => ({ ...f, account: data[0]._id }));
+      
+      const lastUsed = localStorage.getItem('lastUsedIncomeAccount');
+      if (lastUsed && data.find(a => a._id === lastUsed)) {
+        setFormData(f => ({ ...f, account: lastUsed }));
+      } else if (data.length > 0 && !editingIncome) {
+        setFormData(f => ({ ...f, account: data[0]._id }));
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -44,11 +50,15 @@ const Income = () => {
         setEditingIncome(null);
       } else {
         await api.post('/transactions', formData);
+        // Save last used account
+        localStorage.setItem('lastUsedIncomeAccount', formData.account);
       }
+      
+      const lastUsed = localStorage.getItem('lastUsedIncomeAccount');
       setFormData({ 
         type: 'Income', 
         amount: '', 
-        account: accounts[0]?._id, 
+        account: lastUsed || accounts[0]?._id, 
         category: 'Sales', 
         description: '',
         date: new Date().toISOString().split('T')[0]

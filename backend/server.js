@@ -58,6 +58,7 @@ app.use('/api/quotations', protect, restrictToView, verifyProgramAccess, require
 app.use('/api/invoices', protect, restrictToView, verifyProgramAccess, require('./routes/invoiceRoutes'));
 app.use('/api/settings', protect, restrictToView, require('./routes/settingsRoutes'));
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
+app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));
 
 
 

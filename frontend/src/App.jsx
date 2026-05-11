@@ -14,6 +14,7 @@ import Ledger from './pages/Ledger';
 import Settings from './pages/Settings';
 import Notes from './pages/Notes';
 import UserAccess from './pages/UserAccess';
+import Documents from './pages/Documents';
 import { ProgramProvider } from './context/ProgramContext';
 import { ShieldAlert } from 'lucide-react';
 
@@ -65,6 +66,7 @@ function App() {
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           <Route path="/notes" element={<PrivateRoute><Notes /></PrivateRoute>} />
           <Route path="/user-access" element={<PrivateRoute><UserAccess /></PrivateRoute>} />
+          <Route path="/bill-upload" element={<PrivateRoute><Documents /></PrivateRoute>} />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

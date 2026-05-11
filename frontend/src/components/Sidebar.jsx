@@ -58,6 +58,10 @@ const Sidebar = () => {
           <Wallet />
           <span>Accounts & Balances</span>
         </NavLink>
+        <NavLink to="/bill-upload" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+          <ArrowUpRight />
+          <span>Bill Upload</span>
+        </NavLink>
         <NavLink to="/ledger" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
           <BookOpen />
           <span>Party Ledger</span>
