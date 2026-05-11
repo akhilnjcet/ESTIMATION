@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -19,19 +19,19 @@ import { ProgramProvider } from './context/ProgramContext';
 import { ShieldAlert } from 'lucide-react';
 
 function PrivateRoute({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true); // Default to open on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to open on desktop
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role') || 'admin';
   const location = useLocation();
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.body.setAttribute('data-role', role);
     // On mobile, default to closed
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, [role]);
 
   // Close sidebar on route change ONLY on mobile
-  React.useEffect(() => {
+  useEffect(() => {
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, [location.pathname]);
 
