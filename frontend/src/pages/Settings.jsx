@@ -33,10 +33,19 @@ const Settings = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleEdit = (prog) => {
-    setEditingProgram(prog);
-    setFormData(prog);
-    setShowForm(true);
+  const handleDelete = async (prog) => {
+    const password = window.prompt(`To delete "${prog.name}", please enter your login password:`);
+    if (password === null) return; // User cancelled
+
+    try {
+      // Send password in request body for verification
+      await api.delete(`/programs/${prog._id}`, { data: { password } });
+      alert('Program deleted successfully!');
+      fetchPrograms();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete program: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   return (
@@ -115,6 +124,9 @@ const Settings = () => {
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
               <button onClick={() => handleEdit(prog)} className="p-2 bg-white shadow-sm border rounded-lg text-gray-400 hover:text-primary">
                 <Edit2 size={14} />
+              </button>
+              <button onClick={() => handleDelete(prog)} className="p-2 bg-white shadow-sm border rounded-lg text-gray-400 hover:text-danger">
+                <Trash2 size={14} />
               </button>
             </div>
             

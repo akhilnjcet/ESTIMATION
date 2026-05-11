@@ -117,6 +117,34 @@ button {
   border-color: var(--text-secondary);
 }
 
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+  background-color: var(--background);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline-danger {
+  background-color: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+}
+
+.btn-outline-danger:hover {
+  background-color: #fef2f2;
+  border-color: var(--danger);
+}
+
 /* Inputs */
 .form-group {
   margin-bottom: 1.5rem;

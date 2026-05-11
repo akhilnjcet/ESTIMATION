@@ -32,6 +32,8 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+const bcrypt = require('bcryptjs');
+
 // Update program
 router.put('/:id', protect, async (req, res) => {
   try {
@@ -43,6 +45,35 @@ router.put('/:id', protect, async (req, res) => {
     res.json(updated);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete program
+router.delete('/:id', protect, async (req, res) => {
+  const { password } = req.body;
+  
+  try {
+    // 1. Verify Password
+    const isMatch = await bcrypt.compare(password, req.user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid password. Deletion cancelled.' });
+    }
+
+    // 2. Check if owner
+    const program = await Program.findOne({ _id: req.params.id, owner: req.user._id });
+    if (!program) {
+      return res.status(404).json({ message: 'Program not found or you are not the owner' });
+    }
+
+    // 3. Delete
+    await Program.deleteOne({ _id: req.params.id });
+    
+    // Optional: Delete all related data (Invoices, Customers, etc.)
+    // For now, just delete the program entry
+    
+    res.json({ message: 'Program deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -27,4 +27,32 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/accounts/:id
+// @desc    Update an account
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const account = await Account.findOneAndUpdate(
+      { _id: req.params.id, programId: req.programId },
+      req.body,
+      { new: true }
+    );
+    if (!account) return res.status(404).json({ message: 'Account not found' });
+    res.json(account);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   DELETE /api/accounts/:id
+// @desc    Delete an account
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const account = await Account.findOneAndDelete({ _id: req.params.id, programId: req.programId });
+    if (!account) return res.status(404).json({ message: 'Account not found' });
+    res.json({ message: 'Account deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

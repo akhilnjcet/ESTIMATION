@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Mail, Lock, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useProgram } from '../context/ProgramContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { refreshPrograms } = useProgram();
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,12 +22,14 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('user', JSON.stringify(data));
+        await refreshPrograms();
         navigate('/');
       } else {
         const { data } = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('user', JSON.stringify(data));
+        await refreshPrograms();
         navigate('/');
       }
     } catch (err) {

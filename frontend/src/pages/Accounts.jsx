@@ -6,6 +6,7 @@ const Accounts = () => {
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
 
   useEffect(() => {
@@ -30,14 +31,44 @@ const Accounts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/accounts', formData);
+      if (editingId) {
+        await api.put(`/accounts/${editingId}`, formData);
+        alert('Account updated successfully!');
+      } else {
+        await api.post('/accounts', formData);
+        alert('Account created successfully!');
+      }
       setFormData({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
       setShowForm(false);
+      setEditingId(null);
       fetchAccounts();
-      alert('Account saved successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to save account: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleEdit = (acc) => {
+    setFormData({
+      name: acc.name,
+      type: acc.type,
+      accountNumber: acc.accountNumber || '',
+      bankName: acc.bankName || '',
+      balance: acc.balance
+    });
+    setEditingId(acc._id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this account?')) return;
+    try {
+      await api.delete(`/accounts/${id}`);
+      fetchAccounts();
+      alert('Account deleted!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -98,14 +129,18 @@ const Accounts = () => {
                 ₹ {acc.balance.toLocaleString()}
               </div>
             </div>
+            <div className="flex gap-2">
+              <button className="btn btn-sm btn-outline" onClick={() => handleEdit(acc)}>Edit</button>
+              <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(acc._id)}>Delete</button>
+            </div>
           </div>
         ))}
         {accounts.length === 0 && <div className="card" style={{gridColumn: '1 / -1', textAlign: 'center', color: '#64748b'}}>No accounts found. Please click "Add Account".</div>}
       </div>
 
       {showForm && (
-        <div className="card mb-4 mt-6">
-          <h2 className="text-xl font-bold mb-4">Add New Account</h2>
+        <div className="card mb-4 mt-6" id="account-form">
+          <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit Account' : 'Add New Account'}</h2>
           <form onSubmit={handleSubmit}>
             <div className="dashboard-grid">
               <div className="form-group">
