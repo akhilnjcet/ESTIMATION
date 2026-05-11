@@ -79,7 +79,21 @@ if (process.env.NODE_ENV !== 'production') {
 
 // For production (Vercel)
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
+  if (mongoose.connection.readyState === 1) return;
+  
+  // If already connecting, wait for it to finish
+  if (mongoose.connection.readyState === 2) {
+    await new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (mongoose.connection.readyState === 1) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+    });
+    return;
+  }
+
   await mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
   
   // Seed Admin & Program if they don't exist
