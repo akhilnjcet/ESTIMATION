@@ -2,14 +2,13 @@ const mongoose = require('mongoose');
 
 const noteSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
-  type: { 
-    type: String, 
-    enum: ['Income', 'Expense'], 
-    required: true 
-  },
-  amount: { 
+  incomeAmount: { 
     type: Number, 
-    required: true 
+    default: 0 
+  },
+  expenseAmount: { 
+    type: Number, 
+    default: 0 
   },
   description: { 
     type: String, 
