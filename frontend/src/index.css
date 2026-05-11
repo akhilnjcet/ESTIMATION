@@ -92,7 +92,7 @@ button {
 
 /* Header & Toggle */
 .mobile-header {
-  display: flex;
+  display: none; /* Hide by default on desktop */
   background: white;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
@@ -128,8 +128,11 @@ button {
   border-radius: 2px;
 }
 
-/* Responsive Rules */
 @media (max-width: 1024px) {
+  .mobile-header {
+    display: flex; /* Only show on mobile/tablet */
+  }
+  
   .sidebar {
     position: fixed;
     left: 0;
