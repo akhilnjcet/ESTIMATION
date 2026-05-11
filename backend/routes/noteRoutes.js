@@ -5,7 +5,8 @@ const { protect } = require('../middleware/authMiddleware');
 
 router.get('/', protect, async (req, res) => {
   try {
-    const notes = await Note.find().sort({ date: -1 });
+    const query = req.programId ? { programId: req.programId } : {};
+    const notes = await Note.find(query).sort({ date: -1 });
     res.json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -14,20 +15,33 @@ router.get('/', protect, async (req, res) => {
 
 router.post('/', protect, async (req, res) => {
   try {
-    const note = await Note.create(req.body);
+    if (!req.programId) return res.status(400).json({ message: 'No program selected' });
+    const note = await Note.create({ ...req.body, programId: req.programId });
     res.json(note);
   } catch (error) {
+    console.error('NOTE_SAVE_ERROR:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 router.put('/:id', protect, async (req, res) => {
   try {
-    const note = await Note.findByIdAndUpdate(
-      req.params.id, 
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, programId: req.programId }, 
       { $set: req.body, $inc: { editCount: 1 } }, 
       { new: true }
     );
+    if (!note) return res.status(404).json({ message: 'Note not found' });
+    res.json(note);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, programId: req.programId });
+    if (!note) return res.status(404).json({ message: 'Note not found' });
     res.json(note);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -36,7 +50,8 @@ router.put('/:id', protect, async (req, res) => {
 
 router.delete('/:id', protect, async (req, res) => {
   try {
-    await Note.findByIdAndDelete(req.params.id);
+    const note = await Note.findOneAndDelete({ _id: req.params.id, programId: req.programId });
+    if (!note) return res.status(404).json({ message: 'Note not found' });
     res.json({ message: 'Deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
