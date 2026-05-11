@@ -115,7 +115,7 @@ const Expense = () => {
                 <input type="date" className="form-control" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Amount (₹)</label>
+                <label className="form-label">Amount (&#8377;)</label>
                 <input type="number" className="form-control" required value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
               </div>
               <div className="form-group">
@@ -176,7 +176,7 @@ const Expense = () => {
                     <small style={{color:'gray'}}>{exp.description}</small>
                   </td>
                   <td>{exp.account?.name}</td>
-                  <td style={{ color: 'var(--danger)', fontWeight: 'bold' }}>- ₹ {exp.amount.toLocaleString()}</td>
+                  <td style={{ color: 'var(--danger)', fontWeight: 'bold' }}>- &#8377; {exp.amount.toLocaleString()}</td>
                   <td>
                     <div className="flex gap-2">
                       <button onClick={() => handleEdit(exp)} style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>Edit</button>

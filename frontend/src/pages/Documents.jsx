@@ -127,7 +127,7 @@ const Invoices = () => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="form-group">
-                <label className="form-label">Amount (₹)</label>
+                <label className="form-label">Amount (&#8377;)</label>
                 <input type="number" className="form-control" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
               </div>
               <div className="form-group">
@@ -182,7 +182,7 @@ const Invoices = () => {
                 <h3 className="font-bold text-lg truncate mb-1" title={doc.title}>{doc.title}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                   <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(doc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                  {doc.amount && <div className="font-bold text-gray-900">₹{doc.amount.toLocaleString()}</div>}
+                  {doc.amount && <div className="font-bold text-gray-900">&#8377; {doc.amount.toLocaleString()}</div>}
                 </div>
               </div>
             </div>

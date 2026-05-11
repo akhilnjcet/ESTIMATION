@@ -243,8 +243,8 @@ const Invoices = () => {
                   <div className="font-bold">{item.productName || 'Item'}</div>
                 </td>
                 <td className="p-3 text-center">{item.quantity}</td>
-                <td className="p-3 text-right">₹{(item.price || 0).toLocaleString()}</td>
-                <td className="p-3 text-right font-bold">₹{(item.total || 0).toLocaleString()}</td>
+                <td className="p-3 text-right">&#8377; {(item.price || 0).toLocaleString()}</td>
+                <td className="p-3 text-right font-bold">&#8377; {(item.total || 0).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -253,7 +253,7 @@ const Invoices = () => {
         <div className="w-64 ml-auto">
           <div className="flex justify-between text-xl font-bold border-t-2 pt-3">
             <span>Total:</span>
-            <span className="text-primary">₹{(docData.totalAmount || 0).toLocaleString()}</span>
+            <span className="text-primary">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -361,7 +361,7 @@ const Invoices = () => {
                         </div>
                         <div className="col-span-4 md:col-span-2">
                           <label className="text-[10px] font-bold text-gray-400 uppercase">Total</label>
-                          <div className="h-[38px] flex items-center font-bold text-primary">₹{item.total.toLocaleString()}</div>
+                          <div className="h-[38px] flex items-center font-bold text-primary">&#8377; {item.total.toLocaleString()}</div>
                         </div>
                       </div>
                     </div>
@@ -421,7 +421,7 @@ const Invoices = () => {
                     <div className="font-bold text-gray-900">{inv.customer?.customerName || 'Unknown'}</div>
                   </td>
                   <td className="py-4 text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
-                  <td className="py-4 font-bold text-gray-900">₹ {inv.totalAmount?.toLocaleString()}</td>
+                  <td className="py-4 font-bold text-gray-900">&#8377; {inv.totalAmount?.toLocaleString()}</td>
                   <td className="py-4 text-center">
                     <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold uppercase tracking-wider">
                       {inv.status}

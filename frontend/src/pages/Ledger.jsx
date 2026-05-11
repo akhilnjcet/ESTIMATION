@@ -123,20 +123,20 @@ const Ledger = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div className="card border-l-4 border-gray-400 shadow-sm">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Opening Balance</div>
-          <div className="text-lg font-bold text-gray-900">₹ {totalOpeningBalance.toLocaleString()}</div>
+          <div className="text-lg font-bold text-gray-900">&#8377; {totalOpeningBalance.toLocaleString()}</div>
         </div>
         <div className="card border-l-4 border-emerald-500 shadow-sm">
           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (+)</div>
-          <div className="text-lg font-bold text-emerald-600">₹ {totalCredit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-emerald-600">&#8377; {totalCredit.toLocaleString()}</div>
         </div>
         <div className="card border-l-4 border-rose-500 shadow-sm">
           <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (-)</div>
-          <div className="text-lg font-bold text-rose-600">₹ {totalDebit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-rose-600">&#8377; {totalDebit.toLocaleString()}</div>
         </div>
         <div className={`card border-l-4 shadow-sm ${netBalance >= 0 ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-500 bg-rose-50/30'}`}>
           <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${netBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Net Balance</div>
           <div className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-            {netBalance < 0 ? '-' : '+'} ₹ {Math.abs(netBalance).toLocaleString()}
+            {netBalance < 0 ? '-' : '+'} &#8377; {Math.abs(netBalance).toLocaleString()}
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ const Ledger = () => {
         <div className="flex-1 card py-4 flex justify-between items-center bg-emerald-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase opacity-80">Cash on Hand</span>
-            <span className="text-xl font-bold">₹ {cashBalance.toLocaleString()}</span>
+            <span className="text-xl font-bold">&#8377; {cashBalance.toLocaleString()}</span>
           </div>
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <Wallet size={20} />
@@ -155,7 +155,7 @@ const Ledger = () => {
         <div className="flex-1 card py-4 flex justify-between items-center bg-rose-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase opacity-80">Bank Balance</span>
-            <span className="text-xl font-bold">₹ {bankBalance.toLocaleString()}</span>
+            <span className="text-xl font-bold">&#8377; {bankBalance.toLocaleString()}</span>
           </div>
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <Receipt size={20} />
@@ -226,14 +226,14 @@ const Ledger = () => {
                   </td>
                   <td className="py-4 text-right">
                     {txn.type === 'Expense' ? (
-                      <span className="font-bold text-rose-600">₹ {txn.amount.toLocaleString()}</span>
+                      <span className="font-bold text-rose-600">&#8377; {txn.amount.toLocaleString()}</span>
                     ) : (
                       <span className="text-gray-300">-</span>
                     )}
                   </td>
                   <td className="py-4 text-right">
                     {txn.type === 'Income' ? (
-                      <span className="font-bold text-emerald-600">₹ {txn.amount.toLocaleString()}</span>
+                      <span className="font-bold text-emerald-600">&#8377; {txn.amount.toLocaleString()}</span>
                     ) : (
                       <span className="text-gray-300">-</span>
                     )}

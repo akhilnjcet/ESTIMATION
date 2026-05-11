@@ -108,7 +108,7 @@ const Accounts = () => {
           </div>
           <div>
             <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Total Available Balance</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>₹ {totalBalance.toLocaleString()}</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>&#8377; {totalBalance.toLocaleString()}</div>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ const Accounts = () => {
           </div>
           <div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Business Income</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--secondary)' }}>₹ {totalIncome.toLocaleString()}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--secondary)' }}>&#8377; {totalIncome.toLocaleString()}</div>
           </div>
         </div>
 
@@ -128,7 +128,7 @@ const Accounts = () => {
           </div>
           <div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Business Expense</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>₹ {totalExpense.toLocaleString()}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>&#8377; {totalExpense.toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -142,12 +142,12 @@ const Accounts = () => {
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{acc.type} • {acc.name}</div>
               <div className="flex items-baseline gap-2">
                 <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: acc.balance < 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
-                  ₹ {acc.balance.toLocaleString()}
+                  &#8377; {acc.balance.toLocaleString()}
                 </span>
                 <span className="text-xs text-gray-400"> (Current)</span>
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                Opening: ₹{acc.openingBalance?.toLocaleString() || '0'}
+                Opening: &#8377; {acc.openingBalance?.toLocaleString() || '0'}
               </div>
             </div>
             <div className="flex gap-2">
@@ -182,7 +182,7 @@ const Accounts = () => {
                 <input type="date" className="form-control" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Opening Balance (₹)</label>
+                <label className="form-label">Opening Balance (&#8377;)</label>
                 <input type="number" className="form-control" required value={formData.openingBalance} onChange={e => setFormData({...formData, openingBalance: e.target.value})} />
               </div>
             </div>

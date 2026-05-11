@@ -60,7 +60,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Combined Total Balance</p>
-              <h2 className="text-3xl font-bold text-primary mt-1">₹ {stats.balance.toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-primary mt-1">&#8377; {stats.balance.toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-primary/10 rounded-xl text-primary">
               <Wallet size={24} />
@@ -68,10 +68,10 @@ const Dashboard = () => {
           </div>
           <div className="mt-4 flex gap-4 text-xs">
             <span className="flex items-center gap-1 text-green-600 font-bold">
-              <TrendingUp size={12} /> Income: ₹{stats.income.toLocaleString()}
+              <TrendingUp size={12} /> Income: &#8377; {stats.income.toLocaleString()}
             </span>
             <span className="flex items-center gap-1 text-red-600 font-bold">
-              <TrendingDown size={12} /> Expense: ₹{stats.expense.toLocaleString()}
+              <TrendingDown size={12} /> Expense: &#8377; {stats.expense.toLocaleString()}
             </span>
           </div>
         </div>
@@ -80,7 +80,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Cash on Hand</p>
-              <h2 className="text-3xl font-bold text-secondary mt-1">₹ {stats.cashBalance.toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-secondary mt-1">&#8377; {stats.cashBalance.toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-secondary/10 rounded-xl text-secondary">
               <Activity size={24} />
@@ -93,15 +93,15 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Digital & Bank Assets</p>
-              <h2 className="text-3xl font-bold text-[#b45309] mt-1">₹ {(stats.bankBalance + stats.upiBalance).toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-[#b45309] mt-1">&#8377; {(stats.bankBalance + stats.upiBalance).toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
               <Landmark size={24} />
             </div>
           </div>
           <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase">
-            <span className="text-amber-700">Bank: ₹{stats.bankBalance.toLocaleString()}</span>
-            <span className="text-amber-700">UPI: ₹{stats.upiBalance.toLocaleString()}</span>
+            <span className="text-amber-700">Bank: &#8377; {stats.bankBalance.toLocaleString()}</span>
+            <span className="text-amber-700">UPI: &#8377; {stats.upiBalance.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -124,16 +124,16 @@ const Dashboard = () => {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Income</span>
-                <span className="font-bold text-green-600">₹{prog.income.toLocaleString()}</span>
+                <span className="font-bold text-green-600">&#8377; {prog.income.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Expense</span>
-                <span className="font-bold text-red-600">₹{prog.expense.toLocaleString()}</span>
+                <span className="font-bold text-red-600">&#8377; {prog.expense.toLocaleString()}</span>
               </div>
               <div className="pt-2 border-t flex justify-between font-bold">
                 <span>Net Balance</span>
                 <span className={prog.balance >= 0 ? 'text-primary' : 'text-red-600'}>
-                  ₹{prog.balance.toLocaleString()}
+                  &#8377; {prog.balance.toLocaleString()}
                 </span>
               </div>
             </div>

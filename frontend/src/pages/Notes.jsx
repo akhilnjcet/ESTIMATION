@@ -59,15 +59,15 @@ const Notes = () => {
       <div className="dashboard-grid mb-6">
         <div className="card" style={{ borderLeft: '4px solid var(--secondary)', background: '#ecfdf5' }}>
           <div style={{ color: 'var(--text-secondary)' }}>Total Income</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--secondary)' }}>₹ {totalIncome.toLocaleString()}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--secondary)' }}>&#8377; {totalIncome.toLocaleString()}</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--danger)', background: '#fef2f2' }}>
           <div style={{ color: 'var(--text-secondary)' }}>Total Expense</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>₹ {totalExpense.toLocaleString()}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>&#8377; {totalExpense.toLocaleString()}</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--primary)', background: '#eef2ff' }}>
           <div style={{ color: 'var(--text-secondary)' }}>Net Balance</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>₹ {balance.toLocaleString()}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>&#8377; {balance.toLocaleString()}</div>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ const Notes = () => {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Amount (₹)</label>
+              <label className="form-label">Amount (&#8377;)</label>
               <input type="number" className="form-control" required value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
             </div>
             <div className="form-group">
@@ -129,10 +129,10 @@ const Notes = () => {
                       )}
                     </td>
                     <td style={{textAlign:'right', color:'var(--secondary)', fontWeight:'bold'}}>
-                      {note.type === 'Income' ? `+₹ ${note.amount.toLocaleString()}` : '-'}
+                      {note.type === 'Income' ? `+ &#8377; ${note.amount.toLocaleString()}` : '-'}
                     </td>
                     <td style={{textAlign:'right', color:'var(--danger)', fontWeight:'bold'}}>
-                      {note.type === 'Expense' ? `-₹ ${note.amount.toLocaleString()}` : '-'}
+                      {note.type === 'Expense' ? `- &#8377; ${note.amount.toLocaleString()}` : '-'}
                     </td>
                     <td>
                       <div className="flex gap-2">

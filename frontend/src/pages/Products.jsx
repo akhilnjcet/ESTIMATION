@@ -55,7 +55,7 @@ const Products = () => {
                 <input type="text" className="form-control" required value={formData.productName} onChange={e => setFormData({...formData, productName: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Price (₹)</label>
+                <label className="form-label">Price (&#8377;)</label>
                 <input type="number" className="form-control" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
               </div>
               <div className="form-group">
@@ -98,7 +98,7 @@ const Products = () => {
                 <tr key={prod._id}>
                   <td><strong>{prod.productName}</strong></td>
                   <td>{prod.hsnCode || '-'} / {prod.category || '-'}</td>
-                  <td>₹ {prod.price.toLocaleString()}</td>
+                  <td>&#8377; {prod.price.toLocaleString()}</td>
                   <td>{prod.stock}</td>
                   <td>{prod.taxPercentage}%</td>
                   <td>
