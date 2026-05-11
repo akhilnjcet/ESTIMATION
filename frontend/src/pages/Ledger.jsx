@@ -141,6 +141,9 @@ const Ledger = () => {
   const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
   const netBalance = totalOpeningBalance + totalCredit - totalDebit;
 
+  const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
+  const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-end mb-8">
@@ -160,22 +163,34 @@ const Ledger = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="card border-l-4 border-gray-400 shadow-md">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div className="card border-l-4 border-gray-400 shadow-sm">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Opening Balance</div>
-          <div className="text-xl font-bold text-gray-900">₹ {totalOpeningBalance.toLocaleString()}</div>
+          <div className="text-lg font-bold text-gray-900">₹ {totalOpeningBalance.toLocaleString()}</div>
         </div>
-        <div className="card border-l-4 border-emerald-500 shadow-md">
+        <div className="card border-l-4 border-emerald-500 shadow-sm">
           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (+)</div>
-          <div className="text-xl font-bold text-gray-900">₹ {totalCredit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-gray-900">₹ {totalCredit.toLocaleString()}</div>
         </div>
-        <div className="card border-l-4 border-rose-500 shadow-md">
+        <div className="card border-l-4 border-rose-500 shadow-sm">
           <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (-)</div>
-          <div className="text-xl font-bold text-gray-900">₹ {totalDebit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-gray-900">₹ {totalDebit.toLocaleString()}</div>
         </div>
-        <div className="card border-l-4 border-blue-500 shadow-md bg-blue-50/30">
+        <div className="card border-l-4 border-blue-500 shadow-sm bg-blue-50/30">
           <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Net Balance</div>
           <div className="text-xl font-bold text-gray-900">₹ {netBalance.toLocaleString()}</div>
+        </div>
+      </div>
+
+      {/* Breakdown Bar */}
+      <div className="flex gap-4 mb-8">
+        <div className="flex-1 card py-3 flex justify-between items-center bg-gray-50 border-dashed">
+          <span className="text-xs font-bold text-gray-500 uppercase">Cash on Hand:</span>
+          <span className="font-bold text-gray-700">₹ {cashBalance.toLocaleString()}</span>
+        </div>
+        <div className="flex-1 card py-3 flex justify-between items-center bg-gray-50 border-dashed">
+          <span className="text-xs font-bold text-gray-500 uppercase">Bank Balance:</span>
+          <span className="font-bold text-gray-700">₹ {bankBalance.toLocaleString()}</span>
         </div>
       </div>
 
