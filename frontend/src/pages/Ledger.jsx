@@ -5,13 +5,22 @@ import { FileText, Download, Printer, Filter } from 'lucide-react';
 
 const Ledger = () => {
   const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const { selectedProgram } = useProgram();
 
   useEffect(() => {
     fetchTransactions();
+    fetchAccounts();
   }, [filter]);
+
+  const fetchAccounts = async () => {
+    try {
+      const { data } = await api.get('/accounts');
+      setAccounts(data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -70,6 +79,10 @@ const Ledger = () => {
 
           <div class="summary">
             <div class="summary-card">
+              <label>Opening Balance</label>
+              <value>₹ ${totalOpeningBalance.toLocaleString()}</value>
+            </div>
+            <div class="summary-card">
               <label>Total Credit (In)</label>
               <value class="credit">₹ ${totalCredit.toLocaleString()}</value>
             </div>
@@ -77,9 +90,9 @@ const Ledger = () => {
               <label>Total Debit (Out)</label>
               <value class="debit">₹ ${totalDebit.toLocaleString()}</value>
             </div>
-            <div class="summary-card" style="border-left: 4px solid ${selectedProgram?.themeColor || '#4f46e5'}">
-              <label>Net Balance</label>
-              <value>₹ ${balance.toLocaleString()}</value>
+            <div class="summary-card" style="border-left: 4px solid ${selectedProgram?.themeColor || '#4f46e5'}; grid-column: span 3;">
+              <label>Net Balance (Closing)</label>
+              <value>₹ ${netBalance.toLocaleString()}</value>
             </div>
           </div>
 
@@ -123,9 +136,10 @@ const Ledger = () => {
     printWindow.document.close();
   };
 
+  const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
   const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
   const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-  const netBalance = totalCredit - totalDebit;
+  const netBalance = totalOpeningBalance + totalCredit - totalDebit;
 
   return (
     <div className="p-6">
@@ -146,18 +160,22 @@ const Ledger = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="card border-l-4 border-gray-400 shadow-md">
+          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Opening Balance</div>
+          <div className="text-xl font-bold text-gray-900">₹ {totalOpeningBalance.toLocaleString()}</div>
+        </div>
         <div className="card border-l-4 border-emerald-500 shadow-md">
-          <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (Income)</div>
-          <div className="text-2xl font-bold text-gray-900">₹ {totalCredit.toLocaleString()}</div>
+          <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (+)</div>
+          <div className="text-xl font-bold text-gray-900">₹ {totalCredit.toLocaleString()}</div>
         </div>
         <div className="card border-l-4 border-rose-500 shadow-md">
-          <div className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (Expense)</div>
-          <div className="text-2xl font-bold text-gray-900">₹ {totalDebit.toLocaleString()}</div>
+          <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (-)</div>
+          <div className="text-xl font-bold text-gray-900">₹ {totalDebit.toLocaleString()}</div>
         </div>
         <div className="card border-l-4 border-blue-500 shadow-md bg-blue-50/30">
-          <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Net Balance</div>
-          <div className="text-2xl font-bold text-gray-900">₹ {netBalance.toLocaleString()}</div>
+          <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Net Balance</div>
+          <div className="text-xl font-bold text-gray-900">₹ {netBalance.toLocaleString()}</div>
         </div>
       </div>
 
