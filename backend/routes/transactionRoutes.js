@@ -9,13 +9,19 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
+    const { type, sortBy } = req.query;
     const filter = { programId: req.programId };
-    if (req.query.type) filter.type = req.query.type;
+    if (type) filter.type = type;
+    
+    let sortOptions = { date: -1, createdAt: -1 };
+    if (sortBy === 'date_asc') sortOptions = { date: 1, createdAt: 1 };
+    if (sortBy === 'amount_desc') sortOptions = { amount: -1 };
+    if (sortBy === 'amount_asc') sortOptions = { amount: 1 };
     
     const transactions = await Transaction.find(filter)
       .populate('account', 'name type')
       .populate('party', 'customerName')
-      .sort({ date: -1 });
+      .sort(sortOptions);
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: error.message });

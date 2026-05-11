@@ -7,7 +7,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const documents = await Document.find({ programId: req.programId }).sort({ date: -1 });
+    const documents = await Document.find({ programId: req.programId }).sort({ date: -1, createdAt: -1 });
     res.json(documents);
   } catch (error) {
     res.status(500).json({ message: error.message });

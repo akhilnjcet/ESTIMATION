@@ -8,12 +8,13 @@ const Ledger = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc
   const { selectedProgram } = useProgram();
 
   useEffect(() => {
     fetchTransactions();
     fetchAccounts();
-  }, [filter]);
+  }, [filter, sortBy]);
 
   const fetchAccounts = async () => {
     try {
@@ -25,8 +26,8 @@ const Ledger = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      let url = '/transactions';
-      if (filter !== 'All') url += `?type=${filter}`;
+      let url = `/transactions?sortBy=${sortBy}`;
+      if (filter !== 'All') url += `&type=${filter}`;
       const { data } = await api.get(url);
       setTransactions(data);
     } catch (err) { console.error(err); }
@@ -216,17 +217,32 @@ const Ledger = () => {
             <FileText size={20} className="text-gray-400" />
             Transaction History
           </h2>
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
-            <Filter size={16} className="text-gray-400" />
-            <select 
-              className="outline-none text-sm font-bold bg-transparent"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="All">All Transactions</option>
-              <option value="Income">Income Only</option>
-              <option value="Expense">Expense Only</option>
-            </select>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+              <Filter size={16} className="text-gray-400" />
+              <select 
+                className="outline-none text-sm font-bold bg-transparent"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="date_desc">Newest First</option>
+                <option value="date_asc">Oldest First</option>
+                <option value="amount_desc">Highest Amount</option>
+                <option value="amount_asc">Lowest Amount</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+              <Filter size={16} className="text-gray-400" />
+              <select 
+                className="outline-none text-sm font-bold bg-transparent"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                <option value="All">All Transactions</option>
+                <option value="Income">Income Only</option>
+                <option value="Expense">Expense Only</option>
+              </select>
+            </div>
           </div>
         </div>
         
