@@ -11,6 +11,10 @@ const accountSchema = new mongoose.Schema({
     enum: ['Cash', 'Bank', 'UPI', 'Other'],
     required: true
   },
+  openingBalance: {
+    type: Number,
+    default: 0
+  },
   balance: {
     type: Number,
     default: 0

@@ -12,7 +12,7 @@ const Accounts = () => {
     type: 'Cash', 
     accountNumber: '', 
     bankName: '', 
-    balance: 0,
+    openingBalance: 0,
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -68,7 +68,7 @@ const Accounts = () => {
       type: acc.type,
       accountNumber: acc.accountNumber || '',
       bankName: acc.bankName || '',
-      balance: acc.balance,
+      openingBalance: acc.openingBalance || 0,
       date: acc.date ? new Date(acc.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setEditingId(acc._id);
@@ -140,8 +140,14 @@ const Accounts = () => {
           <div key={acc._id} className="card flex justify-between items-center" style={{ borderTop: acc.balance < 0 ? '4px solid var(--danger)' : '4px solid #94a3b8' }}>
             <div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{acc.type} • {acc.name}</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: acc.balance < 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
-                ₹ {acc.balance.toLocaleString()}
+              <div className="flex items-baseline gap-2">
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: acc.balance < 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
+                  ₹ {acc.balance.toLocaleString()}
+                </span>
+                <span className="text-xs text-gray-400"> (Current)</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Opening: ₹{acc.openingBalance?.toLocaleString() || '0'}
               </div>
             </div>
             <div className="flex gap-2">
@@ -177,7 +183,7 @@ const Accounts = () => {
               </div>
               <div className="form-group">
                 <label className="form-label">Opening Balance (₹)</label>
-                <input type="number" className="form-control" required value={formData.balance} onChange={e => setFormData({...formData, balance: e.target.value})} />
+                <input type="number" className="form-control" required value={formData.openingBalance} onChange={e => setFormData({...formData, openingBalance: e.target.value})} />
               </div>
             </div>
             <button type="submit" className="btn btn-primary">Save Account</button>

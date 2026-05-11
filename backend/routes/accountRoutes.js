@@ -20,7 +20,17 @@ router.get('/', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const account = await Account.create({ ...req.body, programId: req.programId });
+    const { openingBalance, balance, ...rest } = req.body;
+    
+    // Set current balance to opening balance if not provided
+    const initialBalance = balance || openingBalance || 0;
+    
+    const account = await Account.create({ 
+      ...rest, 
+      openingBalance: openingBalance || 0,
+      balance: initialBalance,
+      programId: req.programId 
+    });
     res.status(201).json(account);
   } catch (error) {
     res.status(500).json({ message: error.message });
