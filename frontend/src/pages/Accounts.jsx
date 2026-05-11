@@ -7,7 +7,6 @@ const Accounts = () => {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ 
     name: '', 
     type: 'Cash', 
