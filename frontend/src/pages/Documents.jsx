@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { FileText, Upload, Trash2, Eye, Calendar, DollarSign, Link as LinkIcon, X } from 'lucide-react';
+import { FileText, Upload, Trash2, Eye, Calendar, DollarSign, Link as LinkIcon, X, Download } from 'lucide-react';
 
 const Invoices = () => {
   const [documents, setDocuments] = useState([]);
@@ -77,6 +77,19 @@ const Invoices = () => {
       await api.delete(`/documents/${id}`);
       fetchDocuments();
     } catch (err) { console.error(err); }
+  };
+
+  const handleDownload = (doc) => {
+    if (doc.fileType === 'Link') {
+      window.open(doc.externalLink, '_blank');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = doc.fileUrl;
+    link.download = doc.title || 'bill-record';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleView = (doc) => {
@@ -166,10 +179,13 @@ const Invoices = () => {
         {documents.map(doc => (
           <div key={doc._id} className="card group relative overflow-hidden">
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
-              <button onClick={() => handleView(doc)} className="p-2 bg-white shadow-md border rounded-lg text-primary hover:bg-primary hover:text-white transition-colors">
+              <button onClick={() => handleView(doc)} className="p-2 bg-white shadow-md border rounded-lg text-primary hover:bg-primary hover:text-white transition-colors" title="View">
                 <Eye size={16} />
               </button>
-              <button onClick={() => handleDelete(doc._id)} className="p-2 bg-white shadow-md border rounded-lg text-danger hover:bg-danger hover:text-white transition-colors">
+              <button onClick={() => handleDownload(doc)} className="p-2 bg-white shadow-md border rounded-lg text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors" title="Download">
+                <Download size={16} />
+              </button>
+              <button onClick={() => handleDelete(doc._id)} className="p-2 bg-white shadow-md border rounded-lg text-danger hover:bg-danger hover:text-white transition-colors" title="Delete">
                 <Trash2 size={16} />
               </button>
             </div>
