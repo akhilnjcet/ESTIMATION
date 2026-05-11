@@ -31,6 +31,16 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Middleware to ensure DB connection
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Routes
 const { protect, restrictToView, verifyProgramAccess } = require('./middleware/authMiddleware');
 
@@ -121,15 +131,7 @@ const connectDB = async () => {
   }
 };
 
-// Middleware to ensure DB connection
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {
