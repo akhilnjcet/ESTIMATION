@@ -75,19 +75,33 @@ const Notes = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.incomeAmount && !formData.expenseAmount) return alert('At least one amount is required');
-    if (!formData.description) return alert('Description required');
+    const income = parseFloat(formData.incomeAmount) || 0;
+    const expense = parseFloat(formData.expenseAmount) || 0;
     
+    if (income === 0 && expense === 0) return alert('At least one amount (Income or Expense) is required');
+    if (!formData.description.trim()) return alert('Description is required');
+    
+    const payload = {
+      ...formData,
+      incomeAmount: income,
+      expenseAmount: expense,
+      description: formData.description.trim()
+    };
+
     try {
       if (editingNote) {
-        await api.put(`/notes/${editingNote._id}`, formData);
+        await api.put(`/notes/${editingNote._id}`, payload);
         setEditingNote(null);
       } else {
-        await api.post('/notes', formData);
+        await api.post('/notes', payload);
       }
       setFormData({ incomeAmount: '', expenseAmount: '', description: '' });
       fetchNotes();
-    } catch (err) { console.error(err); }
+      // Optional: alert('Entry saved successfully!');
+    } catch (err) { 
+      console.error(err); 
+      alert('Failed to save entry');
+    }
   };
 
   const handleEdit = (note) => {
@@ -232,10 +246,10 @@ const Notes = () => {
                         )}
                       </td>
                       <td className="py-4 text-right font-bold text-secondary">
-                        {note.incomeAmount ? `&#8377; ${note.incomeAmount.toLocaleString()}` : '-'}
+                        {note.incomeAmount > 0 ? <>&#8377; {note.incomeAmount.toLocaleString()}</> : <span className="text-gray-300">&#8377; 0</span>}
                       </td>
                       <td className="py-4 text-right font-bold text-danger">
-                        {note.expenseAmount ? `&#8377; ${note.expenseAmount.toLocaleString()}` : '-'}
+                        {note.expenseAmount > 0 ? <>&#8377; {note.expenseAmount.toLocaleString()}</> : <span className="text-gray-300">&#8377; 0</span>}
                       </td>
                       <td className={`py-4 text-right font-bold ${net >= 0 ? 'text-primary' : 'text-danger'}`}>
                         &#8377; {net.toLocaleString()}
@@ -252,12 +266,12 @@ const Notes = () => {
                 {notes.length === 0 && <tr><td colSpan="6" className="py-20 text-center text-gray-400 font-medium">No records found.</td></tr>}
               </tbody>
               {notes.length > 0 && (
-                <tfoot className="bg-gray-50 border-t-2 border-gray-200">
-                  <tr>
-                    <td colSpan="2" className="py-4 font-bold text-gray-900 text-right uppercase tracking-wider text-xs">Total Summary</td>
-                    <td className="py-4 text-right font-black text-secondary">&#8377; {totalIncome.toLocaleString()}</td>
-                    <td className="py-4 text-right font-black text-danger">&#8377; {totalExpense.toLocaleString()}</td>
-                    <td className={`py-4 text-right font-black ${balance >= 0 ? 'text-primary' : 'text-danger'}`}>
+                <tfoot className="bg-gray-100 border-t-2 border-gray-200">
+                  <tr className="font-black">
+                    <td colSpan="2" className="py-4 text-gray-900 text-right uppercase tracking-wider text-xs">Total Summary</td>
+                    <td className="py-4 text-right text-secondary">&#8377; {totalIncome.toLocaleString()}</td>
+                    <td className="py-4 text-right text-danger">&#8377; {totalExpense.toLocaleString()}</td>
+                    <td className={`py-4 text-right ${balance >= 0 ? 'text-primary' : 'text-danger'}`}>
                       &#8377; {balance.toLocaleString()}
                     </td>
                     <td></td>
