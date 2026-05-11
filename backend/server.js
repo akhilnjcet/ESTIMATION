@@ -7,10 +7,20 @@ const path = require('path');
 const app = express();
 
 // Health Check for Debugging
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  let connectionError = null;
+  try {
+    if (mongoose.connection.readyState !== 1 && process.env.MONGO_URI) {
+      await mongoose.connect(process.env.MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
+    }
+  } catch (err) {
+    connectionError = err.message;
+  }
+
   res.json({ 
     status: 'OK', 
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    error: connectionError,
     mongo_uri_exists: !!process.env.MONGO_URI,
     node_version: process.version
   });
