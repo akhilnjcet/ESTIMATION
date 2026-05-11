@@ -58,7 +58,7 @@ app.use((err, req, res, next) => {
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
-  mongoose.connect(MONGO_URI)
+  mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 })
     .then(async () => {
       console.log('Connected to MongoDB');
       // ... seeding logic (optional for local)

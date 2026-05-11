@@ -19,20 +19,23 @@ export const ProgramProvider = ({ children }) => {
       try {
         setLoading(true);
         const { data } = await api.get('/programs');
-        setPrograms(data);
+        
+        // Ensure data is an array
+        const programList = Array.isArray(data) ? data : [];
+        setPrograms(programList);
         
         const savedProgramId = localStorage.getItem('programId');
-        if (savedProgramId) {
-          const found = data.find(p => p._id === savedProgramId);
+        if (savedProgramId && programList.length > 0) {
+          const found = programList.find(p => p._id === savedProgramId);
           if (found) {
             setSelectedProgram(found);
-          } else if (data.length > 0) {
-            setSelectedProgram(data[0]);
-            localStorage.setItem('programId', data[0]._id);
+          } else {
+            setSelectedProgram(programList[0]);
+            localStorage.setItem('programId', programList[0]._id);
           }
-        } else if (data.length > 0) {
-          setSelectedProgram(data[0]);
-          localStorage.setItem('programId', data[0]._id);
+        } else if (programList.length > 0) {
+          setSelectedProgram(programList[0]);
+          localStorage.setItem('programId', programList[0]._id);
         }
       } catch (err) {
         console.error('Failed to fetch programs', err);

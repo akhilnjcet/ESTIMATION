@@ -28,9 +28,24 @@ const Dashboard = () => {
   }, []);
 
   if (loading) return <div className="p-12 text-center text-gray-500">Loading Krishva ERP Dashboard...</div>;
-  if (!dashboardData) return <div className="p-12 text-center text-red-500">Error loading dashboard data.</div>;
+  if (!dashboardData || dashboardData.message) {
+    return (
+      <div className="p-12 text-center">
+        <div className="text-red-500 mb-4">{dashboardData?.message || 'Error loading dashboard data.'}</div>
+        <button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>
+      </div>
+    );
+  }
 
-  const { combined, programSummaries } = dashboardData;
+  const { combined = {}, programSummaries = [] } = dashboardData;
+  const stats = {
+    balance: combined.balance || 0,
+    income: combined.income || 0,
+    expense: combined.expense || 0,
+    cashBalance: combined.cashBalance || 0,
+    bankBalance: combined.bankBalance || 0,
+    upiBalance: combined.upiBalance || 0,
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -45,7 +60,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Combined Total Balance</p>
-              <h2 className="text-3xl font-bold text-primary mt-1">₹ {combined.balance.toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-primary mt-1">₹ {stats.balance.toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-primary/10 rounded-xl text-primary">
               <Wallet size={24} />
@@ -53,10 +68,10 @@ const Dashboard = () => {
           </div>
           <div className="mt-4 flex gap-4 text-xs">
             <span className="flex items-center gap-1 text-green-600 font-bold">
-              <TrendingUp size={12} /> Income: ₹{combined.income.toLocaleString()}
+              <TrendingUp size={12} /> Income: ₹{stats.income.toLocaleString()}
             </span>
             <span className="flex items-center gap-1 text-red-600 font-bold">
-              <TrendingDown size={12} /> Expense: ₹{combined.expense.toLocaleString()}
+              <TrendingDown size={12} /> Expense: ₹{stats.expense.toLocaleString()}
             </span>
           </div>
         </div>
@@ -65,7 +80,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Cash on Hand</p>
-              <h2 className="text-3xl font-bold text-secondary mt-1">₹ {combined.cashBalance.toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-secondary mt-1">₹ {stats.cashBalance.toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-secondary/10 rounded-xl text-secondary">
               <Activity size={24} />
@@ -78,15 +93,15 @@ const Dashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Digital & Bank Assets</p>
-              <h2 className="text-3xl font-bold text-[#b45309] mt-1">₹ {(combined.bankBalance + combined.upiBalance).toLocaleString()}</h2>
+              <h2 className="text-3xl font-bold text-[#b45309] mt-1">₹ {(stats.bankBalance + stats.upiBalance).toLocaleString()}</h2>
             </div>
             <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
               <Landmark size={24} />
             </div>
           </div>
           <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase">
-            <span className="text-amber-700">Bank: ₹{combined.bankBalance.toLocaleString()}</span>
-            <span className="text-amber-700">UPI: ₹{combined.upiBalance.toLocaleString()}</span>
+            <span className="text-amber-700">Bank: ₹{stats.bankBalance.toLocaleString()}</span>
+            <span className="text-amber-700">UPI: ₹{stats.upiBalance.toLocaleString()}</span>
           </div>
         </div>
       </div>
