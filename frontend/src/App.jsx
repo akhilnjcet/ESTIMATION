@@ -67,7 +67,9 @@ function PrivateRoute({ children }) {
           </button>
           <span className="font-bold text-primary">Krishna ERP</span>
         </div>
-        {children}
+        <div className="main-content-inner">
+          {children}
+        </div>
       </main>
     </div>
   );
