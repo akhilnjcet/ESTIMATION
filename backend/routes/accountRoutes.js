@@ -41,12 +41,23 @@ router.post('/', protect, async (req, res) => {
 // @desc    Update an account
 router.put('/:id', protect, async (req, res) => {
   try {
-    const account = await Account.findOneAndUpdate(
-      { _id: req.params.id, programId: req.programId },
-      req.body,
+    const oldAccount = await Account.findOne({ _id: req.params.id, programId: req.programId });
+    if (!oldAccount) return res.status(404).json({ message: 'Account not found' });
+
+    const updates = { ...req.body };
+    
+    // If openingBalance is being updated, adjust current balance by the difference
+    if (updates.openingBalance !== undefined) {
+      const diff = Number(updates.openingBalance) - oldAccount.openingBalance;
+      updates.balance = oldAccount.balance + diff;
+    }
+
+    const account = await Account.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
       { new: true }
     );
-    if (!account) return res.status(404).json({ message: 'Account not found' });
+    
     res.json(account);
   } catch (error) {
     res.status(500).json({ message: error.message });

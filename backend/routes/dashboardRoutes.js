@@ -30,13 +30,15 @@ router.get('/combined', protect, async (req, res) => {
 
     const income = totals.find(t => t._id === 'Income')?.total || 0;
     const expense = totals.find(t => t._id === 'Expense')?.total || 0;
-    const balance = income - expense;
-
+    
     // Account-wise totals
     const accounts = await Account.find({ programId: { $in: programIds } });
     const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + a.balance, 0);
     const bankBalance = accounts.filter(a => a.type === 'Bank').reduce((sum, a) => sum + a.balance, 0);
     const upiBalance = accounts.filter(a => a.type === 'UPI').reduce((sum, a) => sum + a.balance, 0);
+
+    // True Balance = Sum of all account balances (includes opening balance + transactions)
+    const balance = cashBalance + bankBalance + upiBalance;
 
     // Program-wise Summary
     const programSummaries = await Promise.all(programIds.map(async (id) => {
@@ -52,12 +54,15 @@ router.get('/combined', protect, async (req, res) => {
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]);
 
+      const progAccounts = await Account.find({ programId: id });
+      const progBalance = progAccounts.reduce((sum, a) => sum + a.balance, 0);
+
       return {
         _id: prog._id,
         name: prog.name,
         income: progIncome[0]?.total || 0,
         expense: progExpense[0]?.total || 0,
-        balance: (progIncome[0]?.total || 0) - (progExpense[0]?.total || 0)
+        balance: progBalance
       };
     }));
 

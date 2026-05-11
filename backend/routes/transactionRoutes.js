@@ -29,31 +29,45 @@ router.get('/', protect, async (req, res) => {
 });
 
 // @route   POST /api/transactions
-// @desc    Add Income or Expense
+// @desc    Add Income, Expense or Transfer
 router.post('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
     
-    const { type, amount, account, category, description, date, party } = req.body;
+    const { type, amount, account, toAccount, category, description, date, party } = req.body;
 
     const transaction = new Transaction({
-      type, amount, account, category, description, date, party,
+      type, amount, account, toAccount, category, description, date, party,
       programId: req.programId
     });
 
     await transaction.save();
 
     // Update Account Balance
-    const acc = await Account.findById(account);
-    if (!acc) throw new Error('Account not found');
+    if (type === 'Transfer') {
+      if (!toAccount) throw new Error('toAccount is required for transfers');
+      
+      const fromAcc = await Account.findById(account);
+      const targetAcc = await Account.findById(toAccount);
+      
+      if (!fromAcc || !targetAcc) throw new Error('One or both accounts not found');
+      
+      fromAcc.balance -= Number(amount);
+      targetAcc.balance += Number(amount);
+      
+      await fromAcc.save();
+      await targetAcc.save();
+    } else {
+      const acc = await Account.findById(account);
+      if (!acc) throw new Error('Account not found');
 
-    if (type === 'Income') {
-      acc.balance += Number(amount);
-    } else if (type === 'Expense') {
-      acc.balance -= Number(amount);
+      if (type === 'Income') {
+        acc.balance += Number(amount);
+      } else if (type === 'Expense') {
+        acc.balance -= Number(amount);
+      }
+      await acc.save();
     }
-
-    await acc.save();
 
     res.status(201).json(transaction);
   } catch (error) {

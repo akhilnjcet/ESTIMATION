@@ -63,23 +63,24 @@ button {
 
 .sidebar {
   width: 280px;
-  background: var(--primary);
-  color: #fff;
+  background: #1e1b4b; /* Premium Navy Dark */
+  color: #f8fafc;
   height: 100vh;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
+  z-index: 1100;
   flex-shrink: 0;
   overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.05);
 }
 
 .sidebar.collapsed {
   width: 0;
   transform: translateX(-100%);
-  margin-right: -280px; /* Pull content back when collapsed */
 }
 
 .main-content {
@@ -88,6 +89,18 @@ button {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  margin-left: 280px; /* Offset for fixed sidebar on desktop */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
 }
 
 /* Header & Toggle */
@@ -399,21 +412,7 @@ button {
   color: var(--text-primary);
 }
 
-/* Sidebar Styling */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: var(--sidebar-width);
-  background: #1e1b4b; /* Premium Navy Dark */
-  border-right: 1px solid rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  transition: var(--transition);
-  color: #f8fafc;
-}
+/* Sidebar Styling logic moved to main layout section */
 
 .sidebar-header {
   padding: 2.5rem 1.5rem;

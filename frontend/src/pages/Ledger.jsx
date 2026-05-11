@@ -40,6 +40,12 @@ const Ledger = () => {
     const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
     const netBalance = totalOpeningBalance + totalCredit - totalDebit;
 
+    const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
+    const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
+
+    // Ask user if they want to include specific account balances
+    const includeBalances = window.confirm('Include Cash on Hand and Bank Balance in this report?');
+
     const printWindow = window.open('', '_blank');
     const tableRows = transactions.map(t => `
       <tr>
@@ -54,6 +60,13 @@ const Ledger = () => {
       </tr>
     `).join('');
 
+    const balancesHtml = includeBalances ? `
+      <div class="summary" style="margin-top: 0; background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 5px 5px;">
+        <div class="card" style="background:transparent; border-right: 1px solid #e2e8f0;">Cash on Hand: ₹${cashBalance.toLocaleString()}</div>
+        <div class="card" style="background:transparent;">Bank Balance: ₹${bankBalance.toLocaleString()}</div>
+      </div>
+    ` : '';
+
     const html = `
       <html>
         <head>
@@ -61,27 +74,43 @@ const Ledger = () => {
           <style>
             body { font-family: sans-serif; padding: 20px; color: #333; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
-            .summary { display: flex; gap: 20px; margin: 20px 0; }
-            .card { flex: 1; padding: 10px; background: #f4f4f4; border-radius: 5px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+            .summary { display: flex; gap: 0; margin: 20px 0; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
+            .card { flex: 1; padding: 15px; background: #fff; font-size: 13px; }
+            .card-primary { background: #eef2ff; border-left: 4px solid #4f46e5; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f8fafc; border-bottom: 2px solid #4f46e5; padding: 12px 10px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b; }
+            td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; font-size: 12px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div><h1>${selectedProgram?.name}</h1></div>
-            <div style="text-align:right"><h2>Statement</h2></div>
+            <div>
+              <h1 style="margin:0; color:#4f46e5;">${selectedProgram?.name}</h1>
+              <p style="margin:5px 0 0 0; font-size:12px; color:#64748b;">Financial Ledger Statement</p>
+            </div>
+            <div style="text-align:right">
+              <h2 style="margin:0; color:#94a3b8; font-size:24px;">STATEMENT</h2>
+              <p style="margin:5px 0 0 0; font-size:12px;">Date: ${new Date().toLocaleDateString('en-GB')}</p>
+            </div>
           </div>
+          
           <div class="summary">
-            <div class="card">Opening: ₹${totalOpeningBalance.toLocaleString()}</div>
-            <div class="card">Credit: ₹${totalCredit.toLocaleString()}</div>
-            <div class="card">Debit: ₹${totalDebit.toLocaleString()}</div>
-            <div class="card" style="background:#eef2ff"><b>Net: ₹${netBalance.toLocaleString()}</b></div>
+            <div class="card" style="border-right: 1px solid #ddd;">Opening: ₹${totalOpeningBalance.toLocaleString()}</div>
+            <div class="card" style="border-right: 1px solid #ddd; color: #10b981;">Credit (+): ₹${totalCredit.toLocaleString()}</div>
+            <div class="card" style="border-right: 1px solid #ddd; color: #ef4444;">Debit (-): ₹${totalDebit.toLocaleString()}</div>
+            <div class="card card-primary"><b>Net Balance: ₹${netBalance.toLocaleString()}</b></div>
           </div>
+
+          ${balancesHtml}
+
           <table>
-            <thead><tr><th>Date</th><th>Details</th><th>Acc</th><th>Debit</th><th>Credit</th></tr></thead>
+            <thead><tr><th>Date</th><th>Details</th><th>Account</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead>
             <tbody>${tableRows}</tbody>
           </table>
+          
+          <div style="margin-top: 40px; padding-top: 10px; border-top: 1px solid #eee; font-size: 10px; color: #94a3b8; text-align: center;">
+            This is a computer generated statement. Generated via Krishna ERP.
+          </div>
         </body>
       </html>
     `;
