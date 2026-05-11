@@ -35,9 +35,10 @@ const Ledger = () => {
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
+    const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
     const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
     const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-    const balance = totalCredit - totalDebit;
+    const netBalance = totalOpeningBalance + totalCredit - totalDebit;
 
     printWindow.document.write(`
       <html>
@@ -128,7 +129,10 @@ const Ledger = () => {
           </div>
 
           <script>
-            window.onload = function() { window.print(); window.close(); }
+            setTimeout(() => {
+              window.print();
+              window.close();
+            }, 500);
           </script>
         </body>
       </html>
@@ -170,27 +174,39 @@ const Ledger = () => {
         </div>
         <div className="card border-l-4 border-emerald-500 shadow-sm">
           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (+)</div>
-          <div className="text-lg font-bold text-gray-900">₹ {totalCredit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-emerald-600">₹ {totalCredit.toLocaleString()}</div>
         </div>
         <div className="card border-l-4 border-rose-500 shadow-sm">
           <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (-)</div>
-          <div className="text-lg font-bold text-gray-900">₹ {totalDebit.toLocaleString()}</div>
+          <div className="text-lg font-bold text-rose-600">₹ {totalDebit.toLocaleString()}</div>
         </div>
-        <div className="card border-l-4 border-blue-500 shadow-sm bg-blue-50/30">
-          <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Net Balance</div>
-          <div className="text-xl font-bold text-gray-900">₹ {netBalance.toLocaleString()}</div>
+        <div className={`card border-l-4 shadow-sm ${netBalance >= 0 ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-500 bg-rose-50/30'}`}>
+          <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${netBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Net Balance</div>
+          <div className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+            {netBalance < 0 ? '-' : '+'} ₹ {Math.abs(netBalance).toLocaleString()}
+          </div>
         </div>
       </div>
 
       {/* Breakdown Bar */}
       <div className="flex gap-4 mb-8">
-        <div className="flex-1 card py-3 flex justify-between items-center bg-gray-50 border-dashed">
-          <span className="text-xs font-bold text-gray-500 uppercase">Cash on Hand:</span>
-          <span className="font-bold text-gray-700">₹ {cashBalance.toLocaleString()}</span>
+        <div className="flex-1 card py-4 flex justify-between items-center bg-emerald-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase opacity-80">Cash on Hand</span>
+            <span className="text-xl font-bold">₹ {cashBalance.toLocaleString()}</span>
+          </div>
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <Wallet size={20} />
+          </div>
         </div>
-        <div className="flex-1 card py-3 flex justify-between items-center bg-gray-50 border-dashed">
-          <span className="text-xs font-bold text-gray-500 uppercase">Bank Balance:</span>
-          <span className="font-bold text-gray-700">₹ {bankBalance.toLocaleString()}</span>
+        <div className="flex-1 card py-4 flex justify-between items-center bg-rose-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase opacity-80">Bank Balance</span>
+            <span className="text-xl font-bold">₹ {bankBalance.toLocaleString()}</span>
+          </div>
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <Receipt size={20} />
+          </div>
         </div>
       </div>
 
