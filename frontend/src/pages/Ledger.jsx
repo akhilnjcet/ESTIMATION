@@ -35,110 +35,62 @@ const Ledger = () => {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
     const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
     const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
     const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
     const netBalance = totalOpeningBalance + totalCredit - totalDebit;
 
-    printWindow.document.write(`
+    const printWindow = window.open('', '_blank');
+    const tableRows = transactions.map(t => `
+      <tr>
+        <td>${new Date(t.date).toLocaleDateString('en-GB')}</td>
+        <td>
+          <div style="font-weight: bold">${t.category}</div>
+          <div style="font-size: 10px; color: #64748b">${t.description || ''}</div>
+        </td>
+        <td>${t.account?.name || '-'}</td>
+        <td style="text-align: right; color: #ef4444">${t.type === 'Expense' ? '₹ ' + t.amount.toLocaleString() : '-'}</td>
+        <td style="text-align: right; color: #10b981">${t.type === 'Income' ? '₹ ' + t.amount.toLocaleString() : '-'}</td>
+      </tr>
+    `).join('');
+
+    const html = `
       <html>
         <head>
           <title>Statement - ${selectedProgram?.name}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${selectedProgram?.themeColor || '#4f46e5'}; padding-bottom: 20px; margin-bottom: 30px; }
-            .business-info h1 { margin: 0; color: ${selectedProgram?.themeColor || '#4f46e5'}; font-size: 24px; }
-            .business-info p { margin: 2px 0; font-size: 12px; color: #64748b; }
-            .statement-title { text-align: right; }
-            .statement-title h2 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
-            .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-            .summary-card { padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-            .summary-card label { display: block; font-size: 10px; text-transform: uppercase; color: #64748b; margin-bottom: 5px; }
-            .summary-card value { display: block; font-size: 18px; font-weight: bold; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
-            td { padding: 12px; font-size: 12px; border-bottom: 1px solid #f1f5f9; }
-            .debit { color: #ef4444; font-weight: bold; }
-            .credit { color: #10b981; font-weight: bold; }
-            .footer { margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 10px; color: #94a3b8; text-align: center; }
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+            .summary { display: flex; gap: 20px; margin: 20px 0; }
+            .card { flex: 1; padding: 10px; background: #f4f4f4; border-radius: 5px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="business-info">
-              <h1>${selectedProgram?.name}</h1>
-              <p>${selectedProgram?.address || ''}</p>
-              <p>Phone: ${selectedProgram?.phone || ''} | Email: ${selectedProgram?.email || ''}</p>
-              ${selectedProgram?.gstNumber ? `<p>GST: ${selectedProgram?.gstNumber}</p>` : ''}
-            </div>
-            <div class="statement-title">
-              <h2>Account Statement</h2>
-              <p style="font-size: 12px; color: #64748b;">Period: All Time</p>
-            </div>
+            <div><h1>${selectedProgram?.name}</h1></div>
+            <div style="text-align:right"><h2>Statement</h2></div>
           </div>
-
           <div class="summary">
-            <div class="summary-card">
-              <label>Opening Balance</label>
-              <value>₹ ${totalOpeningBalance.toLocaleString()}</value>
-            </div>
-            <div class="summary-card">
-              <label>Total Credit (In)</label>
-              <value class="credit">₹ ${totalCredit.toLocaleString()}</value>
-            </div>
-            <div class="summary-card">
-              <label>Total Debit (Out)</label>
-              <value class="debit">₹ ${totalDebit.toLocaleString()}</value>
-            </div>
-            <div class="summary-card" style="border-left: 4px solid ${selectedProgram?.themeColor || '#4f46e5'}; grid-column: span 3;">
-              <label>Net Balance (Closing)</label>
-              <value>₹ ${netBalance.toLocaleString()}</value>
-            </div>
+            <div class="card">Opening: ₹${totalOpeningBalance.toLocaleString()}</div>
+            <div class="card">Credit: ₹${totalCredit.toLocaleString()}</div>
+            <div class="card">Debit: ₹${totalDebit.toLocaleString()}</div>
+            <div class="card" style="background:#eef2ff"><b>Net: ₹${netBalance.toLocaleString()}</b></div>
           </div>
-
           <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Details / Category</th>
-                <th>Account</th>
-                <th style="text-align: right">Debit (Out)</th>
-                <th style="text-align: right">Credit (In)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${transactions.map(t => `
-                <tr>
-                  <td>${new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
-                  <td>
-                    <div style="font-weight: bold">${t.category}</div>
-                    <div style="font-size: 10px; color: #64748b">${t.description || ''}</div>
-                  </td>
-                  <td>${t.account?.name || '-'}</td>
-                  <td style="text-align: right" class="debit">${t.type === 'Expense' ? `₹ ${t.amount.toLocaleString()}` : '-'}</td>
-                  <td style="text-align: right" class="credit">${t.type === 'Income' ? `₹ ${t.amount.toLocaleString()}` : '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
+            <thead><tr><th>Date</th><th>Details</th><th>Acc</th><th>Debit</th><th>Credit</th></tr></thead>
+            <tbody>${tableRows}</tbody>
           </table>
-
-          <div class="footer">
-            <p>This is a computer generated statement for ${selectedProgram?.name}.</p>
-            <p>Powered by Krishna Accounting & IT Solutions</p>
-          </div>
-
-          <script>
-            setTimeout(() => {
-              window.print();
-              window.close();
-            }, 500);
-          </script>
         </body>
       </html>
-    `);
+    `;
+
+    printWindow.document.write(html);
     printWindow.document.close();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   };
 
   const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
