@@ -19,23 +19,27 @@ import { ProgramProvider } from './context/ProgramContext';
 import { ShieldAlert } from 'lucide-react';
 
 function PrivateRoute({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true); // Default to open on desktop
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role') || 'admin';
   const location = useLocation();
 
   React.useEffect(() => {
     document.body.setAttribute('data-role', role);
+    // On mobile, default to closed
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, [role]);
 
-  // Close sidebar on route change (mobile)
+  // Close sidebar on route change ONLY on mobile
   React.useEffect(() => {
-    setIsSidebarOpen(false);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, [location.pathname]);
 
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <div className="app-container">
@@ -47,17 +51,19 @@ function PrivateRoute({ children }) {
       )}
       
       {/* Sidebar Overlay (Mobile) */}
-      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
+      {isSidebarOpen && window.innerWidth < 1024 && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
       
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
       <main className="main-content" style={{ marginTop: role === 'viewer' ? '2.5rem' : '0' }}>
-        {/* Mobile Header */}
+        {/* Universal Header */}
         <div className="mobile-header">
-          <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
-            <div style={{ width: 20, height: 2, background: 'currentColor', marginBottom: 4 }}></div>
-            <div style={{ width: 20, height: 2, background: 'currentColor', marginBottom: 4 }}></div>
-            <div style={{ width: 20, height: 2, background: 'currentColor' }}></div>
+          <button className="menu-toggle" onClick={toggleSidebar}>
+            <span></span>
+            <span></span>
+            <span></span>
           </button>
           <span className="font-bold text-primary">Krishna ERP</span>
         </div>

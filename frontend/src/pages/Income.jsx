@@ -161,7 +161,7 @@ const Income = () => {
             <tbody>
               {incomes.map(inc => (
                 <tr key={inc._id}>
-                  <td>{new Date(inc.date).toLocaleDateString()}</td>
+                  <td>{new Date(inc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
                   <td>
                     <div className="flex items-center gap-2">
                       <span>{inc.category}</span>

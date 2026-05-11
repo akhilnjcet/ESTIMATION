@@ -181,7 +181,7 @@ const Invoices = () => {
               <div className="flex-1 overflow-hidden">
                 <h3 className="font-bold text-lg truncate mb-1" title={doc.title}>{doc.title}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                  <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(doc.date).toLocaleDateString()}</div>
+                  <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(doc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                   {doc.amount && <div className="font-bold text-gray-900">₹{doc.amount.toLocaleString()}</div>}
                 </div>
               </div>

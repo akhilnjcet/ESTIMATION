@@ -4,13 +4,14 @@ import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, Arrow
 import ProgramSelector from './ProgramSelector';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
+  const isMobile = window.innerWidth < 1024;
+  
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
       <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
         <button 
           onClick={() => setIsOpen(false)}
-          style={{ position: 'absolute', right: '1rem', top: '1.5rem', background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
-          className="lg:hidden" // Only show on mobile
+          style={{ position: 'absolute', right: '1rem', top: '1.5rem', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: isMobile ? 'block' : 'none' }}
         >
           ✕
         </button>

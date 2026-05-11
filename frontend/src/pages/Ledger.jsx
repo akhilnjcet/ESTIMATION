@@ -111,7 +111,7 @@ const Ledger = () => {
             <tbody>
               ${transactions.map(t => `
                 <tr>
-                  <td>${new Date(t.date).toLocaleDateString()}</td>
+                  <td>${new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
                   <td>
                     <div style="font-weight: bold">${t.category}</div>
                     <div style="font-size: 10px; color: #64748b">${t.description || ''}</div>
@@ -261,7 +261,7 @@ const Ledger = () => {
               {transactions.map(txn => (
                 <tr key={txn._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="py-4 font-medium text-gray-600">
-                    {new Date(txn.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {new Date(txn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </td>
                   <td className="py-4">
                     <div className="font-bold text-gray-900">{txn.category}</div>
