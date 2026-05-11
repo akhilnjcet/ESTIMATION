@@ -119,7 +119,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 
