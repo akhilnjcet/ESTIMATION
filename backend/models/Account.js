@@ -21,6 +21,10 @@ const accountSchema = new mongoose.Schema({
   bankName: {
     type: String
   },
+  date: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -7,7 +7,15 @@ const Accounts = () => {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    type: 'Cash', 
+    accountNumber: '', 
+    bankName: '', 
+    balance: 0,
+    date: new Date().toISOString().split('T')[0]
+  });
 
   useEffect(() => {
     fetchAccounts();
@@ -38,7 +46,14 @@ const Accounts = () => {
         await api.post('/accounts', formData);
         alert('Account created successfully!');
       }
-      setFormData({ name: '', type: 'Cash', accountNumber: '', bankName: '', balance: 0 });
+      setFormData({ 
+        name: '', 
+        type: 'Cash', 
+        accountNumber: '', 
+        bankName: '', 
+        balance: 0,
+        date: new Date().toISOString().split('T')[0]
+      });
       setShowForm(false);
       setEditingId(null);
       fetchAccounts();
@@ -54,7 +69,8 @@ const Accounts = () => {
       type: acc.type,
       accountNumber: acc.accountNumber || '',
       bankName: acc.bankName || '',
-      balance: acc.balance
+      balance: acc.balance,
+      date: acc.date ? new Date(acc.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setEditingId(acc._id);
     setShowForm(true);
@@ -155,6 +171,10 @@ const Accounts = () => {
                   <option value="UPI">UPI Wallet</option>
                   <option value="Other">Other</option>
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Opening Date</label>
+                <input type="date" className="form-control" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
               <div className="form-group">
                 <label className="form-label">Opening Balance (₹)</label>

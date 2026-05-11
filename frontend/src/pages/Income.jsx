@@ -5,7 +5,14 @@ const Income = () => {
   const [incomes, setIncomes] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ type: 'Income', amount: '', account: '', category: 'Sales', description: '' });
+  const [formData, setFormData] = useState({ 
+    type: 'Income', 
+    amount: '', 
+    account: '', 
+    category: 'Sales', 
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
 
   const [editingIncome, setEditingIncome] = useState(null);
 
@@ -38,7 +45,14 @@ const Income = () => {
       } else {
         await api.post('/transactions', formData);
       }
-      setFormData({ type: 'Income', amount: '', account: accounts[0]?._id, category: 'Sales', description: '' });
+      setFormData({ 
+        type: 'Income', 
+        amount: '', 
+        account: accounts[0]?._id, 
+        category: 'Sales', 
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+      });
       setShowForm(false);
       fetchIncomes();
     } catch (err) { console.error(err); }
@@ -46,7 +60,14 @@ const Income = () => {
 
   const handleEdit = (inc) => {
     setEditingIncome(inc);
-    setFormData({ type: 'Income', amount: inc.amount, account: inc.account?._id, category: inc.category, description: inc.description || '' });
+    setFormData({ 
+      type: 'Income', 
+      amount: inc.amount, 
+      account: inc.account?._id, 
+      category: inc.category, 
+      description: inc.description || '',
+      date: inc.date ? new Date(inc.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -79,6 +100,10 @@ const Income = () => {
           ) : (
           <form onSubmit={handleSubmit}>
             <div className="dashboard-grid">
+              <div className="form-group">
+                <label className="form-label">Transaction Date</label>
+                <input type="date" className="form-control" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+              </div>
               <div className="form-group">
                 <label className="form-label">Amount (₹)</label>
                 <input type="number" className="form-control" required value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
