@@ -19,15 +19,36 @@ import { ProgramProvider } from './context/ProgramContext';
 import { ShieldAlert } from 'lucide-react';
 
 function PrivateRoute({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to open on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showAccessBar, setShowAccessBar] = useState(true);
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role') || 'admin';
   const location = useLocation();
 
   useEffect(() => {
     document.body.setAttribute('data-role', role);
-    // On mobile, default to closed
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    
+    if (role === 'viewer') {
+      const timer = setTimeout(() => setShowAccessBar(false), 4000);
+      
+      const handleInteraction = () => {
+        setShowAccessBar(true);
+        // Reset timer
+        clearTimeout(window.accessBarTimer);
+        window.accessBarTimer = setTimeout(() => setShowAccessBar(false), 3000);
+      };
+
+      window.addEventListener('mousedown', handleInteraction);
+      window.addEventListener('touchstart', handleInteraction);
+      
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(window.accessBarTimer);
+        window.removeEventListener('mousedown', handleInteraction);
+        window.removeEventListener('touchstart', handleInteraction);
+      };
+    }
   }, [role]);
 
   // Close sidebar on route change ONLY on mobile
@@ -44,9 +65,32 @@ function PrivateRoute({ children }) {
   return (
     <div className="app-container">
       {role === 'viewer' && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: '#fef2f2', color: '#dc2626', padding: '0.5rem', textAlign: 'center', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 9999, borderBottom: '1px solid #fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+        <div 
+          className={`access-bar ${showAccessBar ? 'show' : 'hide'}`}
+          style={{ 
+            position: 'fixed', 
+            top: '1rem', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            background: 'rgba(254, 242, 242, 0.9)', 
+            backdropFilter: 'blur(4px)',
+            color: '#dc2626', 
+            padding: '0.6rem 1.2rem', 
+            borderRadius: '50px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            fontSize: '0.75rem', 
+            fontWeight: 'bold', 
+            zIndex: 9999, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: showAccessBar ? 1 : 0,
+            pointerEvents: showAccessBar ? 'auto' : 'none'
+          }}
+        >
           <ShieldAlert size={14} />
-          VIEW ONLY ACCESS - You do not have permission to add, edit or delete records.
+          VIEW ONLY ACCESS - Permission restricted
         </div>
       )}
       
@@ -57,7 +101,7 @@ function PrivateRoute({ children }) {
       
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
-      <main className="main-content" style={{ marginTop: role === 'viewer' ? '2.5rem' : '0' }}>
+      <main className="main-content">
         {/* Universal Header */}
         <div className="mobile-header">
           <button className="menu-toggle" onClick={toggleSidebar}>

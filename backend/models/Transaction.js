@@ -55,4 +55,7 @@ const transactionSchema = new mongoose.Schema({
   }
 });
 
+transactionSchema.index({ programId: 1 });
+transactionSchema.index({ date: -1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

@@ -76,11 +76,17 @@ const Accounts = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this account?')) return;
+    const password = window.prompt('SECURITY CHECK: Please enter your login password to confirm account deletion:');
+    
+    if (password === null) return; // User cancelled
+    if (!password) return alert('Password is required to delete an account.');
+
     try {
-      await api.delete(`/accounts/${id}`);
+      await api.delete(`/accounts/${id}`, {
+        headers: { password }
+      });
       fetchAccounts();
-      alert('Account deleted!');
+      alert('Account deleted successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to delete: ' + (err.response?.data?.message || err.message));

@@ -106,4 +106,19 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
+// @route   DELETE /api/quotations/:id
+// @desc    Delete a quotation
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const quotation = await Quotation.findOneAndDelete({ _id: req.params.id, programId: req.programId });
+    if (!quotation) {
+      return res.status(404).json({ message: 'Quotation not found' });
+    }
+    res.json({ message: 'Quotation deleted successfully' });
+  } catch (error) {
+    console.error('DELETE_QUOTATION_ERROR:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -193,16 +193,16 @@ const Ledger = () => {
       </div>
 
       <div className="card border-none shadow-xl">
-        <div className="flex justify-between items-center mb-6 px-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 px-2">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <FileText size={20} className="text-gray-400" />
             Transaction History
           </h2>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
               <Filter size={16} className="text-gray-400" />
               <select 
-                className="outline-none text-sm font-bold bg-transparent"
+                className="outline-none text-sm font-bold bg-transparent w-full"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -212,10 +212,10 @@ const Ledger = () => {
                 <option value="amount_asc">Lowest Amount</option>
               </select>
             </div>
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+            <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
               <Filter size={16} className="text-gray-400" />
               <select 
-                className="outline-none text-sm font-bold bg-transparent"
+                className="outline-none text-sm font-bold bg-transparent w-full"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >

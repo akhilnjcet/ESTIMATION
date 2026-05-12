@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Edit2, Printer, Plus, X, Eye } from 'lucide-react';
+import { Edit2, Printer, Plus, X, Eye, Trash2 } from 'lucide-react';
 
 const Quotations = () => {
   const [quotations, setQuotations] = useState([]);
@@ -24,6 +24,19 @@ const Quotations = () => {
   const fetchQuotations = async () => {
     try { const { data } = await api.get('/quotations'); setQuotations(data); } catch (err) {}
   };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this quotation?')) return;
+    try {
+      await api.delete(`/quotations/${id}`);
+      fetchQuotations();
+      alert('Quotation deleted successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete quotation');
+    }
+  };
+
   const fetchCustomers = async () => {
     try { const { data } = await api.get('/customers'); setCustomers(data); } catch (err) {}
   };
@@ -425,6 +438,9 @@ const Quotations = () => {
                       </button>
                       <button className="p-2 text-gray-400 hover:text-emerald-600 bg-white border rounded-lg shadow-sm" onClick={() => handleEdit(q)}>
                         <Edit2 size={16} />
+                      </button>
+                      <button className="p-2 text-gray-400 hover:text-rose-600 bg-white border rounded-lg shadow-sm" onClick={() => handleDelete(q._id)}>
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

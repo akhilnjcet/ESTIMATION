@@ -35,4 +35,6 @@ const accountSchema = new mongoose.Schema({
   }
 });
 
+accountSchema.index({ programId: 1 });
+
 module.exports = mongoose.model('Account', accountSchema);

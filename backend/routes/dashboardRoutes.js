@@ -17,65 +17,72 @@ router.get('/combined', protect, async (req, res) => {
       programIds = req.user.programAccess;
     }
 
-    // Aggregates
-    const totals = await Transaction.aggregate([
+    if (programIds.length === 0) {
+      return res.json({ combined: { income: 0, expense: 0, balance: 0, cashBalance: 0, bankBalance: 0, upiBalance: 0 }, programSummaries: [] });
+    }
+
+    // 1. Aggregates for all programs at once
+    const allTotals = await Transaction.aggregate([
       { $match: { programId: { $in: programIds } } },
       {
         $group: {
-          _id: '$type',
+          _id: { programId: '$programId', type: '$type' },
           total: { $sum: '$amount' }
         }
       }
     ]);
 
-    const income = totals.find(t => t._id === 'Income')?.total || 0;
-    const expense = totals.find(t => t._id === 'Expense')?.total || 0;
+    // 2. Account balances for all programs at once
+    const allAccounts = await Account.find({ programId: { $in: programIds } });
     
-    // Account-wise totals
-    const accounts = await Account.find({ programId: { $in: programIds } });
-    const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + a.balance, 0);
-    const bankBalance = accounts.filter(a => a.type === 'Bank').reduce((sum, a) => sum + a.balance, 0);
-    const upiBalance = accounts.filter(a => a.type === 'UPI').reduce((sum, a) => sum + a.balance, 0);
+    // Process results
+    const programDataMap = {};
+    programIds.forEach(id => {
+      programDataMap[id.toString()] = { income: 0, expense: 0, balance: 0 };
+    });
 
-    // True Balance = Sum of all account balances (includes opening balance + transactions)
-    const balance = cashBalance + bankBalance + upiBalance;
+    allTotals.forEach(t => {
+      const pid = t._id.programId.toString();
+      if (programDataMap[pid]) {
+        if (t._id.type === 'Income') programDataMap[pid].income = t.total;
+        if (t._id.type === 'Expense') programDataMap[pid].expense = t.total;
+      }
+    });
 
-    // Program-wise Summary
-    const programSummaries = await Promise.all(programIds.map(async (id) => {
-      const prog = await Program.findById(id);
-      if (!prog) return null;
+    let globalCash = 0, globalBank = 0, globalUpi = 0;
+    allAccounts.forEach(acc => {
+      const pid = acc.programId.toString();
+      if (programDataMap[pid]) {
+        programDataMap[pid].balance += acc.balance;
+      }
+      if (acc.type === 'Cash') globalCash += acc.balance;
+      else if (acc.type === 'Bank') globalBank += acc.balance;
+      else if (acc.type === 'UPI') globalUpi += acc.balance;
+    });
 
-      const progIncome = await Transaction.aggregate([
-        { $match: { programId: id, type: 'Income' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]);
-      const progExpense = await Transaction.aggregate([
-        { $match: { programId: id, type: 'Expense' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]);
-
-      const progAccounts = await Account.find({ programId: id });
-      const progBalance = progAccounts.reduce((sum, a) => sum + a.balance, 0);
-
-      return {
-        _id: prog._id,
-        name: prog.name,
-        income: progIncome[0]?.total || 0,
-        expense: progExpense[0]?.total || 0,
-        balance: progBalance
-      };
+    // Get Program names
+    const programsInfo = await Program.find({ _id: { $in: programIds } }, 'name');
+    
+    const programSummaries = programsInfo.map(p => ({
+      _id: p._id,
+      name: p.name,
+      ...programDataMap[p._id.toString()]
     }));
+
+    const globalIncome = Object.values(programDataMap).reduce((sum, p) => sum + p.income, 0);
+    const globalExpense = Object.values(programDataMap).reduce((sum, p) => sum + p.expense, 0);
+    const globalBalance = globalCash + globalBank + globalUpi;
 
     res.json({
       combined: {
-        income,
-        expense,
-        balance,
-        cashBalance,
-        bankBalance,
-        upiBalance
+        income: globalIncome,
+        expense: globalExpense,
+        balance: globalBalance,
+        cashBalance: globalCash,
+        bankBalance: globalBank,
+        upiBalance: globalUpi
       },
-      programSummaries: programSummaries.filter(p => p !== null)
+      programSummaries
     });
   } catch (error) {
     console.error('DASHBOARD_ERROR:', error);

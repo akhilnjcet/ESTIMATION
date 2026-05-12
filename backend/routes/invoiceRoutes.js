@@ -99,4 +99,17 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
+// @route   DELETE /api/invoices/:id
+// @desc    Delete an invoice
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const invoice = await Invoice.findOneAndDelete({ _id: req.params.id, programId: req.programId });
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+    res.json({ message: 'Invoice deleted successfully' });
+  } catch (error) {
+    console.error('DELETE_INVOICE_ERROR:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

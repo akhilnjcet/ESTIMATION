@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Account = require('../models/Account');
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/accounts
@@ -65,13 +67,29 @@ router.put('/:id', protect, async (req, res) => {
 });
 
 // @route   DELETE /api/accounts/:id
-// @desc    Delete an account
+// @desc    Delete an account (Requires Password)
 router.delete('/:id', protect, async (req, res) => {
+  const { password } = req.headers; // Password passed in headers
+  
+  if (!password) {
+    return res.status(400).json({ message: 'Security password is required to delete an account' });
+  }
+
   try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect security password. Deletion denied.' });
+    }
+
     const account = await Account.findOneAndDelete({ _id: req.params.id, programId: req.programId });
     if (!account) return res.status(404).json({ message: 'Account not found' });
-    res.json({ message: 'Account deleted' });
+    
+    res.json({ message: 'Account deleted successfully' });
   } catch (error) {
+    console.error('DELETE_ACCOUNT_ERROR:', error);
     res.status(500).json({ message: error.message });
   }
 });

@@ -24,6 +24,19 @@ const Invoices = () => {
   const fetchInvoices = async () => {
     try { const { data } = await api.get('/invoices'); setInvoices(data); } catch (err) {}
   };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      fetchInvoices();
+      alert('Invoice deleted successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete invoice');
+    }
+  };
+
   const fetchCustomers = async () => {
     try { const { data } = await api.get('/customers'); setCustomers(data); } catch (err) {}
   };
@@ -442,6 +455,13 @@ const Invoices = () => {
                         title="Edit Invoice"
                       >
                         <Edit2 size={16} />
+                      </button>
+                      <button 
+                        className="p-2 text-gray-400 hover:text-rose-600 transition-colors bg-white border rounded-lg shadow-sm"
+                        onClick={() => handleDelete(inv._id)}
+                        title="Delete Invoice"
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
