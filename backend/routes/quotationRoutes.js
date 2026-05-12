@@ -23,10 +23,10 @@ router.post('/', protect, async (req, res) => {
   try {
     console.log('POST /quotations - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date } = req.body;
     
-    // Get highest existing number for this program to prevent collisions after deletion
-    const lastQuotation = await Quotation.findOne({ programId: req.programId }).sort({ createdAt: -1 });
+    // Get highest existing number for this program
+    const lastQuotation = await Quotation.findOne({ programId: req.programId }).sort({ quotationNumber: -1 });
     let nextNum = 1;
     if (lastQuotation && lastQuotation.quotationNumber) {
       const parts = lastQuotation.quotationNumber.split('-');
@@ -35,7 +35,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     const programSuffix = req.programId.toString().slice(-4).toUpperCase();
-    const quotationNumber = `EST-${programSuffix}-${nextNum.toString().padStart(3, '0')}`;
+    const quotationNumber = `Q-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -53,7 +53,8 @@ router.post('/', protect, async (req, res) => {
       discount: discount || 0,
       totalAmount,
       notes,
-      terms
+      terms,
+      createdAt: date || new Date()
     });
 
     const createdQuotation = await quotation.save();
@@ -76,7 +77,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /quotations - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date } = req.body;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -84,11 +85,14 @@ router.put('/:id', protect, async (req, res) => {
       product: (item.product && item.product !== '') ? item.product : null
     }));
 
+    const updateData = { 
+      customer, items: sanitizedItems, subTotal, taxAmount, discount, totalAmount, notes, terms, status
+    };
+    if (date) updateData.createdAt = date;
+
     const quotation = await Quotation.findOneAndUpdate(
       { _id: req.params.id, programId: req.programId },
-      { 
-        customer, items: sanitizedItems, subTotal, taxAmount, discount, totalAmount, notes, terms, status
-      },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 

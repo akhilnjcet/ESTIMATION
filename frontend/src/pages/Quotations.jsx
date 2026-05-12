@@ -11,8 +11,14 @@ const Quotations = () => {
   const [showForm, setShowForm] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
-  const [formData, setFormData] = useState({ customer: '', notes: '', terms: '' });
+  const [formData, setFormData] = useState({ 
+    customer: '', 
+    notes: '', 
+    terms: '',
+    date: new Date().toISOString().split('T')[0]
+  });
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -24,6 +30,11 @@ const Quotations = () => {
   const fetchQuotations = async () => {
     try { const { data } = await api.get('/quotations'); setQuotations(data); } catch (err) {}
   };
+
+  const filteredQuotations = quotations.filter(q => 
+    q.quotationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    q.customer?.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this quotation?')) return;
@@ -45,7 +56,12 @@ const Quotations = () => {
   };
 
   const resetForm = () => {
-    setFormData({ customer: '', notes: '', terms: '' });
+    setFormData({ 
+      customer: '', 
+      notes: '', 
+      terms: '',
+      date: new Date().toISOString().split('T')[0]
+    });
     setItems([]);
     setEditingId(null);
     setShowForm(false);
@@ -56,7 +72,8 @@ const Quotations = () => {
     setFormData({
       customer: q.customer?._id || q.customer,
       notes: q.notes || '',
-      terms: q.terms || ''
+      terms: q.terms || '',
+      date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setItems(q.items.map(item => ({
       ...item,
@@ -117,6 +134,8 @@ const Quotations = () => {
 
   const handlePrint = (docData) => {
     const printWindow = window.open('', '_blank');
+    const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
+    
     printWindow.document.write(`
       <html>
         <head>
@@ -160,12 +179,13 @@ const Quotations = () => {
             <div class="details">
               <div>
                 <h3>Quotation To:</h3>
-                <p style="font-size: 18px;">${docData.customer?.customerName}</p>
-                <p style="font-weight: normal; color: #64748b;">${docData.customer?.phone || ''}</p>
+                <p style="font-size: 18px;">${docData.customer?.customerName || customer?.customerName}</p>
+                <p style="font-weight: normal; color: #64748b;">${docData.customer?.address || customer?.address || ''}</p>
+                <p style="font-weight: normal; color: #64748b;">${docData.customer?.phone || customer?.phone || ''}</p>
               </div>
               <div style="text-align: right">
                 <h3>Details:</h3>
-                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt).toLocaleDateString()}</strong></p>
+                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString()}</strong></p>
               </div>
             </div>
 
@@ -215,6 +235,7 @@ const Quotations = () => {
   };
 
   const renderPreviewDocument = (docData, isLive = false) => {
+    const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
     return (
       <div className="card" style={{ background: '#fff', padding: isLive ? '1.5rem' : '3rem', color: '#000', margin: '0 auto', maxWidth: '800px', transform: isLive ? 'scale(0.95)' : 'none', transformOrigin: 'top center' }}>
         <div className="flex justify-between items-start mb-6 border-b pb-4">
@@ -231,10 +252,11 @@ const Quotations = () => {
         <div className="flex justify-between mb-6">
           <div>
             <h3 className="text-xs uppercase text-gray-400">Quoted To:</h3>
-            <p className="font-bold">{docData.customer?.customerName || 'Select Customer'}</p>
+            <p className="font-bold text-lg">{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
+            <p className="text-sm text-gray-600">{docData.customer?.address || customer?.address || ''}</p>
           </div>
           <div className="text-right">
-            <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+            <p><strong>Date:</strong> {new Date(docData.createdAt || docData.date).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -293,23 +315,41 @@ const Quotations = () => {
   const livePreviewData = {
     customer: customers.find(c => c._id === formData.customer),
     items: items,
-    totalAmount: totals.totalAmount
+    totalAmount: totals.totalAmount,
+    date: formData.date
   };
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Quotations</h1>
-        <button 
-          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2`}
-          onClick={() => {
-            if (showForm) resetForm();
-            else setShowForm(true);
-          }}
-        >
-          {showForm ? <X size={18} /> : <Plus size={18} />}
-          {showForm ? 'Cancel' : 'Create New Quotation'}
-        </button>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Quotations</h1>
+          <p className="text-gray-500">Manage and track your business proposals</p>
+        </div>
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <input 
+              type="text" 
+              className="form-control pl-10" 
+              placeholder="Search name or number..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute left-3 top-2.5 text-gray-400">
+              <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+            </div>
+          </div>
+          <button 
+            className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2 whitespace-nowrap`}
+            onClick={() => {
+              if (showForm) resetForm();
+              else setShowForm(true);
+            }}
+          >
+            {showForm ? <X size={18} /> : <Plus size={18} />}
+            {showForm ? 'Cancel' : 'Create New Quotation'}
+          </button>
+        </div>
       </div>
       
       {showForm && (
@@ -320,17 +360,29 @@ const Quotations = () => {
               {editingId ? 'Update Quotation' : 'Quotation Details'}
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="form-group mb-6">
-                <label className="form-label">Select Customer</label>
-                <select 
-                  className="form-control" 
-                  required 
-                  value={formData.customer} 
-                  onChange={e => setFormData({...formData, customer: e.target.value})}
-                >
-                  <option value="">Select a customer...</option>
-                  {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="form-group">
+                  <label className="form-label">Select Customer</label>
+                  <select 
+                    className="form-control" 
+                    required 
+                    value={formData.customer} 
+                    onChange={e => setFormData({...formData, customer: e.target.value})}
+                  >
+                    <option value="">Select a customer...</option>
+                    {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Quotation Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    required 
+                    value={formData.date} 
+                    onChange={e => setFormData({...formData, date: e.target.value})} 
+                  />
+                </div>
               </div>
 
               <div className="mb-8">
@@ -420,7 +472,7 @@ const Quotations = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {quotations.map(q => (
+              {filteredQuotations.map(q => (
                 <tr key={q._id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 font-bold text-primary">{q.quotationNumber}</td>
                   <td>{q.customer?.customerName || 'Unknown'}</td>

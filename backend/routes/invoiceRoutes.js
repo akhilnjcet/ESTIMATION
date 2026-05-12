@@ -20,8 +20,8 @@ router.post('/', protect, async (req, res) => {
     console.log('POST /invoices - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
 
-    // Get highest existing number for this program to prevent collisions after deletion
-    const lastInvoice = await Invoice.findOne({ programId: req.programId }).sort({ createdAt: -1 });
+    // Get highest existing number for this program
+    const lastInvoice = await Invoice.findOne({ programId: req.programId }).sort({ invoiceNumber: -1 });
     let nextNum = 1;
     if (lastInvoice && lastInvoice.invoiceNumber) {
       const parts = lastInvoice.invoiceNumber.split('-');
@@ -30,9 +30,9 @@ router.post('/', protect, async (req, res) => {
     }
     
     const programSuffix = req.programId.toString().slice(-4).toUpperCase();
-    const invoiceNumber = `INV-${programSuffix}-${nextNum.toString().padStart(3, '0')}`;
+    const invoiceNumber = `INV-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
 
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date } = req.body;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -50,7 +50,8 @@ router.post('/', protect, async (req, res) => {
       discount: discount || 0,
       totalAmount,
       notes,
-      terms
+      terms,
+      createdAt: date || new Date()
     });
 
     const createdInvoice = await invoice.save();
@@ -73,7 +74,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /invoices - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date } = req.body;
     
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -81,11 +82,14 @@ router.put('/:id', protect, async (req, res) => {
       product: (item.product && item.product !== '') ? item.product : null
     }));
 
+    const updateData = { 
+      customer, items: sanitizedItems, subTotal, taxAmount, discount, totalAmount, notes, terms, status
+    };
+    if (date) updateData.createdAt = date;
+
     const invoice = await Invoice.findOneAndUpdate(
       { _id: req.params.id, programId: req.programId },
-      { 
-        customer, items: sanitizedItems, subTotal, taxAmount, discount, totalAmount, notes, terms, status
-      },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });

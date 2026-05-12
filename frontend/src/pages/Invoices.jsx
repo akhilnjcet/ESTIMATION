@@ -11,8 +11,14 @@ const Invoices = () => {
   const [showForm, setShowForm] = useState(false);
   const [previewData, setPreviewData] = useState(null); 
   const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
-  const [formData, setFormData] = useState({ customer: '', notes: '', terms: '' });
+  const [formData, setFormData] = useState({ 
+    customer: '', 
+    notes: '', 
+    terms: '',
+    date: new Date().toISOString().split('T')[0]
+  });
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -24,6 +30,11 @@ const Invoices = () => {
   const fetchInvoices = async () => {
     try { const { data } = await api.get('/invoices'); setInvoices(data); } catch (err) {}
   };
+
+  const filteredInvoices = invoices.filter(inv => 
+    inv.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    inv.customer?.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this invoice?')) return;
@@ -45,7 +56,12 @@ const Invoices = () => {
   };
 
   const resetForm = () => {
-    setFormData({ customer: '', notes: '', terms: '' });
+    setFormData({ 
+      customer: '', 
+      notes: '', 
+      terms: '',
+      date: new Date().toISOString().split('T')[0]
+    });
     setItems([]);
     setEditingId(null);
     setShowForm(false);
@@ -56,7 +72,8 @@ const Invoices = () => {
     setFormData({
       customer: inv.customer?._id || inv.customer,
       notes: inv.notes || '',
-      terms: inv.terms || ''
+      terms: inv.terms || '',
+      date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setItems(inv.items.map(item => ({
       ...item,
@@ -167,7 +184,7 @@ const Invoices = () => {
               </div>
               <div style="text-align: right">
                 <h3>Invoice Details:</h3>
-                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt).toLocaleDateString()}</strong></p>
+                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString()}</strong></p>
               </div>
             </div>
 
@@ -236,7 +253,7 @@ const Invoices = () => {
             <p className="font-bold">{docData.customer?.customerName || 'Select Customer'}</p>
           </div>
           <div className="text-right">
-            <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+            <p><strong>Date:</strong> {new Date(docData.createdAt || docData.date).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -295,23 +312,41 @@ const Invoices = () => {
   const livePreviewData = {
     customer: customers.find(c => c._id === formData.customer),
     items: items,
-    totalAmount: totals.totalAmount
+    totalAmount: totals.totalAmount,
+    date: formData.date
   };
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-        <button 
-          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2`}
-          onClick={() => {
-            if (showForm) resetForm();
-            else setShowForm(true);
-          }}
-        >
-          {showForm ? <X size={18} /> : <Plus size={18} />}
-          {showForm ? 'Cancel' : 'Create New Invoice'}
-        </button>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+          <p className="text-gray-500">Manage and track your billing records</p>
+        </div>
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <input 
+              type="text" 
+              className="form-control pl-10" 
+              placeholder="Search name or number..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute left-3 top-2.5 text-gray-400">
+              <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+            </div>
+          </div>
+          <button 
+            className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2 whitespace-nowrap`}
+            onClick={() => {
+              if (showForm) resetForm();
+              else setShowForm(true);
+            }}
+          >
+            {showForm ? <X size={18} /> : <Plus size={18} />}
+            {showForm ? 'Cancel' : 'Create New Invoice'}
+          </button>
+        </div>
       </div>
       
       {showForm && (
@@ -322,17 +357,29 @@ const Invoices = () => {
               {editingId ? 'Update Invoice' : 'Invoice Details'}
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="form-group mb-6">
-                <label className="form-label">Select Customer</label>
-                <select 
-                  className="form-control" 
-                  required 
-                  value={formData.customer} 
-                  onChange={e => setFormData({...formData, customer: e.target.value})}
-                >
-                  <option value="">Select a customer...</option>
-                  {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="form-group">
+                  <label className="form-label">Select Customer</label>
+                  <select 
+                    className="form-control" 
+                    required 
+                    value={formData.customer} 
+                    onChange={e => setFormData({...formData, customer: e.target.value})}
+                  >
+                    <option value="">Select a customer...</option>
+                    {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Invoice Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    required 
+                    value={formData.date} 
+                    onChange={e => setFormData({...formData, date: e.target.value})} 
+                  />
+                </div>
               </div>
 
               <div className="mb-8">
@@ -427,7 +474,7 @@ const Invoices = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {invoices.map(inv => (
+              {filteredInvoices.map(inv => (
                 <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="py-4 font-bold text-primary">{inv.invoiceNumber}</td>
                   <td className="py-4">
