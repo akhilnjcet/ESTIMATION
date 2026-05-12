@@ -193,17 +193,17 @@ const Quotations = () => {
             <table>
               <thead>
                 <tr>
-                  <th style="width: 40px">Sr.</th>
-                  <th>Item Description</th>
-                  <th style="text-align: center; width: 60px">Qty</th>
-                  <th style="text-align: right; width: 100px">Price</th>
-                  <th style="text-align: right; width: 120px">Total</th>
+                  <th style="width: 5%; text-align: left; padding-left: 0;">Sr.</th>
+                  <th style="width: 50%; text-align: left;">Item Description</th>
+                  <th style="width: 10%; text-align: center;">Qty</th>
+                  <th style="width: 15%; text-align: right;">Price</th>
+                  <th style="width: 20%; text-align: right;">Total</th>
                 </tr>
               </thead>
               <tbody>
                 ${docData.items.map((item, idx) => `
                   <tr>
-                    <td>${idx + 1}</td>
+                    <td style="padding-left: 0;">${idx + 1}</td>
                     <td>
                       <div style="font-weight: bold">${item.productName}</div>
                       <div style="font-size: 11px; color: #64748b">${item.description || ''}</div>
@@ -266,14 +266,14 @@ const Quotations = () => {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem', tableLayout: 'fixed' }}>
           <thead>
             <tr className="bg-gray-50 border-b-2 border-gray-100">
-              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase w-10">Sr.</th>
-              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase">Item</th>
-              <th className="p-3 text-center text-[10px] font-bold text-gray-400 uppercase w-20">Qty</th>
-              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase w-32">Price</th>
-              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase w-32">Total</th>
+              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '50px' }}>Sr.</th>
+              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase">Item Description</th>
+              <th className="p-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '70px' }}>Qty</th>
+              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '100px' }}>Price</th>
+              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
             </tr>
           </thead>
           <tbody>
@@ -281,8 +281,8 @@ const Quotations = () => {
               <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                 <td className="p-3 text-sm text-gray-400">{idx + 1}</td>
                 <td className="p-3">
-                  <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
-                  {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
+                  <div className="font-bold text-gray-900 truncate">{item.productName || 'Item'}</div>
+                  {item.description && <div className="text-[10px] text-gray-400 italic truncate">{item.description}</div>}
                 </td>
                 <td className="p-3 text-center text-sm font-medium">{item.quantity}</td>
                 <td className="p-3 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
