@@ -194,7 +194,7 @@ const Quotations = () => {
               <thead>
                 <tr>
                   <th style="width: 40px; text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Sr.</th>
-                  <th style="text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 10px;">Item Description</th>
+                  <th style="text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Item Description</th>
                   <th style="width: 60px; text-align: center; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Qty</th>
                   <th style="width: 100px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Price</th>
                   <th style="width: 120px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Total</th>
@@ -204,7 +204,7 @@ const Quotations = () => {
                 ${docData.items.map((item, idx) => `
                   <tr>
                     <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">${idx + 1}</td>
-                    <td style="padding: 12px 10px; border-bottom: 1px solid #edf2f7;">
+                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
                       <div style="font-weight: bold; color: #1e293b;">${item.productName}</div>
                       ${item.description ? `<div style="font-size: 11px; color: #64748b;">${item.description}</div>` : ''}
                     </td>
@@ -269,8 +269,8 @@ const Quotations = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
           <thead>
             <tr className="border-b-2 border-gray-100">
-              <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '40px' }}>Sr.</th>
-              <th className="py-3 px-4 text-left text-[10px] font-bold text-gray-400 uppercase">Item Description</th>
+              <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '40px', paddingLeft: 0 }}>Sr.</th>
+              <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ paddingLeft: 0 }}>Item Description</th>
               <th className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '60px' }}>Qty</th>
               <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '100px' }}>Price</th>
               <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
@@ -279,8 +279,8 @@ const Quotations = () => {
           <tbody>
             {docData.items.map((item, idx) => (
               <tr key={idx} className="border-b border-gray-50">
-                <td className="py-4 text-sm text-gray-500">{idx + 1}</td>
-                <td className="py-4 px-4">
+                <td className="py-4 text-sm text-gray-500" style={{ paddingLeft: 0 }}>{idx + 1}</td>
+                <td className="py-4" style={{ paddingLeft: 0 }}>
                   <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
                   {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
                 </td>
