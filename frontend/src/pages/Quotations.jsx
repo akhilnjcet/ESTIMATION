@@ -143,7 +143,7 @@ const Quotations = () => {
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
             body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; }
-            .doc-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 16px; line-height: 24px; color: #555; }
+            .doc-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 14px; line-height: 24px; color: #555; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${selectedProgram?.themeColor || '#4f46e5'}; padding-bottom: 20px; margin-bottom: 30px; }
             .business-info h1 { margin: 0; color: ${selectedProgram?.themeColor || '#4f46e5'}; font-size: 28px; }
             .business-info p { margin: 2px 0; font-size: 12px; color: #64748b; }
@@ -151,14 +151,14 @@ const Quotations = () => {
             .doc-title h2 { margin: 0; font-size: 32px; color: #e2e8f0; font-weight: 800; letter-spacing: -1px; }
             .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
             .details div { width: 45%; }
-            .details h3 { font-size: 12px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
-            .details p { margin: 0; font-weight: bold; font-size: 14px; }
+            .details h3 { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; font-weight: bold; }
+            .details p { margin: 0; font-weight: bold; font-size: 14px; color: #1e293b; }
             table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; margin-bottom: 30px; }
-            table th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #edf2f7; font-size: 12px; text-transform: uppercase; color: #64748b; }
-            table td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
-            .totals { width: 300px; margin-left: auto; }
+            table th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #edf2f7; font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+            table td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px; color: #1e293b; }
+            .totals { width: 250px; margin-left: auto; }
             .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .grand-total { font-size: 20px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; margin-top: 10px; padding-top: 10px; }
+            .grand-total { font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; margin-top: 10px; padding-top: 10px; }
             .footer { margin-top: 100px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 11px; text-align: center; color: #94a3b8; }
           </style>
         </head>
@@ -171,43 +171,46 @@ const Quotations = () => {
                 <p>Phone: ${selectedProgram?.phone || ''} | Email: ${selectedProgram?.email || ''}</p>
               </div>
               <div class="doc-title">
-                <h2>QUOTATION</h2>
-                <p style="font-weight: bold; color: #1e293b;">${docData.quotationNumber}</p>
+                <h2 style="color: ${selectedProgram?.themeColor || '#4f46e5'}; opacity: 0.1">QUOTATION</h2>
+                <p style="font-weight: bold; color: #1e293b; margin: 0; font-size: 18px;">${docData.quotationNumber}</p>
               </div>
             </div>
 
             <div class="details">
               <div>
-                <h3>Quotation To:</h3>
-                <p style="font-size: 18px;">${docData.customer?.customerName || customer?.customerName}</p>
-                <p style="font-weight: normal; color: #64748b;">${docData.customer?.address || customer?.address || ''}</p>
-                <p style="font-weight: normal; color: #64748b;">${docData.customer?.phone || customer?.phone || ''}</p>
+                <h3>Quoted To:</h3>
+                <p style="font-size: 16px;">${docData.customer?.customerName || customer?.customerName}</p>
+                <p style="font-weight: normal; color: #64748b; font-size: 12px;">${docData.customer?.address || customer?.address || ''}</p>
+                <p style="font-weight: normal; color: #64748b; font-size: 12px;">Phone: ${docData.customer?.phone || customer?.phone || ''}</p>
               </div>
               <div style="text-align: right">
-                <h3>Details:</h3>
-                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString()}</strong></p>
+                <h3>Document Details:</h3>
+                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}</strong></p>
+                <p style="font-weight: normal">Valid Until: <strong>${new Date(new Date(docData.createdAt || docData.date).getTime() + 15*24*60*60*1000).toLocaleDateString('en-GB')}</strong></p>
               </div>
             </div>
 
             <table>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th style="text-align: center">Qty</th>
-                  <th style="text-align: right">Price</th>
-                  <th style="text-align: right">Total</th>
+                  <th style="width: 40px">Sr.</th>
+                  <th>Item Description</th>
+                  <th style="text-align: center; width: 60px">Qty</th>
+                  <th style="text-align: right; width: 100px">Price</th>
+                  <th style="text-align: right; width: 120px">Total</th>
                 </tr>
               </thead>
               <tbody>
-                ${docData.items.map(item => `
+                ${docData.items.map((item, idx) => `
                   <tr>
+                    <td>${idx + 1}</td>
                     <td>
                       <div style="font-weight: bold">${item.productName}</div>
                       <div style="font-size: 11px; color: #64748b">${item.description || ''}</div>
                     </td>
                     <td style="text-align: center">${item.quantity}</td>
-                    <td style="text-align: right">₹${item.price.toLocaleString()}</td>
-                    <td style="text-align: right">₹${item.total.toLocaleString()}</td>
+                    <td style="text-align: right">₹${(item.price || 0).toLocaleString()}</td>
+                    <td style="text-align: right; font-weight: bold">₹${(item.total || 0).toLocaleString()}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -215,14 +218,14 @@ const Quotations = () => {
 
             <div class="totals">
               <div class="total-row grand-total">
-                <span>Total Amount:</span>
-                <span>₹${docData.totalAmount.toLocaleString()}</span>
+                <span>Grand Total:</span>
+                <span>₹${(docData.totalAmount || 0).toLocaleString()}</span>
               </div>
             </div>
 
             <div class="footer">
-              <p>We look forward to working with you!</p>
-              <p>Powered by Krishna IT Solutions</p>
+              <p>This is a computer generated quotation.</p>
+              <p>Thank you for your interest! | Powered by Krishna ERP</p>
             </div>
           </div>
           <script>
@@ -237,56 +240,62 @@ const Quotations = () => {
   const renderPreviewDocument = (docData, isLive = false) => {
     const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
     return (
-      <div className="card" style={{ background: '#fff', padding: isLive ? '1.5rem' : '3rem', color: '#000', margin: '0 auto', maxWidth: '800px', transform: isLive ? 'scale(0.95)' : 'none', transformOrigin: 'top center' }}>
-        <div className="flex justify-between items-start mb-6 border-b pb-4">
+      <div className="card" style={{ background: '#fff', padding: isLive ? '1.5rem' : '3rem', color: '#1e293b', margin: '0 auto', maxWidth: '800px', transform: isLive ? 'scale(0.95)' : 'none', transformOrigin: 'top center' }}>
+        <div className="flex justify-between items-start mb-8 border-b pb-6">
           <div>
-            <h1 style={{ fontSize: isLive ? '1.8rem' : '2.5rem', color: 'var(--primary)', margin: 0 }}>QUOTATION</h1>
-            <p style={{ color: '#64748b', margin: 0 }}>#{docData.quotationNumber || 'DRAFT'}</p>
+            <h1 className="font-black tracking-tighter" style={{ fontSize: isLive ? '1.5rem' : '2.2rem', color: selectedProgram?.themeColor || 'var(--primary)', margin: 0 }}>QUOTATION</h1>
+            <div className="mt-2 bg-gray-100 inline-block px-3 py-1 rounded text-sm font-bold text-gray-600">
+              #{docData.quotationNumber || 'DRAFT'}
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h2 style={{ margin: 0, color: selectedProgram?.themeColor || 'var(--primary)' }}>{selectedProgram?.name}</h2>
-            <p style={{ margin: 0, color: '#64748b' }}>{selectedProgram?.address}</p>
+            <h2 className="text-xl font-bold" style={{ margin: 0, color: '#ef4444' }}>{selectedProgram?.name}</h2>
+            <p className="text-xs text-gray-500 max-w-[200px] ml-auto mt-1">{selectedProgram?.address}</p>
           </div>
         </div>
 
-        <div className="flex justify-between mb-6">
+        <div className="flex justify-between mb-8">
           <div>
-            <h3 className="text-xs uppercase text-gray-400">Quoted To:</h3>
-            <p className="font-bold text-lg">{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
-            <p className="text-sm text-gray-600">{docData.customer?.address || customer?.address || ''}</p>
+            <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-2">Quoted To:</h3>
+            <p className="font-bold text-lg text-gray-900 leading-tight">{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
+            <p className="text-sm text-gray-500 mt-1">{docData.customer?.address || customer?.address || ''}</p>
           </div>
           <div className="text-right">
-            <p><strong>Date:</strong> {new Date(docData.createdAt || docData.date).toLocaleDateString()}</p>
+            <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-2">Date:</h3>
+            <p className="font-bold text-gray-900">{new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}</p>
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="p-3 text-left">Item</th>
-              <th className="p-3 text-center">Qty</th>
-              <th className="p-3 text-right">Price</th>
-              <th className="p-3 text-right">Total</th>
+            <tr className="bg-gray-50 border-b-2 border-gray-100">
+              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase w-10">Sr.</th>
+              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase">Item</th>
+              <th className="p-3 text-center text-[10px] font-bold text-gray-400 uppercase w-20">Qty</th>
+              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase w-32">Price</th>
+              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase w-32">Total</th>
             </tr>
           </thead>
           <tbody>
             {docData.items.map((item, idx) => (
-              <tr key={idx} className="border-b">
+              <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <td className="p-3 text-sm text-gray-400">{idx + 1}</td>
                 <td className="p-3">
-                  <div className="font-bold">{item.productName || 'Item'}</div>
+                  <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
+                  {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
                 </td>
-                <td className="p-3 text-center">{item.quantity}</td>
-                <td className="p-3 text-right">&#8377; {(item.price || 0).toLocaleString()}</td>
-                <td className="p-3 text-right font-bold">&#8377; {(item.total || 0).toLocaleString()}</td>
+                <td className="p-3 text-center text-sm font-medium">{item.quantity}</td>
+                <td className="p-3 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
+                <td className="p-3 text-right font-bold text-gray-900">&#8377; {(item.total || 0).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         <div className="w-64 ml-auto">
-          <div className="flex justify-between text-xl font-bold border-t-2 pt-3">
-            <span>Total:</span>
-            <span className="text-primary">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
+          <div className="flex justify-between items-center py-4 border-t-2 border-gray-900">
+            <span className="text-sm font-bold text-gray-400 uppercase">Grand Total</span>
+            <span className="text-2xl font-black text-gray-900">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
