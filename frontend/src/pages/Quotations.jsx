@@ -190,34 +190,34 @@ const Quotations = () => {
               </div>
             </div>
 
-            <table>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
               <thead>
                 <tr>
-                  <th style="width: 5%; text-align: left; padding-left: 0;">Sr.</th>
-                  <th style="width: 50%; text-align: left;">Item Description</th>
-                  <th style="width: 10%; text-align: center;">Qty</th>
-                  <th style="width: 15%; text-align: right;">Price</th>
-                  <th style="width: 20%; text-align: right;">Total</th>
+                  <th style="width: 40px; text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Sr.</th>
+                  <th style="text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 10px;">Item Description</th>
+                  <th style="width: 60px; text-align: center; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Qty</th>
+                  <th style="width: 100px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Price</th>
+                  <th style="width: 120px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Total</th>
                 </tr>
               </thead>
               <tbody>
                 ${docData.items.map((item, idx) => `
                   <tr>
-                    <td style="padding-left: 0;">${idx + 1}</td>
-                    <td>
-                      <div style="font-weight: bold">${item.productName}</div>
-                      <div style="font-size: 11px; color: #64748b">${item.description || ''}</div>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">${idx + 1}</td>
+                    <td style="padding: 12px 10px; border-bottom: 1px solid #edf2f7;">
+                      <div style="font-weight: bold; color: #1e293b;">${item.productName}</div>
+                      ${item.description ? `<div style="font-size: 11px; color: #64748b;">${item.description}</div>` : ''}
                     </td>
-                    <td style="text-align: center">${item.quantity}</td>
-                    <td style="text-align: right">₹${(item.price || 0).toLocaleString()}</td>
-                    <td style="text-align: right; font-weight: bold">₹${(item.total || 0).toLocaleString()}</td>
+                    <td style="text-align: center; padding: 12px 0; border-bottom: 1px solid #edf2f7;">${item.quantity}</td>
+                    <td style="text-align: right; padding: 12px 0; border-bottom: 1px solid #edf2f7;">₹${(item.price || 0).toLocaleString()}</td>
+                    <td style="text-align: right; font-weight: bold; padding: 12px 0; border-bottom: 1px solid #edf2f7;">₹${(item.total || 0).toLocaleString()}</td>
                   </tr>
                 `).join('')}
               </tbody>
             </table>
 
-            <div class="totals">
-              <div class="total-row grand-total">
+            <div class="totals" style="margin-top: 30px;">
+              <div class="total-row grand-total" style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; padding-top: 15px;">
                 <span>Grand Total:</span>
                 <span>₹${(docData.totalAmount || 0).toLocaleString()}</span>
               </div>
@@ -266,27 +266,27 @@ const Quotations = () => {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem', tableLayout: 'fixed' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-100">
-              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '50px' }}>Sr.</th>
-              <th className="p-3 text-left text-[10px] font-bold text-gray-400 uppercase">Item Description</th>
-              <th className="p-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '70px' }}>Qty</th>
-              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '100px' }}>Price</th>
-              <th className="p-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
+            <tr className="border-b-2 border-gray-100">
+              <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '40px' }}>Sr.</th>
+              <th className="py-3 px-4 text-left text-[10px] font-bold text-gray-400 uppercase">Item Description</th>
+              <th className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '60px' }}>Qty</th>
+              <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '100px' }}>Price</th>
+              <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
             </tr>
           </thead>
           <tbody>
             {docData.items.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                <td className="p-3 text-sm text-gray-400">{idx + 1}</td>
-                <td className="p-3">
-                  <div className="font-bold text-gray-900 truncate">{item.productName || 'Item'}</div>
-                  {item.description && <div className="text-[10px] text-gray-400 italic truncate">{item.description}</div>}
+              <tr key={idx} className="border-b border-gray-50">
+                <td className="py-4 text-sm text-gray-500">{idx + 1}</td>
+                <td className="py-4 px-4">
+                  <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
+                  {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
                 </td>
-                <td className="p-3 text-center text-sm font-medium">{item.quantity}</td>
-                <td className="p-3 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
-                <td className="p-3 text-right font-bold text-gray-900">&#8377; {(item.total || 0).toLocaleString()}</td>
+                <td className="py-4 text-center text-sm font-medium">{item.quantity}</td>
+                <td className="py-4 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
+                <td className="py-4 text-right font-bold text-gray-900">&#8377; {(item.total || 0).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
