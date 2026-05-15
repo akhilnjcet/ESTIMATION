@@ -235,55 +235,68 @@ const Invoices = () => {
 
   const renderPreviewDocument = (docData, isLive = false) => {
     return (
-      <div className="card" style={{ background: '#fff', padding: isLive ? '1.5rem' : '3rem', color: '#000', margin: '0 auto', maxWidth: '800px', transform: isLive ? 'scale(0.95)' : 'none', transformOrigin: 'top center' }}>
-        <div className="flex justify-between items-start mb-6 border-b pb-4">
+      <div className="preview-document-card card" style={{ 
+        background: '#fff', 
+        padding: isLive ? '1rem' : 'clamp(1rem, 5vw, 3rem)', 
+        color: '#000', 
+        margin: '0 auto', 
+        width: '100%',
+        maxWidth: '800px', 
+        transform: isLive ? 'scale(0.95)' : 'none', 
+        transformOrigin: 'top center',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.1)'
+      }}>
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 border-b pb-4">
           <div>
-            <h1 style={{ fontSize: isLive ? '1.8rem' : '2.5rem', color: 'var(--secondary)', margin: 0 }}>INVOICE</h1>
+            <h1 className="font-black tracking-tighter" style={{ fontSize: isLive ? '1.8rem' : 'clamp(1.8rem, 5vw, 2.5rem)', color: 'var(--secondary)', margin: 0 }}>INVOICE</h1>
             <p style={{ color: '#64748b', margin: 0 }}>#{docData.invoiceNumber || 'DRAFT'}</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h2 style={{ margin: 0, color: selectedProgram?.themeColor || 'var(--secondary)' }}>{selectedProgram?.name}</h2>
-            <p style={{ margin: 0, color: '#64748b' }}>{selectedProgram?.address}</p>
+          <div className="sm:text-right w-full sm:w-auto">
+            <h2 className="text-xl font-bold" style={{ margin: 0, color: selectedProgram?.themeColor || 'var(--secondary)' }}>{selectedProgram?.name}</h2>
+            <p className="text-xs text-gray-500 max-w-[250px] sm:ml-auto mt-1">{selectedProgram?.address}</p>
           </div>
         </div>
 
-        <div className="flex justify-between mb-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-6 mb-6">
           <div>
-            <h3 className="text-xs uppercase text-gray-400">Billed To:</h3>
-            <p className="font-bold">{docData.customer?.customerName || 'Select Customer'}</p>
+            <h3 className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-1">Billed To:</h3>
+            <p className="font-bold text-lg">{docData.customer?.customerName || 'Select Customer'}</p>
           </div>
-          <div className="text-right">
-            <p><strong>Date:</strong> {new Date(docData.createdAt || docData.date).toLocaleDateString()}</p>
+          <div className="sm:text-right">
+            <p className="text-sm"><strong>Date:</strong> {new Date(docData.createdAt || docData.date).toLocaleDateString()}</p>
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-          <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="p-3 text-left">Item</th>
-              <th className="p-3 text-center">Qty</th>
-              <th className="p-3 text-right">Price</th>
-              <th className="p-3 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {docData.items.map((item, idx) => (
-              <tr key={idx} className="border-b">
-                <td className="p-3">
-                  <div className="font-bold">{item.productName || 'Item'}</div>
-                </td>
-                <td className="p-3 text-center">{item.quantity}</td>
-                <td className="p-3 text-right">&#8377; {(item.price || 0).toLocaleString()}</td>
-                <td className="p-3 text-right font-bold">&#8377; {(item.total || 0).toLocaleString()}</td>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem', minWidth: '500px' }}>
+            <thead>
+              <tr className="bg-gray-50 border-b">
+                <th className="p-3 text-left text-xs font-bold text-gray-400 uppercase">Item</th>
+                <th className="p-3 text-center text-xs font-bold text-gray-400 uppercase" style={{ width: '60px' }}>Qty</th>
+                <th className="p-3 text-right text-xs font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Price</th>
+                <th className="p-3 text-right text-xs font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {docData.items.map((item, idx) => (
+                <tr key={idx} className="border-b hover:bg-gray-50/50">
+                  <td className="p-3">
+                    <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
+                    {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
+                  </td>
+                  <td className="p-3 text-center text-sm">{item.quantity}</td>
+                  <td className="p-3 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
+                  <td className="p-3 text-right font-bold text-gray-900">&#8377; {(item.total || 0).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        <div className="w-64 ml-auto">
-          <div className="flex justify-between text-xl font-bold border-t-2 pt-3">
-            <span>Total:</span>
-            <span className="text-primary">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
+        <div className="w-full sm:w-64 ml-auto">
+          <div className="flex justify-between items-center py-4 border-t-2 border-gray-900">
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total</span>
+            <span className="text-2xl font-black text-primary">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -292,17 +305,19 @@ const Invoices = () => {
 
   if (previewData) {
     return (
-      <div className="preview-overlay bg-gray-100 min-h-screen p-8">
+      <div className="preview-overlay bg-gray-100/80 backdrop-blur-md min-h-screen p-4 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <button className="btn btn-secondary flex items-center gap-2" onClick={() => setPreviewData(null)}>
-              <X size={18} /> Close
+          <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-gray-100/50 p-2 rounded-lg backdrop-blur-sm">
+            <button className="btn btn-secondary flex items-center gap-2 shadow-sm" onClick={() => setPreviewData(null)}>
+              <X size={18} /> <span className="hidden sm:inline">Close</span>
             </button>
-            <button className="btn btn-primary flex items-center gap-2" onClick={() => handlePrint(previewData)}>
-              <Printer size={18} /> Print PDF
+            <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={() => handlePrint(previewData)}>
+              <Printer size={18} /> <span>Print PDF</span>
             </button>
           </div>
-          {renderPreviewDocument(previewData, false)}
+          <div className="animate-in zoom-in-95 duration-200">
+            {renderPreviewDocument(previewData, false)}
+          </div>
         </div>
       </div>
     );

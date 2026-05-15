@@ -33,6 +33,21 @@ const Settings = () => {
     } catch (err) { console.error(err); }
   };
 
+  const handleEdit = (prog) => {
+    setEditingProgram(prog);
+    setFormData({
+      name: prog.name || '',
+      address: prog.address || '',
+      phone: prog.phone || '',
+      email: prog.email || '',
+      gstNumber: prog.gstNumber || '',
+      themeColor: prog.themeColor || '#4f46e5',
+      footerText: prog.footerText || ''
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleDelete = async (prog) => {
     const password = window.prompt(`To delete "${prog.name}", please enter your login password:`);
     if (password === null) return; // User cancelled

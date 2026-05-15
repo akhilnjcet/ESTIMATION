@@ -8,6 +8,8 @@ const Customers = () => {
     customerName: '', phone: '', email: '', address: '', gstNumber: ''
   });
 
+  const [editingId, setEditingId] = useState(null);
+
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -21,14 +23,33 @@ const Customers = () => {
     }
   };
 
+  const handleEdit = (customer) => {
+    setEditingId(customer._id);
+    setFormData({
+      customerName: customer.customerName,
+      phone: customer.phone,
+      email: customer.email || '',
+      address: customer.address || '',
+      gstNumber: customer.gstNumber || ''
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/customers', formData);
+      if (editingId) {
+        await api.put(`/customers/${editingId}`, formData);
+        alert('Customer updated successfully!');
+      } else {
+        await api.post('/customers', formData);
+        alert('Customer saved successfully!');
+      }
       setFormData({ customerName: '', phone: '', email: '', address: '', gstNumber: '' });
+      setEditingId(null);
       setShowForm(false);
       fetchCustomers();
-      alert('Customer saved successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to save customer: ' + (err.response?.data?.message || err.message));
@@ -50,14 +71,14 @@ const Customers = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Customers</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+        <button className="btn btn-primary" onClick={() => { if (showForm && editingId) { setEditingId(null); setFormData({ customerName: '', phone: '', email: '', address: '', gstNumber: '' }); } else { setShowForm(!showForm); } }}>
           {showForm ? 'Cancel' : 'Add Customer'}
         </button>
       </div>
       
       {showForm && (
         <div className="card mb-4" style={{ backgroundColor: '#f8fafc' }}>
-          <h2 className="text-xl font-bold mb-4">Add New Customer</h2>
+          <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit Customer' : 'Add New Customer'}</h2>
           <form onSubmit={handleSubmit}>
             <div className="dashboard-grid">
               <div className="form-group">
@@ -81,7 +102,7 @@ const Customers = () => {
               <label className="form-label">Address</label>
               <textarea className="form-control" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
             </div>
-            <button type="submit" className="btn btn-primary">Save Customer</button>
+            <button type="submit" className="btn btn-primary">{editingId ? 'Update Customer' : 'Save Customer'}</button>
           </form>
         </div>
       )}
@@ -106,7 +127,7 @@ const Customers = () => {
                   <td>{customer.email || '-'}</td>
                   <td>{customer.gstNumber || '-'}</td>
                   <td>
-                    <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Edit</button>
+                    <button className="btn btn-secondary" onClick={() => handleEdit(customer)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Edit</button>
                     <button className="btn btn-secondary" onClick={() => handleDelete(customer._id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>Delete</button>
                   </td>
                 </tr>
