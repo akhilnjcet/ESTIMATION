@@ -240,76 +240,102 @@ const Quotations = () => {
   const renderPreviewDocument = (docData, isLive = false) => {
     const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
     return (
-      <div className="preview-document-card card" style={{ 
-        background: '#fff', 
-        padding: isLive ? '1rem' : 'clamp(1rem, 3vw, 2.5rem)', 
-        color: '#1e293b', 
-        margin: '0 auto', 
-        width: isLive ? '100%' : '95%',
-        maxWidth: '800px', 
-        overflow: 'hidden',
-        boxShadow: isLive ? 'none' : '0 10px 30px rgba(0,0,0,0.08)',
-        border: '1px solid #edf2f7'
-      }}>
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8 border-b pb-6">
-          <div className="w-full sm:w-auto">
-            <h1 className="font-black tracking-tighter" style={{ fontSize: isLive ? '1.5rem' : 'clamp(1.5rem, 5vw, 2.2rem)', color: selectedProgram?.themeColor || 'var(--primary)', margin: 0 }}>QUOTATION</h1>
-            <div className="mt-2 bg-gray-100 inline-block px-3 py-1 rounded text-sm font-bold text-gray-600">
-              #{docData.quotationNumber || 'DRAFT'}
+      <div className="invoice-container">
+        <div className="invoice-header">
+          <div className="company-section">
+            {selectedProgram?.showLogo && selectedProgram?.logo && (
+              <img src={selectedProgram.logo} alt="Logo" className="company-logo" />
+            )}
+            <div className="company-details">
+              <h2 className="company-name">{selectedProgram?.name}</h2>
+              <p className="company-address">{selectedProgram?.address}</p>
             </div>
           </div>
-          <div className="sm:text-right w-full sm:w-auto">
-            <h2 className="text-xl font-bold" style={{ margin: 0, color: '#ef4444' }}>{selectedProgram?.name}</h2>
-            <p className="text-[11px] text-gray-500 max-w-[250px] sm:ml-auto mt-1 leading-tight">{selectedProgram?.address}</p>
+          <div style={{ textAlign: 'right' }}>
+            <h1 style={{ margin: 0, color: '#111', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px' }}>QUOTATION</h1>
+            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#111' }}>
+              <b>No:</b> #{docData.quotationNumber || 'DRAFT'} | <b>Date:</b> {new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between gap-6 mb-8">
+        <div className="invoice-info">
           <div>
-            <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-2">Quoted To:</h3>
-            <p className="font-bold text-lg text-gray-900 leading-tight">{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
-            <p className="text-sm text-gray-500 mt-1">{docData.customer?.address || customer?.address || ''}</p>
+            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Quoted To:</h3>
+            <p style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666', maxWidth: '250px' }}>{docData.customer?.address || customer?.address || ''}</p>
           </div>
-          <div className="sm:text-right">
-            <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-2">Date:</h3>
-            <p className="font-bold text-gray-900">{new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}</p>
+          <div style={{ textAlign: 'right' }}>
+            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Terms:</h3>
+            <p style={{ margin: 0, fontSize: '13px', color: '#111' }}>Bank Transfer / Cash</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}>Valid for 30 Days</p>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-2 sm:mx-0">
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
-            <thead>
-              <tr className="border-b-2 border-gray-100">
-                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '30px' }}>Sr.</th>
-                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">Description</th>
-                <th className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '50px' }}>Qty</th>
-                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '80px' }}>Price</th>
-                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '90px' }}>Total</th>
+        <table className="invoice-table">
+          <thead>
+            <tr>
+              <th style={{ width: '50px' }}>Sr.</th>
+              <th>Description</th>
+              <th style={{ width: '80px', textAlign: 'center' }}>Qty</th>
+              <th style={{ width: '120px', textAlign: 'right' }}>Unit Price</th>
+              <th style={{ width: '120px', textAlign: 'right' }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {docData.items.map((item, idx) => (
+              <tr key={idx}>
+                <td style={{ color: '#999' }}>{String(idx + 1).padStart(2, '0')}</td>
+                <td>
+                  <div style={{ fontWeight: '600', color: '#111' }}>{item.productName || 'Item'}</div>
+                  {item.description && <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{item.description}</div>}
+                </td>
+                <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                <td style={{ textAlign: 'right' }}>&#8377;{(item.price || 0).toLocaleString()}</td>
+                <td style={{ textAlign: 'right', fontWeight: '700' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
               </tr>
-            </thead>
-            <tbody>
-              {docData.items.map((item, idx) => (
-                <tr key={idx} className="border-b border-gray-50">
-                  <td className="py-3 text-xs text-gray-500">{idx + 1}</td>
-                  <td className="py-3">
-                    <div className="font-bold text-gray-900 text-sm">{item.productName || 'Item'}</div>
-                    {item.description && <div className="text-[10px] text-gray-400 italic leading-tight">{item.description}</div>}
-                  </td>
-                  <td className="py-3 text-center text-xs font-medium">{item.quantity}</td>
-                  <td className="py-3 text-right text-xs">&#8377;{(item.price || 0).toLocaleString()}</td>
-                  <td className="py-3 text-right font-bold text-gray-900 text-xs">&#8377;{(item.total || 0).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
 
-        <div className="w-full sm:w-64 ml-auto">
-          <div className="flex justify-between items-center py-4 border-t-2 border-gray-900">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Grand Total</span>
-            <span className="text-xl font-black text-gray-900">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
+        <div className="total-section">
+          <div className="total-row">
+            <span style={{ color: '#666' }}>Sub Total</span>
+            <span style={{ fontWeight: '600' }}>&#8377;{(docData.totalAmount || 0).toLocaleString()}</span>
+          </div>
+          <div className="total-row">
+            <span style={{ color: '#666' }}>Tax (0%)</span>
+            <span style={{ fontWeight: '600' }}>&#8377;0</span>
+          </div>
+          <div className="total-row grand-total">
+            <span>Grand Total</span>
+            <span>&#8377;{(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
+
+          <div className="invoice-footer">
+            <div style={{ maxWidth: '350px' }}>
+              <h4 style={{ fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Terms & Conditions:</h4>
+              <p style={{ fontSize: '10px', color: '#888', lineHeight: '1.5', margin: 0 }}>
+                1. Goods once sold will not be taken back.<br/>
+                2. Please check items before acceptance.<br/>
+                3. Payment should be made within the due date.<br/>
+                4. This is a computer generated document.
+              </p>
+            </div>
+            
+            {(selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
+              <div className="signature-section">
+                {selectedProgram?.signatureUrl && (
+                  <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" />
+                )}
+                {selectedProgram?.signatureTitle && (
+                  <p className="signature-label">{selectedProgram.signatureTitle}</p>
+                )}
+                <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {selectedProgram?.name}</p>
+              </div>
+            )}
+          </div>
       </div>
     );
   };

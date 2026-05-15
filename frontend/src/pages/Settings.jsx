@@ -7,7 +7,7 @@ const Settings = () => {
   const { programs, setPrograms } = useProgram();
   const [editingProgram, setEditingProgram] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: ''
+    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '', signatureUrl: '', signatureTitle: 'Authorized Signature', logo: '', showLogo: true, treasurerSignatureUrl: '', treasurerSignatureTitle: 'Treasurer', showTreasurerSignature: true
   });
   const [showForm, setShowForm] = useState(false);
 
@@ -42,7 +42,14 @@ const Settings = () => {
       email: prog.email || '',
       gstNumber: prog.gstNumber || '',
       themeColor: prog.themeColor || '#4f46e5',
-      footerText: prog.footerText || ''
+      footerText: prog.footerText || '',
+      signatureUrl: prog.signatureUrl || '',
+      signatureTitle: prog.signatureTitle || 'Authorized Signature',
+      logo: prog.logo || '',
+      showLogo: prog.showLogo !== undefined ? prog.showLogo : true,
+      treasurerSignatureUrl: prog.treasurerSignatureUrl || '',
+      treasurerSignatureTitle: prog.treasurerSignatureTitle || 'Treasurer',
+      showTreasurerSignature: prog.showTreasurerSignature !== undefined ? prog.showTreasurerSignature : true
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -118,11 +125,77 @@ const Settings = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="form-group">
+                <label className="form-label">Company Logo URL (Optional)</label>
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.logo} onChange={e => setFormData({...formData, logo: e.target.value})} placeholder="https://example.com/logo.png" />
+                </div>
+              </div>
+              <div className="form-group flex items-center mt-8">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 accent-primary rounded" 
+                    checked={formData.showLogo} 
+                    onChange={e => setFormData({...formData, showLogo: e.target.checked})} 
+                  />
+                  <span className="font-bold text-sm text-gray-700">Show Company Logo in Print</span>
+                </label>
+              </div>
+            </div>
+
             <div className="form-group mb-6">
               <label className="form-label">Full Address (for Print Header)</label>
               <div className="flex items-start gap-2">
                 <MapPin size={18} className="text-gray-400 mt-2" />
                 <textarea className="form-control" rows="3" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="form-group">
+                <label className="form-label">Signature Title (e.g. Authorized Signatory)</label>
+                <div className="flex items-center gap-2">
+                  <Edit2 size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.signatureTitle} onChange={e => setFormData({...formData, signatureTitle: e.target.value})} placeholder="Authorized Signature" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Signature Image URL (Optional)</label>
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.signatureUrl} onChange={e => setFormData({...formData, signatureUrl: e.target.value})} placeholder="https://example.com/signature.png" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-t pt-8">
+              <div className="form-group">
+                <label className="form-label">Treasurer Signature Title</label>
+                <div className="flex items-center gap-2">
+                  <Edit2 size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.treasurerSignatureTitle} onChange={e => setFormData({...formData, treasurerSignatureTitle: e.target.value})} placeholder="Treasurer" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Treasurer Signature URL</label>
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="text-gray-400" />
+                  <input type="text" className="form-control" value={formData.treasurerSignatureUrl} onChange={e => setFormData({...formData, treasurerSignatureUrl: e.target.value})} placeholder="https://example.com/treasurer.png" />
+                </div>
+              </div>
+              <div className="form-group flex items-center mt-8">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 accent-primary rounded" 
+                    checked={formData.showTreasurerSignature} 
+                    onChange={e => setFormData({...formData, showTreasurerSignature: e.target.checked})} 
+                  />
+                  <span className="font-bold text-sm text-gray-700">Show Treasurer Signature in Print</span>
+                </label>
               </div>
             </div>
 

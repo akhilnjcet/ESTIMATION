@@ -83,10 +83,13 @@ const Ledger = () => {
           </style>
         </head>
         <body>
-          <div class="header">
-            <div>
-              <h1 style="margin:0; color:#4f46e5;">${selectedProgram?.name}</h1>
-              <p style="margin:5px 0 0 0; font-size:12px; color:#64748b;">Financial Ledger Statement</p>
+          <div class="header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              ${selectedProgram?.showLogo && selectedProgram?.logo ? `<img src="${selectedProgram.logo}" style="width: 60px; height: 60px; object-fit: contain;" />` : ''}
+              <div>
+                <h1 style="margin:0; color:#4f46e5;">${selectedProgram?.name}</h1>
+                <p style="margin:5px 0 0 0; font-size:12px; color:#64748b;">Financial Ledger Statement</p>
+              </div>
             </div>
             <div style="text-align:right">
               <h2 style="margin:0; color:#94a3b8; font-size:24px;">STATEMENT</h2>
@@ -108,8 +111,20 @@ const Ledger = () => {
             <tbody>${tableRows}</tbody>
           </table>
           
-          <div style="margin-top: 40px; padding-top: 10px; border-top: 1px solid #eee; font-size: 10px; color: #94a3b8; text-align: center;">
-            This is a computer generated statement. Generated via Krishna ERP.
+          <div class="statement-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div class="footer-left" style="font-size: 10px; color: #94a3b8;">
+              This is a computer generated statement.<br/>
+              Generated via Krishna ERP.
+            </div>
+            ${selectedProgram?.showTreasurerSignature && (selectedProgram?.treasurerSignatureUrl || selectedProgram?.treasurerSignatureTitle) ? `
+              <div class="signature-section" style="text-align: center; min-width: 180px;">
+                ${selectedProgram?.treasurerSignatureUrl ? `<img src="${selectedProgram.treasurerSignatureUrl}" style="width: 120px; height: auto; margin-bottom: 5px;" />` : ''}
+                <div style="border-top: 1px solid #333; padding-top: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase;">
+                  ${selectedProgram?.treasurerSignatureTitle || 'Treasurer'}
+                </div>
+                <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">For ${selectedProgram?.name}</div>
+              </div>
+            ` : ''}
           </div>
         </body>
       </html>
