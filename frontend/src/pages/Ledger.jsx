@@ -10,6 +10,7 @@ const Ledger = () => {
   const [filter, setFilter] = useState('All');
   const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc
   const { selectedProgram } = useProgram();
+  const [previewData, setPreviewData] = useState(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -35,124 +36,129 @@ const Ledger = () => {
   };
 
   const handlePrint = () => {
-    const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
-    const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
-    const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-    const netBalance = totalOpeningBalance + totalCredit - totalDebit;
-
-    const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
-    const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
-
-    // Ask user if they want to include specific account balances
     const includeBalances = window.confirm('Include Cash on Hand and Bank Balance in this report?');
+    
+    setPreviewData({
+      transactions,
+      totalOpeningBalance,
+      totalCredit,
+      totalDebit,
+      netBalance,
+      cashBalance,
+      bankBalance,
+      includeBalances,
+      date: new Date().toLocaleDateString('en-GB')
+    });
+  };
 
-    const printWindow = window.open('', '_blank');
-    const tableRows = transactions.map(t => `
-      <tr>
-        <td>${new Date(t.date).toLocaleDateString('en-GB')}</td>
-        <td>
-          <div style="font-weight: bold">${t.category}</div>
-          <div style="font-size: 10px; color: #64748b">${t.description || ''}</div>
-        </td>
-        <td>${t.account?.name || '-'}</td>
-        <td style="text-align: right; color: #ef4444">${t.type === 'Expense' ? '₹ ' + t.amount.toLocaleString() : '-'}</td>
-        <td style="text-align: right; color: #10b981">${t.type === 'Income' ? '₹ ' + t.amount.toLocaleString() : '-'}</td>
-      </tr>
-    `).join('');
+  const triggerPrint = async () => {
+    const images = document.querySelectorAll('.preview-overlay img');
+    await Promise.all(
+      [...images].map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  };
 
-    const balancesHtml = includeBalances ? `
-      <div class="summary" style="margin-top: 0; background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 5px 5px;">
-        <div class="card" style="background:transparent; border-right: 1px solid #e2e8f0;">Cash on Hand: ₹${cashBalance.toLocaleString()}</div>
-        <div class="card" style="background:transparent;">Bank Balance: ₹${bankBalance.toLocaleString()}</div>
+  const renderStatementPreview = (data) => {
+    return (
+      <div className="invoice-container no-shadow" style={{ background: 'white', padding: '40px' }}>
+        <div className="invoice-header" style={{ marginBottom: '30px' }}>
+          <div className="company-section">
+            {selectedProgram?.showLogo && selectedProgram?.logo && (
+              <img src={selectedProgram.logo} alt="Logo" className="company-logo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+            )}
+            <div className="company-details">
+              <h1 className="company-name">{selectedProgram?.name}</h1>
+              <p className="company-address">{selectedProgram?.address}</p>
+            </div>
+          </div>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', borderTop: '2px solid #eee', paddingTop: '15px' }}>
+            <h2 style={{ margin: 0, color: '#111', fontSize: '24px', fontWeight: '900' }}>STATEMENT</h2>
+            <p style={{ margin: 0, fontSize: '14px', color: '#111' }}><b>Date:</b> {data.date}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-0 mb-8 border rounded-lg overflow-hidden">
+          <div className="p-4 border-r bg-gray-50/50">
+            <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">Opening</div>
+            <div className="font-bold">₹{data.totalOpeningBalance.toLocaleString()}</div>
+          </div>
+          <div className="p-4 border-r bg-emerald-50/30 text-emerald-600">
+            <div className="text-[10px] font-bold uppercase mb-1">Credit (+)</div>
+            <div className="font-bold">₹{data.totalCredit.toLocaleString()}</div>
+          </div>
+          <div className="p-4 border-r bg-rose-50/30 text-rose-600">
+            <div className="text-[10px] font-bold uppercase mb-1">Debit (-)</div>
+            <div className="font-bold">₹{data.totalDebit.toLocaleString()}</div>
+          </div>
+          <div className="p-4 bg-primary/5 text-primary">
+            <div className="text-[10px] font-bold uppercase mb-1">Net Balance</div>
+            <div className="font-bold">₹{data.netBalance.toLocaleString()}</div>
+          </div>
+        </div>
+
+        {data.includeBalances && (
+          <div className="flex gap-4 mb-8">
+            <div className="flex-1 p-3 bg-gray-50 rounded-lg border flex justify-between">
+              <span className="text-xs font-bold text-gray-500 uppercase">Cash on Hand</span>
+              <span className="font-bold text-sm">₹{data.cashBalance.toLocaleString()}</span>
+            </div>
+            <div className="flex-1 p-3 bg-gray-50 rounded-lg border flex justify-between">
+              <span className="text-xs font-bold text-gray-500 uppercase">Bank Balance</span>
+              <span className="font-bold text-sm">₹{data.bankBalance.toLocaleString()}</span>
+            </div>
+          </div>
+        )}
+
+        <table className="invoice-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', padding: '10px', borderBottom: '2px solid #eee' }}>Date</th>
+              <th style={{ textAlign: 'left', padding: '10px', borderBottom: '2px solid #eee' }}>Details</th>
+              <th style={{ textAlign: 'right', padding: '10px', borderBottom: '2px solid #eee' }}>Debit</th>
+              <th style={{ textAlign: 'right', padding: '10px', borderBottom: '2px solid #eee' }}>Credit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.transactions.map((t, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '10px', fontSize: '12px' }}>{new Date(t.date).toLocaleDateString('en-GB')}</td>
+                <td style={{ padding: '10px' }}>
+                  <div style={{ fontWeight: '600', fontSize: '13px' }}>{t.category}</div>
+                  <div style={{ fontSize: '10px', color: '#666' }}>{t.description}</div>
+                </td>
+                <td style={{ padding: '10px', textAlign: 'right', color: '#e11d48' }}>{t.type === 'Expense' ? `₹${t.amount.toLocaleString()}` : '-'}</td>
+                <td style={{ padding: '10px', textAlign: 'right', color: '#059669' }}>{t.type === 'Income' ? `₹${t.amount.toLocaleString()}` : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="invoice-footer" style={{ marginTop: '60px' }}>
+          <div style={{ fontSize: '10px', color: '#999' }}>
+            This is a computer generated statement.<br/>Generated via Krishna ERP.
+          </div>
+          {selectedProgram?.showTreasurerSignature && (selectedProgram?.treasurerSignatureUrl || selectedProgram?.treasurerSignatureTitle) && (
+            <div className="signature-section" style={{ marginTop: '20px', textAlign: 'right' }}>
+              {selectedProgram?.treasurerSignatureUrl && (
+                <img src={selectedProgram.treasurerSignatureUrl} alt="Signature" className="signature-image" style={{ width: '120px' }} />
+              )}
+              <p className="signature-label" style={{ fontWeight: 'bold', margin: '5px 0' }}>{selectedProgram?.treasurerSignatureTitle || 'Treasurer'}</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {selectedProgram?.name}</p>
+            </div>
+          )}
+        </div>
       </div>
-    ` : '';
-
-    const html = `
-      <html>
-        <head>
-          <title>Statement - ${selectedProgram?.name}</title>
-          <style>
-            body { font-family: sans-serif; padding: 20px; color: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            * { box-shadow: none !important; animation: none !important; transition: none !important; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
-            .summary { display: flex; gap: 0; margin: 20px 0; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
-            .card { flex: 1; padding: 15px; background: #fff; font-size: 13px; }
-            .card-primary { background: #eef2ff; border-left: 4px solid #4f46e5; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f8fafc; border-bottom: 2px solid #4f46e5; padding: 12px 10px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b; }
-            td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; font-size: 12px; }
-            @media print { body { padding: 0; } .header { border-bottom-color: #000 !important; } }
-          </style>
-        </head>
-        <body>
-          <div class="header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              ${selectedProgram?.showLogo && selectedProgram?.logo ? `<img src="${selectedProgram.logo}" style="width: 60px; height: 60px; object-fit: contain;" />` : ''}
-              <div>
-                <h1 style="margin:0; color:#4f46e5;">${selectedProgram?.name}</h1>
-                <p style="margin:5px 0 0 0; font-size:12px; color:#64748b;">Financial Ledger Statement</p>
-              </div>
-            </div>
-            <div style="text-align:right">
-              <h2 style="margin:0; color:#94a3b8; font-size:24px;">STATEMENT</h2>
-              <p style="margin:5px 0 0 0; font-size:12px;">Date: ${new Date().toLocaleDateString('en-GB')}</p>
-            </div>
-          </div>
-          
-          <div class="summary">
-            <div class="card" style="border-right: 1px solid #ddd;">Opening: ₹${totalOpeningBalance.toLocaleString()}</div>
-            <div class="card" style="border-right: 1px solid #ddd; color: #10b981;">Credit (+): ₹${totalCredit.toLocaleString()}</div>
-            <div class="card" style="border-right: 1px solid #ddd; color: #ef4444;">Debit (-): ₹${totalDebit.toLocaleString()}</div>
-            <div class="card card-primary"><b>Net Balance: ₹${netBalance.toLocaleString()}</b></div>
-          </div>
-
-          ${balancesHtml}
-
-          <table>
-            <thead><tr><th>Date</th><th>Details</th><th>Account</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          
-          <div class="statement-footer" style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div class="footer-left" style="font-size: 10px; color: #94a3b8;">
-              This is a computer generated statement.<br/>
-              Generated via Krishna ERP.
-            </div>
-            ${selectedProgram?.showTreasurerSignature && (selectedProgram?.treasurerSignatureUrl || selectedProgram?.treasurerSignatureTitle) ? `
-              <div class="signature-section" style="text-align: center; min-width: 180px;">
-                ${selectedProgram?.treasurerSignatureUrl ? `<img src="${selectedProgram.treasurerSignatureUrl}" style="width: 120px; height: auto; margin-bottom: 5px;" />` : ''}
-                <div style="border-top: 1px solid #333; padding-top: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase;">
-                  ${selectedProgram?.treasurerSignatureTitle || 'Treasurer'}
-                </div>
-                <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">For ${selectedProgram?.name}</div>
-              </div>
-            ` : ''}
-          </div>
-            <script>
-              window.onload = function() {
-                const images = document.querySelectorAll('img');
-                const promises = [...images].map(img => {
-                  if (img.complete) return Promise.resolve();
-                  return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                  });
-                });
-                Promise.all(promises).then(() => {
-                  setTimeout(() => {
-                    window.print();
-                    window.onafterprint = () => window.close();
-                  }, 500);
-                });
-              };
-            </script>
-          </body>
-        </html>
-      `;
-  
-      printWindow.document.write(html);
-      printWindow.document.close();
-    };
+    );
+  };
 
   const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
   const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
@@ -161,6 +167,26 @@ const Ledger = () => {
 
   const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
   const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
+
+  if (previewData) {
+    return (
+      <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-4 sticky top-0 z-10 p-2 no-print">
+            <button className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" onClick={() => setPreviewData(null)}>
+              <X size={18} /> <span>Close</span>
+            </button>
+            <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={triggerPrint}>
+              <Printer size={18} /> <span>Print</span>
+            </button>
+          </div>
+          <div className="animate-in fade-in zoom-in-95 duration-300">
+            {renderStatementPreview(previewData)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
