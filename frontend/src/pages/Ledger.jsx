@@ -144,7 +144,7 @@ const Ledger = () => {
             </script>
           </body>
         </html>
-      \`;
+      `;
   
       printWindow.document.write(html);
       printWindow.document.close();
