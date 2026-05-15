@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { FileText, Download, Printer, Filter, Wallet, Receipt } from 'lucide-react';
+import { FileText, Download, Printer, Filter, Wallet, Receipt, X } from 'lucide-react';
 
 const Ledger = () => {
   const [transactions, setTransactions] = useState([]);
