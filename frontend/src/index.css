@@ -466,3 +466,51 @@ button {
 .mt-4 { margin-top: 1rem; }
 .text-2xl { font-size: 1.5rem; }
 .font-bold { font-weight: 700; }
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+
+  .sidebar, .mobile-header, .btn, .no-print {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .preview-overlay {
+    background: white !important;
+    padding: 0 !important;
+    position: static !important;
+  }
+
+  .preview-document-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

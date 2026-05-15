@@ -242,25 +242,25 @@ const Quotations = () => {
     return (
       <div className="preview-document-card card" style={{ 
         background: '#fff', 
-        padding: isLive ? '1rem' : 'clamp(1rem, 5vw, 3rem)', 
+        padding: isLive ? '1rem' : 'clamp(1rem, 3vw, 2.5rem)', 
         color: '#1e293b', 
         margin: '0 auto', 
-        width: '100%',
+        width: isLive ? '100%' : '95%',
         maxWidth: '800px', 
-        transform: isLive ? 'scale(0.95)' : 'none', 
-        transformOrigin: 'top center',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.1)'
+        overflow: 'hidden',
+        boxShadow: isLive ? 'none' : '0 10px 30px rgba(0,0,0,0.08)',
+        border: '1px solid #edf2f7'
       }}>
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8 border-b pb-6">
-          <div>
-            <h1 className="font-black tracking-tighter" style={{ fontSize: isLive ? '1.5rem' : 'clamp(1.5rem, 4vw, 2.2rem)', color: selectedProgram?.themeColor || 'var(--primary)', margin: 0 }}>QUOTATION</h1>
+          <div className="w-full sm:w-auto">
+            <h1 className="font-black tracking-tighter" style={{ fontSize: isLive ? '1.5rem' : 'clamp(1.5rem, 5vw, 2.2rem)', color: selectedProgram?.themeColor || 'var(--primary)', margin: 0 }}>QUOTATION</h1>
             <div className="mt-2 bg-gray-100 inline-block px-3 py-1 rounded text-sm font-bold text-gray-600">
               #{docData.quotationNumber || 'DRAFT'}
             </div>
           </div>
           <div className="sm:text-right w-full sm:w-auto">
             <h2 className="text-xl font-bold" style={{ margin: 0, color: '#ef4444' }}>{selectedProgram?.name}</h2>
-            <p className="text-xs text-gray-500 max-w-[250px] sm:ml-auto mt-1">{selectedProgram?.address}</p>
+            <p className="text-[11px] text-gray-500 max-w-[250px] sm:ml-auto mt-1 leading-tight">{selectedProgram?.address}</p>
           </div>
         </div>
 
@@ -276,28 +276,28 @@ const Quotations = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem', minWidth: '500px' }}>
+        <div className="overflow-x-auto -mx-2 sm:mx-0">
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2.5rem' }}>
             <thead>
               <tr className="border-b-2 border-gray-100">
-                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '40px' }}>Sr.</th>
-                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">Item Description</th>
-                <th className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '60px' }}>Qty</th>
-                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '100px' }}>Price</th>
-                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '120px' }}>Total</th>
+                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase" style={{ width: '30px' }}>Sr.</th>
+                <th className="py-3 text-left text-[10px] font-bold text-gray-400 uppercase">Description</th>
+                <th className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase" style={{ width: '50px' }}>Qty</th>
+                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '80px' }}>Price</th>
+                <th className="py-3 text-right text-[10px] font-bold text-gray-400 uppercase" style={{ width: '90px' }}>Total</th>
               </tr>
             </thead>
             <tbody>
               {docData.items.map((item, idx) => (
                 <tr key={idx} className="border-b border-gray-50">
-                  <td className="py-4 text-sm text-gray-500">{idx + 1}</td>
-                  <td className="py-4">
-                    <div className="font-bold text-gray-900">{item.productName || 'Item'}</div>
-                    {item.description && <div className="text-[10px] text-gray-400 italic">{item.description}</div>}
+                  <td className="py-3 text-xs text-gray-500">{idx + 1}</td>
+                  <td className="py-3">
+                    <div className="font-bold text-gray-900 text-sm">{item.productName || 'Item'}</div>
+                    {item.description && <div className="text-[10px] text-gray-400 italic leading-tight">{item.description}</div>}
                   </td>
-                  <td className="py-4 text-center text-sm font-medium">{item.quantity}</td>
-                  <td className="py-4 text-right text-sm">&#8377; {(item.price || 0).toLocaleString()}</td>
-                  <td className="py-4 text-right font-bold text-gray-900">&#8377; {(item.total || 0).toLocaleString()}</td>
+                  <td className="py-3 text-center text-xs font-medium">{item.quantity}</td>
+                  <td className="py-3 text-right text-xs">&#8377;{(item.price || 0).toLocaleString()}</td>
+                  <td className="py-3 text-right font-bold text-gray-900 text-xs">&#8377;{(item.total || 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -306,8 +306,8 @@ const Quotations = () => {
 
         <div className="w-full sm:w-64 ml-auto">
           <div className="flex justify-between items-center py-4 border-t-2 border-gray-900">
-            <span className="text-sm font-bold text-gray-400 uppercase">Grand Total</span>
-            <span className="text-2xl font-black text-gray-900">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Grand Total</span>
+            <span className="text-xl font-black text-gray-900">&#8377; {(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -316,17 +316,17 @@ const Quotations = () => {
 
   if (previewData) {
     return (
-      <div className="preview-overlay bg-gray-100/80 backdrop-blur-md min-h-screen p-4 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
+      <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-gray-100/50 p-2 rounded-lg backdrop-blur-sm">
-            <button className="btn btn-secondary flex items-center gap-2 shadow-sm" onClick={() => setPreviewData(null)}>
-              <X size={18} /> <span className="hidden sm:inline">Close</span>
+          <div className="flex justify-between items-center mb-4 sticky top-0 z-10 p-2">
+            <button className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" onClick={() => setPreviewData(null)}>
+              <X size={18} /> <span>Close</span>
             </button>
             <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={() => handlePrint(previewData)}>
-              <Printer size={18} /> <span>Print PDF</span>
+              <Printer size={18} /> <span>Print</span>
             </button>
           </div>
-          <div className="animate-in zoom-in-95 duration-200">
+          <div className="animate-in fade-in zoom-in-95 duration-300">
             {renderPreviewDocument(previewData, false)}
           </div>
         </div>
