@@ -72,7 +72,8 @@ const Ledger = () => {
         <head>
           <title>Statement - ${selectedProgram?.name}</title>
           <style>
-            body { font-family: sans-serif; padding: 20px; color: #333; }
+            body { font-family: sans-serif; padding: 20px; color: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            * { box-shadow: none !important; animation: none !important; transition: none !important; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
             .summary { display: flex; gap: 0; margin: 20px 0; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
             .card { flex: 1; padding: 15px; background: #fff; font-size: 13px; }
@@ -80,6 +81,7 @@ const Ledger = () => {
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th { background: #f8fafc; border-bottom: 2px solid #4f46e5; padding: 12px 10px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b; }
             td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; font-size: 12px; }
+            @media print { body { padding: 0; } .header { border-bottom-color: #000 !important; } }
           </style>
         </head>
         <body>
@@ -137,8 +139,10 @@ const Ledger = () => {
                   });
                 });
                 Promise.all(promises).then(() => {
-                  window.print();
-                  window.onafterprint = () => window.close();
+                  setTimeout(() => {
+                    window.print();
+                    window.onafterprint = () => window.close();
+                  }, 500);
                 });
               };
             </script>
