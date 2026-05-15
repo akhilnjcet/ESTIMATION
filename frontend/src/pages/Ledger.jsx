@@ -149,7 +149,7 @@ const Ledger = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 summary-cards">
         <div className="card border-l-4 border-gray-400 shadow-sm">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Opening Balance</div>
           <div className="text-lg font-bold text-gray-900">&#8377; {totalOpeningBalance.toLocaleString()}</div>
@@ -193,12 +193,12 @@ const Ledger = () => {
       </div>
 
       <div className="card border-none shadow-xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 px-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 px-2 transaction-header">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <FileText size={20} className="text-gray-400" />
             Transaction History
           </h2>
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto filter-row">
             <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
               <Filter size={16} className="text-gray-400" />
               <select 
@@ -227,8 +227,8 @@ const Ledger = () => {
           </div>
         </div>
         
-        <div className="table-container border-none shadow-none">
-          <table className="data-table">
+        <div className="table-container border-none shadow-none transaction-container">
+          <table className="data-table transaction-table">
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-4">Date</th>

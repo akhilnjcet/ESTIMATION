@@ -514,3 +514,66 @@ html, body {
     print-color-adjust: exact;
   }
 }
+/* Dashboard & Ledger Mobile Fixes */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.transaction-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 768px) {
+  .transaction-header {
+    display: flex;
+    flex-direction: column !important;
+    gap: 12px;
+    align-items: flex-start !important;
+  }
+
+  .transaction-header > div {
+    width: 100% !important;
+    justify-content: space-between;
+  }
+
+  .transaction-header select,
+  .transaction-header button {
+    width: 100%;
+  }
+
+  .summary-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .transaction-table th,
+  .transaction-table td {
+    font-size: 11px !important;
+    padding: 10px 8px !important;
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  .p-6 {
+    padding: 1rem !important;
+  }
+  
+  .card {
+    padding: 1rem !important;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
