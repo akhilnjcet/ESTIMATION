@@ -263,7 +263,7 @@ const Quotations = () => {
           <div style={{ 
             width: '100%', 
             display: 'flex', 
-            justify-content: 'space-between', 
+            justifyContent: 'space-between', 
             alignItems: 'flex-end',
             marginTop: '10px'
           }}>
