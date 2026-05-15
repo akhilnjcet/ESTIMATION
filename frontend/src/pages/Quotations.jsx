@@ -17,6 +17,7 @@ const Quotations = () => {
     customer: '', 
     notes: '', 
     terms: '',
+    showTerms: true,
     date: new Date().toISOString().split('T')[0]
   });
   const [items, setItems] = useState([]);
@@ -25,6 +26,13 @@ const Quotations = () => {
     fetchQuotations();
     fetchCustomers();
     fetchProducts();
+    if (selectedProgram) {
+      setFormData(prev => ({
+        ...prev,
+        terms: selectedProgram.defaultTerms || prev.terms,
+        showTerms: selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true
+      }));
+    }
   }, [selectedProgram]);
 
   const fetchQuotations = async () => {
@@ -247,15 +255,26 @@ const Quotations = () => {
               <img src={selectedProgram.logo} alt="Logo" className="company-logo" />
             )}
             <div className="company-details">
-              <h2 className="company-name">{selectedProgram?.name}</h2>
+              <h1 className="company-name">{selectedProgram?.name}</h1>
               <p className="company-address">{selectedProgram?.address}</p>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h1 style={{ margin: 0, color: '#111', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px' }}>QUOTATION</h1>
-            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#111' }}>
-              <b>No:</b> #{docData.quotationNumber || 'DRAFT'} | <b>Date:</b> {new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}
-            </p>
+          
+          <div style={{ 
+            width: '100%', 
+            display: 'flex', 
+            justify-content: 'space-between', 
+            alignItems: 'flex-end',
+            marginTop: '10px'
+          }}>
+            <div>
+              <h2 style={{ margin: 0, color: '#111', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>QUOTATION</h2>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#111' }}>
+                <b>No:</b> #{docData.quotationNumber || 'DRAFT'} | <b>Date:</b> {new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -313,16 +332,18 @@ const Quotations = () => {
           </div>
         </div>
 
-          <div className="invoice-footer">
-            <div style={{ maxWidth: '350px' }}>
-              <h4 style={{ fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Terms & Conditions:</h4>
-              <p style={{ fontSize: '10px', color: '#888', lineHeight: '1.5', margin: 0 }}>
-                1. Goods once sold will not be taken back.<br/>
-                2. Please check items before acceptance.<br/>
-                3. Payment should be made within the due date.<br/>
-                4. This is a computer generated document.
-              </p>
-            </div>
+        <div className="invoice-footer">
+          <div style={{ maxWidth: '350px' }}>
+            {docData.showTerms && docData.terms && (
+              <>
+                <h4 style={{ fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Terms & Conditions:</h4>
+                <div style={{ fontSize: '10px', color: '#888', lineHeight: '1.5', margin: 0, whiteSpace: 'pre-wrap' }}>
+                  {docData.terms}
+                </div>
+              </>
+            )}
+            <p style={{ fontSize: '10px', color: '#999', marginTop: '10px' }}>This is a computer generated document.</p>
+          </div>
             
             {(selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
               <div className="signature-section">
@@ -481,15 +502,32 @@ const Quotations = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div className="form-group">
-                  <label className="form-label">Notes</label>
-                  <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Notes..." />
+              <div className="mb-8 border-t pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 accent-primary rounded" 
+                      checked={formData.showTerms} 
+                      onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                    />
+                    <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                  </label>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Terms</label>
-                  <input type="text" className="form-control" value={formData.terms} onChange={e => setFormData({...formData, terms: e.target.value})} placeholder="Terms..." />
-                </div>
+                <textarea 
+                  className="form-control" 
+                  rows="4" 
+                  value={formData.terms} 
+                  onChange={e => setFormData({...formData, terms: e.target.value})} 
+                  placeholder="Enter specific terms for this quotation..."
+                  disabled={!formData.showTerms}
+                />
+              </div>
+
+              <div className="form-group mb-8">
+                <label className="form-label">Notes (Internal only)</label>
+                <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Internal notes..." />
               </div>
 
               <button type="submit" className="btn btn-primary w-full py-4 text-lg shadow-xl">

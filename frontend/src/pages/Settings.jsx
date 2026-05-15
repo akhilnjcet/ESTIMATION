@@ -7,7 +7,7 @@ const Settings = () => {
   const { programs, setPrograms } = useProgram();
   const [editingProgram, setEditingProgram] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '', signatureUrl: '', signatureTitle: 'Authorized Signature', logo: '', showLogo: true, treasurerSignatureUrl: '', treasurerSignatureTitle: 'Treasurer', showTreasurerSignature: true
+    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '', signatureUrl: '', signatureTitle: 'Authorized Signature', logo: '', showLogo: true, treasurerSignatureUrl: '', treasurerSignatureTitle: 'Treasurer', showTreasurerSignature: true, defaultTerms: '', showTermsByDefault: true
   });
   const [showForm, setShowForm] = useState(false);
 
@@ -49,7 +49,9 @@ const Settings = () => {
       showLogo: prog.showLogo !== undefined ? prog.showLogo : true,
       treasurerSignatureUrl: prog.treasurerSignatureUrl || '',
       treasurerSignatureTitle: prog.treasurerSignatureTitle || 'Treasurer',
-      showTreasurerSignature: prog.showTreasurerSignature !== undefined ? prog.showTreasurerSignature : true
+      showTreasurerSignature: prog.showTreasurerSignature !== undefined ? prog.showTreasurerSignature : true,
+      defaultTerms: prog.defaultTerms || '',
+      showTermsByDefault: prog.showTermsByDefault !== undefined ? prog.showTermsByDefault : true
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -68,6 +70,22 @@ const Settings = () => {
       console.error(err);
       alert('Failed to delete program: ' + (err.response?.data?.message || err.message));
     }
+  };
+
+  const handleFileUpload = (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size too large. Max 2MB allowed.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, [field]: reader.result });
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -125,78 +143,66 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
               <div className="form-group">
-                <label className="form-label">Company Logo URL (Optional)</label>
-                <div className="flex items-center gap-2">
-                  <Globe size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.logo} onChange={e => setFormData({...formData, logo: e.target.value})} placeholder="https://example.com/logo.png" />
+                <label className="form-label">Company Logo</label>
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'logo')} />
+                  {formData.logo && <img src={formData.logo} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
                 </div>
               </div>
               <div className="form-group flex items-center mt-8">
                 <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    className="w-5 h-5 accent-primary rounded" 
-                    checked={formData.showLogo} 
-                    onChange={e => setFormData({...formData, showLogo: e.target.checked})} 
-                  />
-                  <span className="font-bold text-sm text-gray-700">Show Company Logo in Print</span>
+                  <input type="checkbox" className="w-5 h-5 accent-primary rounded" checked={formData.showLogo} onChange={e => setFormData({...formData, showLogo: e.target.checked})} />
+                  <span className="font-bold text-sm text-gray-700">Show Logo in Print</span>
                 </label>
               </div>
             </div>
 
-            <div className="form-group mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
+              <div className="form-group">
+                <label className="form-label">Authorized Signature</label>
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'signatureUrl')} />
+                  {formData.signatureUrl && <img src={formData.signatureUrl} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Signature Title</label>
+                <input type="text" className="form-control" value={formData.signatureTitle} onChange={e => setFormData({...formData, signatureTitle: e.target.value})} placeholder="Authorized Signatory" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
+              <div className="form-group">
+                <label className="form-label">Treasurer Signature</label>
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'treasurerSignatureUrl')} />
+                  {formData.treasurerSignatureUrl && <img src={formData.treasurerSignatureUrl} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Treasurer Title</label>
+                <input type="text" className="form-control" value={formData.treasurerSignatureTitle} onChange={e => setFormData({...formData, treasurerSignatureTitle: e.target.value})} placeholder="Treasurer" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
+              <div className="form-group">
+                <label className="form-label">Default Terms & Conditions</label>
+                <textarea className="form-control" rows="4" value={formData.defaultTerms} onChange={e => setFormData({...formData, defaultTerms: e.target.value})} placeholder="1. Goods once sold..." />
+              </div>
+              <div className="form-group flex items-center mt-8">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" className="w-5 h-5 accent-primary rounded" checked={formData.showTermsByDefault} onChange={e => setFormData({...formData, showTermsByDefault: e.target.checked})} />
+                  <span className="font-bold text-sm text-gray-700">Show Terms by Default</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="form-group mb-6 border-t pt-6">
               <label className="form-label">Full Address (for Print Header)</label>
-              <div className="flex items-start gap-2">
-                <MapPin size={18} className="text-gray-400 mt-2" />
-                <textarea className="form-control" rows="3" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="form-group">
-                <label className="form-label">Signature Title (e.g. Authorized Signatory)</label>
-                <div className="flex items-center gap-2">
-                  <Edit2 size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.signatureTitle} onChange={e => setFormData({...formData, signatureTitle: e.target.value})} placeholder="Authorized Signature" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Signature Image URL (Optional)</label>
-                <div className="flex items-center gap-2">
-                  <Globe size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.signatureUrl} onChange={e => setFormData({...formData, signatureUrl: e.target.value})} placeholder="https://example.com/signature.png" />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-t pt-8">
-              <div className="form-group">
-                <label className="form-label">Treasurer Signature Title</label>
-                <div className="flex items-center gap-2">
-                  <Edit2 size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.treasurerSignatureTitle} onChange={e => setFormData({...formData, treasurerSignatureTitle: e.target.value})} placeholder="Treasurer" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Treasurer Signature URL</label>
-                <div className="flex items-center gap-2">
-                  <Globe size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.treasurerSignatureUrl} onChange={e => setFormData({...formData, treasurerSignatureUrl: e.target.value})} placeholder="https://example.com/treasurer.png" />
-                </div>
-              </div>
-              <div className="form-group flex items-center mt-8">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    className="w-5 h-5 accent-primary rounded" 
-                    checked={formData.showTreasurerSignature} 
-                    onChange={e => setFormData({...formData, showTreasurerSignature: e.target.checked})} 
-                  />
-                  <span className="font-bold text-sm text-gray-700">Show Treasurer Signature in Print</span>
-                </label>
-              </div>
+              <textarea className="form-control" rows="3" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
             </div>
 
             <button type="submit" className="btn btn-primary px-8">

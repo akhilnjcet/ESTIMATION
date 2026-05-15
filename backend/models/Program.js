@@ -16,6 +16,8 @@ const programSchema = new mongoose.Schema({
   treasurerSignatureUrl: { type: String },
   treasurerSignatureTitle: { type: String, default: 'Treasurer' },
   showTreasurerSignature: { type: Boolean, default: true },
+  defaultTerms: { type: String, default: '1. Goods once sold will not be taken back.\n2. Please check items before acceptance.\n3. Payment should be made within the due date.' },
+  showTermsByDefault: { type: Boolean, default: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
