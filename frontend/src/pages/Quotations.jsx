@@ -372,7 +372,9 @@ const Quotations = () => {
         });
       })
     );
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
   if (previewData) {

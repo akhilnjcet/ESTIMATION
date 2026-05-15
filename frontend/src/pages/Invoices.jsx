@@ -367,7 +367,9 @@ const Invoices = () => {
         });
       })
     );
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
   if (previewData) {
