@@ -126,16 +126,29 @@ const Ledger = () => {
               </div>
             ` : ''}
           </div>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  };
+            <script>
+              window.onload = function() {
+                const images = document.querySelectorAll('img');
+                const promises = [...images].map(img => {
+                  if (img.complete) return Promise.resolve();
+                  return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                  });
+                });
+                Promise.all(promises).then(() => {
+                  window.print();
+                  window.onafterprint = () => window.close();
+                });
+              };
+            </script>
+          </body>
+        </html>
+      \`;
+  
+      printWindow.document.write(html);
+      printWindow.document.close();
+    };
 
   const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
   const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);

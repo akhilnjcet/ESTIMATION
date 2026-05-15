@@ -710,7 +710,10 @@ html, body {
     page-break-inside: avoid;
   }
 
-  .signature-image {
+  .signature-image, .company-logo {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     max-width: 140px;
     page-break-inside: avoid;
   }

@@ -356,6 +356,20 @@ const Invoices = () => {
     );
   };
 
+  const triggerPrint = async () => {
+    const images = document.querySelectorAll('.invoice-container img');
+    await Promise.all(
+      [...images].map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+    window.print();
+  };
+
   if (previewData) {
     return (
       <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
@@ -364,7 +378,7 @@ const Invoices = () => {
             <button className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" onClick={() => setPreviewData(null)}>
               <X size={18} /> <span>Close</span>
             </button>
-            <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={() => window.print()}>
+            <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={triggerPrint}>
               <Printer size={18} /> <span>Print</span>
             </button>
           </div>
