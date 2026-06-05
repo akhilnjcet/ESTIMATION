@@ -104,7 +104,7 @@ const Invoices = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, taxPercentage: 0, total: 0 }]);
+    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0 }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -226,7 +226,7 @@ const Invoices = () => {
                       <div style="font-weight: bold">${item.productName}</div>
                       <div style="font-size: 11px; color: #64748b">${item.description || ''}</div>
                     </td>
-                    <td style="text-align: center">${item.quantity}</td>
+                    <td style="text-align: center">${item.quantity} ${item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
                     <td style="text-align: right">₹${item.price.toLocaleString()}</td>
                     <td style="text-align: right">₹${item.total.toLocaleString()}</td>
                   </tr>
@@ -331,7 +331,7 @@ const Invoices = () => {
                   <div style={{ fontWeight: '600', color: '#111' }}>{item.productName || 'Item'}</div>
                   {item.description && <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{item.description}</div>}
                 </td>
-                <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                 <td style={{ textAlign: 'center' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
                 <td style={{ textAlign: 'right' }}>&#8377;{(item.price || 0).toLocaleString()}</td>
                 <td style={{ textAlign: 'right', fontWeight: '700' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
               </tr>
@@ -547,9 +547,27 @@ const Invoices = () => {
                             placeholder="Name..." 
                           />
                         </div>
-                        <div className="col-span-4 md:col-span-2">
+                         <div className="col-span-4 md:col-span-2">
                           <label className="text-[10px] font-bold text-gray-400 uppercase">Qty</label>
-                          <input type="number" className="form-control" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
+                          <div className="flex gap-1">
+                            <input 
+                              type="number" 
+                              className="form-control" 
+                              style={{ minWidth: '50px' }}
+                              required 
+                              value={item.quantity} 
+                              onChange={e => updateItem(index, 'quantity', e.target.value)} 
+                            />
+                            <select 
+                              className="form-control px-1" 
+                              style={{ width: '70px', flexShrink: 0 }}
+                              value={item.unit || 'Units'} 
+                              onChange={e => updateItem(index, 'unit', e.target.value)}
+                            >
+                              <option value="Units">Pcs</option>
+                              <option value="Kg">Kg</option>
+                            </select>
+                          </div>
                         </div>
                         <div className="col-span-4 md:col-span-2">
                           <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
