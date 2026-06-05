@@ -14,6 +14,11 @@ const itemSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  unit: {
+    type: String,
+    enum: ['Units', 'Kg'],
+    default: 'Units'
+  },
   price: {
     type: Number,
     required: true,
