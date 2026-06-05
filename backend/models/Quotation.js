@@ -82,6 +82,10 @@ const quotationSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  showSignature: {
+    type: Boolean,
+    default: true
+  },
   theme: {
     type: String,
     enum: ['classic', 'modern', 'minimalist'],

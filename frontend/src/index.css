@@ -97,7 +97,7 @@ button {
   margin-left: 0;
 }
 
-@media (max-width: 1024px) {
+@media screen and (max-width: 1024px) {
   .main-content {
     margin-left: 0 !important;
   }
@@ -194,7 +194,7 @@ button {
   background: rgba(255,255,255,0.2);
 }
 
-@media (max-width: 1024px) {
+@media screen and (max-width: 1024px) {
   .sidebar-toggle-tab {
     top: 12px;
     left: 12px;
@@ -718,7 +718,7 @@ html, body {
   }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .invoice-container {
     padding: 20px;
     width: 95%;
@@ -894,12 +894,155 @@ html, body {
 }
 
 @media print {
+  /* Set page margin to prevent browser headers/footers and maximize vertical space */
+  @page {
+    size: auto;
+    margin: 8mm 12mm;
+  }
+
+  /* Optimize container padding to make it more compact vertically for all themes */
+  .invoice-container {
+    padding: 20px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Reduce spaces around header */
+  .invoice-header {
+    margin-bottom: 15px !important;
+    padding-bottom: 15px !important;
+  }
+
+  .company-section {
+    margin-bottom: 10px !important;
+  }
+
+  /* Ensure header remains centered for classic theme in print */
+  .invoice-container:not(.theme-modern):not(.theme-minimalist) .company-section {
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+  
+  .invoice-container:not(.theme-modern):not(.theme-minimalist) .company-details {
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .invoice-container:not(.theme-modern):not(.theme-minimalist) .company-logo {
+    margin: 0 auto 5px auto !important;
+  }
+
+  /* Compact invoice details */
+  .invoice-info {
+    margin-bottom: 15px !important;
+    gap: 15px !important;
+  }
+
+  /* Compact tables for print */
+  .invoice-table {
+    margin-top: 10px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .invoice-table th {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .invoice-table td {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+  }
+
+  /* Compact totals */
+  .total-section {
+    margin-top: 15px !important;
+  }
+
+  .total-row {
+    padding: 6px 0 !important;
+    font-size: 13px !important;
+  }
+
+  .grand-total {
+    font-size: 20px !important;
+    padding-top: 10px !important;
+    margin-top: 5px !important;
+  }
+
+  /* Compact footer and signature to prevent splitting across pages */
+  .invoice-footer {
+    margin-top: 25px !important;
+    padding-top: 15px !important;
+    page-break-inside: avoid !important;
+  }
+
+  .signature-section {
+    min-width: 180px !important;
+    page-break-inside: avoid !important;
+  }
+
+  .signature-image {
+    max-height: 50px !important;
+    width: auto !important;
+    margin-bottom: 4px !important;
+  }
+
+  .signature-label {
+    padding-top: 4px !important;
+    margin-top: 4px !important;
+    font-size: 12px !important;
+  }
+
+  /* Theme overrides to ensure compact printing for other themes */
   .invoice-container.theme-modern {
     padding: 0 !important;
   }
+
+  .invoice-container.theme-modern .invoice-header {
+    padding: 15px 25px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .invoice-container.theme-modern .invoice-info {
+    padding: 0 25px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .invoice-container.theme-modern .invoice-table {
+    margin: 0 25px 15px 25px !important;
+    width: calc(100% - 50px) !important;
+  }
+
+  .invoice-container.theme-modern .total-section {
+    margin-right: 25px !important;
+    padding: 12px !important;
+  }
+
+  .invoice-container.theme-modern .invoice-footer {
+    padding: 15px 25px 20px 25px !important;
+  }
+
   .invoice-container.theme-minimalist {
-    padding: 20px !important;
+    padding: 15px !important;
     border: none !important;
     box-shadow: none !important;
+  }
+
+  .invoice-container.theme-minimalist .invoice-header {
+    padding-bottom: 10px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .invoice-container.theme-minimalist .invoice-info {
+    margin-bottom: 15px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .invoice-container.theme-minimalist .invoice-footer {
+    margin-top: 20px !important;
   }
 }

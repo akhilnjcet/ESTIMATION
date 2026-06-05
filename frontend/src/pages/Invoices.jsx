@@ -21,6 +21,7 @@ const Invoices = () => {
     showTerms: true,
     showTax: true,
     showPaymentTerms: true,
+    showSignature: true,
     theme: 'classic',
     date: new Date().toISOString().split('T')[0]
   });
@@ -75,6 +76,7 @@ const Invoices = () => {
       showTerms: true,
       showTax: true,
       showPaymentTerms: true,
+      showSignature: true,
       theme: 'classic',
       date: new Date().toISOString().split('T')[0]
     });
@@ -92,6 +94,7 @@ const Invoices = () => {
       showTerms: inv.showTerms !== undefined ? inv.showTerms : true,
       showTax: inv.showTax !== undefined ? inv.showTax : true,
       showPaymentTerms: inv.showPaymentTerms !== undefined ? inv.showPaymentTerms : true,
+      showSignature: inv.showSignature !== undefined ? inv.showSignature : true,
       theme: inv.theme || 'classic',
       date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
@@ -371,7 +374,7 @@ const Invoices = () => {
               <p style={{ fontSize: '10px', color: '#999', marginTop: '10px' }}>This is a computer generated document.</p>
             </div>
             
-            {(selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
+            {docData.showSignature !== false && (selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
               <div className="signature-section">
                 {selectedProgram?.signatureUrl && (
                   <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" />
@@ -448,6 +451,7 @@ const Invoices = () => {
     showTerms: formData.showTerms,
     showTax: formData.showTax,
     showPaymentTerms: formData.showPaymentTerms,
+    showSignature: formData.showSignature,
     theme: formData.theme,
     date: formData.date
   };
@@ -621,6 +625,15 @@ const Invoices = () => {
                         onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
                       />
                       <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showSignature !== false} 
+                        onChange={e => setFormData({...formData, showSignature: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
                     </label>
                   </div>
                 </div>
