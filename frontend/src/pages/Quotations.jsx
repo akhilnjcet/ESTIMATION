@@ -20,6 +20,7 @@ const Quotations = () => {
     terms: '',
     showTerms: true,
     showTax: true,
+    showPaymentTerms: true,
     theme: 'classic',
     date: new Date().toISOString().split('T')[0]
   });
@@ -73,6 +74,7 @@ const Quotations = () => {
       terms: '',
       showTerms: true,
       showTax: true,
+      showPaymentTerms: true,
       theme: 'classic',
       date: new Date().toISOString().split('T')[0]
     });
@@ -89,6 +91,7 @@ const Quotations = () => {
       terms: q.terms || '',
       showTerms: q.showTerms !== undefined ? q.showTerms : true,
       showTax: q.showTax !== undefined ? q.showTax : true,
+      showPaymentTerms: q.showPaymentTerms !== undefined ? q.showPaymentTerms : true,
       theme: q.theme || 'classic',
       date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
@@ -306,11 +309,13 @@ const Quotations = () => {
             <p style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{docData.customer?.customerName || customer?.customerName || 'Select Customer'}</p>
             <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666', maxWidth: '250px' }}>{docData.customer?.address || customer?.address || ''}</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Terms:</h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#111' }}>Bank Transfer / Cash</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}>Valid for 30 Days</p>
-          </div>
+          {docData.showPaymentTerms !== false && (
+            <div style={{ textAlign: 'right' }}>
+              <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Terms:</h3>
+              <p style={{ margin: 0, fontSize: '13px', color: '#111' }}>Bank Transfer / Cash</p>
+              <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}>Valid for 30 Days</p>
+            </div>
+          )}
         </div>
 
         <table className="invoice-table">
@@ -447,6 +452,7 @@ const Quotations = () => {
     totalAmount: totals.totalAmount,
     showTerms: formData.showTerms,
     showTax: formData.showTax,
+    showPaymentTerms: formData.showPaymentTerms,
     theme: formData.theme,
     terms: formData.terms,
     date: formData.date
@@ -580,7 +586,7 @@ const Quotations = () => {
                       <option value="minimalist">Clean Minimalist</option>
                     </select>
                   </div>
-                  <div className="flex items-end pb-3">
+                  <div className="flex flex-col gap-2 justify-end pb-1">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input 
                         type="checkbox" 
@@ -589,6 +595,15 @@ const Quotations = () => {
                         onChange={e => setFormData({...formData, showTax: e.target.checked})} 
                       />
                       <span className="text-sm font-bold text-gray-600">Include Tax Info in Print</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showPaymentTerms} 
+                        onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Payment Terms</span>
                     </label>
                   </div>
                 </div>

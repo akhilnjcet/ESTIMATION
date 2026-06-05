@@ -32,7 +32,7 @@ router.post('/', protect, async (req, res) => {
     const programSuffix = req.programId.toString().slice(-4).toUpperCase();
     const invoiceNumber = `INV-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
 
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, theme } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, theme } = req.body;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -53,6 +53,7 @@ router.post('/', protect, async (req, res) => {
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       theme: theme || 'classic',
       createdAt: date || new Date()
     });
@@ -77,7 +78,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /invoices - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, theme } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, theme } = req.body;
     
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -96,6 +97,7 @@ router.put('/:id', protect, async (req, res) => {
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       theme: theme || 'classic',
       status
     };

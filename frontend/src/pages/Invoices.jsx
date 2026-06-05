@@ -20,6 +20,7 @@ const Invoices = () => {
     terms: '',
     showTerms: true,
     showTax: true,
+    showPaymentTerms: true,
     theme: 'classic',
     date: new Date().toISOString().split('T')[0]
   });
@@ -73,6 +74,7 @@ const Invoices = () => {
       terms: '',
       showTerms: true,
       showTax: true,
+      showPaymentTerms: true,
       theme: 'classic',
       date: new Date().toISOString().split('T')[0]
     });
@@ -89,6 +91,7 @@ const Invoices = () => {
       terms: inv.terms || '',
       showTerms: inv.showTerms !== undefined ? inv.showTerms : true,
       showTax: inv.showTax !== undefined ? inv.showTax : true,
+      showPaymentTerms: inv.showPaymentTerms !== undefined ? inv.showPaymentTerms : true,
       theme: inv.theme || 'classic',
       date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
@@ -301,11 +304,13 @@ const Invoices = () => {
             <p style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{docData.customer?.customerName || 'Select Customer'}</p>
             <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666', maxWidth: '250px' }}>{docData.customer?.address || ''}</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Info:</h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#111' }}><b>Mode:</b> Bank / UPI / Cash</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}><b>Status:</b> Fully Paid</p>
-          </div>
+          {docData.showPaymentTerms !== false && (
+            <div style={{ textAlign: 'right' }}>
+              <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Info:</h3>
+              <p style={{ margin: 0, fontSize: '13px', color: '#111' }}><b>Mode:</b> Bank / UPI / Cash</p>
+              <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}><b>Status:</b> Fully Paid</p>
+            </div>
+          )}
         </div>
 
         <table className="invoice-table">
@@ -442,6 +447,7 @@ const Invoices = () => {
     totalAmount: totals.totalAmount,
     showTerms: formData.showTerms,
     showTax: formData.showTax,
+    showPaymentTerms: formData.showPaymentTerms,
     theme: formData.theme,
     date: formData.date
   };
@@ -579,7 +585,7 @@ const Invoices = () => {
                       <option value="minimalist">Clean Minimalist</option>
                     </select>
                   </div>
-                  <div className="flex items-end pb-3">
+                  <div className="flex flex-col gap-2 justify-end pb-1">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input 
                         type="checkbox" 
@@ -588,6 +594,15 @@ const Invoices = () => {
                         onChange={e => setFormData({...formData, showTax: e.target.checked})} 
                       />
                       <span className="text-sm font-bold text-gray-600">Include Tax Info in Print</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showPaymentTerms} 
+                        onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
                     </label>
                   </div>
                 </div>
