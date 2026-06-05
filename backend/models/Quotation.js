@@ -65,6 +65,19 @@ const quotationSchema = new mongoose.Schema({
   },
   notes: String,
   terms: String,
+  showTerms: {
+    type: Boolean,
+    default: true
+  },
+  showTax: {
+    type: Boolean,
+    default: true
+  },
+  theme: {
+    type: String,
+    enum: ['classic', 'modern', 'minimalist'],
+    default: 'classic'
+  },
   status: {
     type: String,
     enum: ['Pending', 'Accepted', 'Rejected', 'Converted'],

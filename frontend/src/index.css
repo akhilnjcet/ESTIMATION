@@ -768,3 +768,138 @@ html, body {
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .transaction-container { width: 100%; overflow-x: auto; }
 .transaction-table { width: 100%; border-collapse: collapse; }
+
+/* Document Themes Styling */
+
+/* Theme Modern */
+.invoice-container.theme-modern {
+  border-top: 8px solid var(--theme-color, #4f46e5);
+  padding: 0;
+  overflow: hidden;
+}
+.invoice-container.theme-modern .invoice-header {
+  background: var(--theme-color, #4f46e5);
+  color: white;
+  padding: 30px 40px;
+  border-bottom: none;
+  margin-bottom: 30px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+.invoice-container.theme-modern .company-section {
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 0;
+}
+.invoice-container.theme-modern .company-name {
+  color: white;
+}
+.invoice-container.theme-modern .company-address {
+  color: rgba(255, 255, 255, 0.8);
+}
+.invoice-container.theme-modern .invoice-header h2 {
+  color: white !important;
+}
+.invoice-container.theme-modern .invoice-header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.invoice-container.theme-modern .invoice-info {
+  padding: 0 40px;
+  margin-bottom: 30px;
+}
+.invoice-container.theme-modern .invoice-table {
+  margin: 0 40px 20px 40px;
+  width: calc(100% - 80px);
+}
+.invoice-container.theme-modern .invoice-table th {
+  background-color: var(--theme-color, #4f46e5);
+  color: white;
+  border-bottom: none;
+}
+.invoice-container.theme-modern .invoice-table tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+.invoice-container.theme-modern .total-section {
+  margin-right: 40px;
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.invoice-container.theme-modern .invoice-footer {
+  padding: 20px 40px 40px 40px;
+}
+
+/* Theme Minimalist */
+.invoice-container.theme-minimalist {
+  padding: 40px;
+  border: none;
+  box-shadow: none;
+}
+.invoice-container.theme-minimalist .invoice-header {
+  border-bottom: 1px solid #000;
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  text-align: left;
+}
+.invoice-container.theme-minimalist .company-section {
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 0;
+}
+.invoice-container.theme-minimalist .company-name {
+  color: #000;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.invoice-container.theme-minimalist .company-address {
+  color: #666;
+}
+.invoice-container.theme-minimalist .invoice-info {
+  margin-bottom: 40px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+.invoice-container.theme-minimalist .invoice-table {
+  margin-top: 20px;
+}
+.invoice-container.theme-minimalist .invoice-table th {
+  border-bottom: 1px solid #000;
+  background-color: transparent;
+  color: #000;
+  font-weight: 700;
+  padding: 10px 0;
+}
+.invoice-container.theme-minimalist .invoice-table td {
+  border-bottom: 1px solid #eee;
+  padding: 12px 0;
+}
+.invoice-container.theme-minimalist .total-section {
+  border-top: none;
+  margin-top: 20px;
+}
+.invoice-container.theme-minimalist .grand-total {
+  border-top: 1px solid #000;
+  color: #000;
+}
+.invoice-container.theme-minimalist .invoice-footer {
+  border-top: 1px solid #eee;
+  margin-top: 60px;
+}
+
+@media print {
+  .invoice-container.theme-modern {
+    padding: 0 !important;
+  }
+  .invoice-container.theme-minimalist {
+    padding: 20px !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}

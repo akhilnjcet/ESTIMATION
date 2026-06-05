@@ -10,6 +10,7 @@ const Quotations = () => {
   const { selectedProgram } = useProgram();
   const [showForm, setShowForm] = useState(false);
   const [previewData, setPreviewData] = useState(null);
+  const [previewTheme, setPreviewTheme] = useState('classic');
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -18,6 +19,8 @@ const Quotations = () => {
     notes: '', 
     terms: '',
     showTerms: true,
+    showTax: true,
+    theme: 'classic',
     date: new Date().toISOString().split('T')[0]
   });
   const [items, setItems] = useState([]);
@@ -68,6 +71,9 @@ const Quotations = () => {
       customer: '', 
       notes: '', 
       terms: '',
+      showTerms: true,
+      showTax: true,
+      theme: 'classic',
       date: new Date().toISOString().split('T')[0]
     });
     setItems([]);
@@ -81,6 +87,9 @@ const Quotations = () => {
       customer: q.customer?._id || q.customer,
       notes: q.notes || '',
       terms: q.terms || '',
+      showTerms: q.showTerms !== undefined ? q.showTerms : true,
+      showTax: q.showTax !== undefined ? q.showTax : true,
+      theme: q.theme || 'classic',
       date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setItems(q.items.map(item => ({
@@ -115,7 +124,9 @@ const Quotations = () => {
 
   const getTotals = () => {
     let subTotal = items.reduce((acc, item) => acc + item.total, 0);
-    let taxAmount = items.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0);
+    let taxAmount = formData.showTax
+      ? items.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0)
+      : 0;
     let totalAmount = subTotal + taxAmount;
     return { subTotal, taxAmount, totalAmount };
   };
@@ -225,6 +236,16 @@ const Quotations = () => {
             </table>
 
             <div class="totals" style="margin-top: 30px;">
+              ${docData.showTax !== false ? `
+                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
+                  <span>Sub Total:</span>
+                  <span>₹${(docData.subTotal || docData.totalAmount || 0).toLocaleString()}</span>
+                </div>
+                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
+                  <span>Tax:</span>
+                  <span>₹${(docData.taxAmount || 0).toLocaleString()}</span>
+                </div>
+              ` : ''}
               <div class="total-row grand-total" style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; padding-top: 15px;">
                 <span>Grand Total:</span>
                 <span>₹${(docData.totalAmount || 0).toLocaleString()}</span>
@@ -245,10 +266,11 @@ const Quotations = () => {
     printWindow.document.close();
   };
 
-  const renderPreviewDocument = (docData, isLive = false) => {
+  const renderPreviewDocument = (docData, isLive = false, activeTheme = null) => {
     const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
+    const theme = activeTheme || docData.theme || 'classic';
     return (
-      <div className="invoice-container">
+      <div className={`invoice-container theme-${theme}`} style={{ '--theme-color': selectedProgram?.themeColor || '#4f46e5' }}>
         <div className="invoice-header">
           <div className="company-section">
             {selectedProgram?.showLogo && selectedProgram?.logo && (
@@ -318,14 +340,18 @@ const Quotations = () => {
         </table>
 
         <div className="total-section">
-          <div className="total-row">
-            <span style={{ color: '#666' }}>Sub Total</span>
-            <span style={{ fontWeight: '600' }}>&#8377;{(docData.totalAmount || 0).toLocaleString()}</span>
-          </div>
-          <div className="total-row">
-            <span style={{ color: '#666' }}>Tax (0%)</span>
-            <span style={{ fontWeight: '600' }}>&#8377;0</span>
-          </div>
+          {docData.showTax !== false && (
+            <>
+              <div className="total-row">
+                <span style={{ color: '#666' }}>Sub Total</span>
+                <span style={{ fontWeight: '600' }}>&#8377;{(docData.subTotal || docData.totalAmount || 0).toLocaleString()}</span>
+              </div>
+              <div className="total-row">
+                <span style={{ color: '#666' }}>Tax</span>
+                <span style={{ fontWeight: '600' }}>&#8377;{(docData.taxAmount || 0).toLocaleString()}</span>
+              </div>
+            </>
+          )}
           <div className="total-row grand-total">
             <span>Grand Total</span>
             <span>&#8377;{(docData.totalAmount || 0).toLocaleString()}</span>
@@ -385,12 +411,27 @@ const Quotations = () => {
             <button className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" onClick={() => setPreviewData(null)}>
               <X size={18} /> <span>Close</span>
             </button>
+            
+            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-lg border shadow-sm">
+              <span className="text-xs font-bold text-gray-500 uppercase px-1">Theme</span>
+              <select 
+                className="form-control py-1 px-3 border border-gray-300 rounded-lg text-sm bg-white"
+                style={{ width: '180px' }}
+                value={previewTheme}
+                onChange={(e) => setPreviewTheme(e.target.value)}
+              >
+                <option value="classic">Classic / Professional</option>
+                <option value="modern">Modern Banner</option>
+                <option value="minimalist">Clean Minimalist</option>
+              </select>
+            </div>
+
             <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={triggerPrint}>
               <Printer size={18} /> <span>Print</span>
             </button>
           </div>
           <div className="animate-in fade-in zoom-in-95 duration-300">
-            {renderPreviewDocument(previewData, false)}
+            {renderPreviewDocument(previewData, false, previewTheme)}
           </div>
         </div>
       </div>
@@ -401,7 +442,13 @@ const Quotations = () => {
   const livePreviewData = {
     customer: customers.find(c => c._id === formData.customer),
     items: items,
+    subTotal: totals.subTotal,
+    taxAmount: totals.taxAmount,
     totalAmount: totals.totalAmount,
+    showTerms: formData.showTerms,
+    showTax: formData.showTax,
+    theme: formData.theme,
+    terms: formData.terms,
     date: formData.date
   };
 
@@ -519,6 +566,35 @@ const Quotations = () => {
               </div>
 
               <div className="mb-8 border-t pt-6">
+                <h3 className="font-bold text-gray-700 mb-4">Design & Tax Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="form-group mb-0">
+                    <label className="form-label">Document Theme</label>
+                    <select 
+                      className="form-control" 
+                      value={formData.theme} 
+                      onChange={e => setFormData({...formData, theme: e.target.value})}
+                    >
+                      <option value="classic">Classic / Professional</option>
+                      <option value="modern">Modern Banner</option>
+                      <option value="minimalist">Clean Minimalist</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-3">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showTax} 
+                        onChange={e => setFormData({...formData, showTax: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Tax Info in Print</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8 border-t pt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -555,7 +631,7 @@ const Quotations = () => {
           <div className="hidden lg:block sticky top-8">
             <h2 className="text-xl font-bold mb-6 text-gray-400">Document Preview</h2>
             <div className="shadow-2xl rounded-2xl overflow-hidden border">
-              {renderPreviewDocument(livePreviewData, true)}
+              {renderPreviewDocument(livePreviewData, true, formData.theme)}
             </div>
           </div>
         </div>
@@ -588,7 +664,7 @@ const Quotations = () => {
                   </td>
                   <td className="py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button className="p-2 text-gray-400 hover:text-primary bg-white border rounded-lg shadow-sm" onClick={() => setPreviewData(q)}>
+                      <button className="p-2 text-gray-400 hover:text-primary bg-white border rounded-lg shadow-sm" onClick={() => { setPreviewData(q); setPreviewTheme(q.theme || 'classic'); }}>
                         <Eye size={16} />
                       </button>
                       <button className="p-2 text-gray-400 hover:text-emerald-600 bg-white border rounded-lg shadow-sm" onClick={() => handleEdit(q)}>

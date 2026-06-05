@@ -21,6 +21,9 @@ const invoiceSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true, min: 0 },
   notes: String,
   terms: String,
+  showTerms: { type: Boolean, default: true },
+  showTax: { type: Boolean, default: true },
+  theme: { type: String, enum: ['classic', 'modern', 'minimalist'], default: 'classic' },
   status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' }
 }, { timestamps: true });
 
