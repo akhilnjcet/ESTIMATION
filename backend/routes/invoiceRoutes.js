@@ -20,19 +20,22 @@ router.post('/', protect, async (req, res) => {
     console.log('POST /invoices - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
 
-    // Get highest existing number for this program
-    const lastInvoice = await Invoice.findOne({ programId: req.programId }).sort({ invoiceNumber: -1 });
-    let nextNum = 1;
-    if (lastInvoice && lastInvoice.invoiceNumber) {
-      const parts = lastInvoice.invoiceNumber.split('-');
-      const lastNum = parseInt(parts[parts.length - 1]);
-      if (!isNaN(lastNum)) nextNum = lastNum + 1;
-    }
-    
-    const programSuffix = req.programId.toString().slice(-4).toUpperCase();
-    const invoiceNumber = `INV-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme, invoiceNumber } = req.body;
 
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme } = req.body;
+    let finalInvoiceNumber = invoiceNumber;
+    if (!finalInvoiceNumber || finalInvoiceNumber.trim() === '') {
+      // Get highest existing number for this program
+      const lastInvoice = await Invoice.findOne({ programId: req.programId }).sort({ invoiceNumber: -1 });
+      let nextNum = 1;
+      if (lastInvoice && lastInvoice.invoiceNumber) {
+        const parts = lastInvoice.invoiceNumber.split('-');
+        const lastNum = parseInt(parts[parts.length - 1]);
+        if (!isNaN(lastNum)) nextNum = lastNum + 1;
+      }
+      
+      const programSuffix = req.programId.toString().slice(-4).toUpperCase();
+      finalInvoiceNumber = `INV-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
+    }
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -42,7 +45,7 @@ router.post('/', protect, async (req, res) => {
 
     const invoice = new Invoice({
       programId: req.programId,
-      invoiceNumber,
+      invoiceNumber: finalInvoiceNumber,
       customer,
       items: sanitizedItems,
       subTotal,
@@ -79,7 +82,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /invoices - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme, invoiceNumber } = req.body;
     
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -103,6 +106,9 @@ router.put('/:id', protect, async (req, res) => {
       theme: theme || 'classic',
       status
     };
+    if (invoiceNumber && invoiceNumber.trim() !== '') {
+      updateData.invoiceNumber = invoiceNumber;
+    }
     if (date) updateData.createdAt = date;
 
     const invoice = await Invoice.findOneAndUpdate(

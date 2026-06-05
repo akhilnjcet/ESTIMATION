@@ -23,7 +23,8 @@ const Quotations = () => {
     showPaymentTerms: true,
     showSignature: true,
     theme: 'classic',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    quotationNumber: ''
   });
   const [items, setItems] = useState([]);
 
@@ -78,7 +79,8 @@ const Quotations = () => {
       showPaymentTerms: true,
       showSignature: true,
       theme: 'classic',
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      quotationNumber: ''
     });
     setItems([]);
     setEditingId(null);
@@ -96,7 +98,8 @@ const Quotations = () => {
       showPaymentTerms: q.showPaymentTerms !== undefined ? q.showPaymentTerms : true,
       showSignature: q.showSignature !== undefined ? q.showSignature : true,
       theme: q.theme || 'classic',
-      date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      quotationNumber: q.quotationNumber || ''
     });
     setItems(q.items.map(item => ({
       ...item,
@@ -113,7 +116,7 @@ const Quotations = () => {
   const updateItem = (index, field, value) => {
     const newItems = [...items];
     if (field === 'product') {
-      const prod = products.find(p => p._id === value);
+      const prod = products.find(p => p._id === value || p.productName === value);
       if (prod) {
         newItems[index] = { ...newItems[index], product: prod._id, productName: prod.productName, price: prod.price, taxPercentage: prod.taxPercentage || 0 };
       } else {
@@ -503,8 +506,8 @@ const Quotations = () => {
               {editingId ? 'Update Quotation' : 'Quotation Details'}
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="form-group">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="form-group mb-0">
                   <label className="form-label">Select Customer</label>
                   <select 
                     className="form-control" 
@@ -516,7 +519,17 @@ const Quotations = () => {
                     {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-0">
+                  <label className="form-label">Quotation No. (Optional)</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Auto-generated if blank"
+                    value={formData.quotationNumber} 
+                    onChange={e => setFormData({...formData, quotationNumber: e.target.value})} 
+                  />
+                </div>
+                <div className="form-group mb-0">
                   <label className="form-label">Quotation Date</label>
                   <input 
                     type="date" 
@@ -590,6 +603,16 @@ const Quotations = () => {
                       </div>
                     </div>
                   ))}
+                  <div className="flex justify-center mt-4">
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary flex items-center gap-2 w-full py-3 justify-center border-dashed border-2 hover:border-primary hover:text-primary transition-all duration-200" 
+                      onClick={addItem}
+                    >
+                      <Plus size={18} />
+                      <span>Add Another Line Item</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -728,7 +751,7 @@ const Quotations = () => {
         </div>
       </div>
       <datalist id="product-list">
-        {products.map(p => <option key={p._id} value={p._id}>{p.productName}</option>)}
+        {products.map(p => <option key={p._id} value={p.productName}>{p.price ? `₹${p.price}` : ''}</option>)}
       </datalist>
     </div>
   );

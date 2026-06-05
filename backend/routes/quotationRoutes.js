@@ -23,19 +23,22 @@ router.post('/', protect, async (req, res) => {
   try {
     console.log('POST /quotations - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme, quotationNumber } = req.body;
     
-    // Get highest existing number for this program
-    const lastQuotation = await Quotation.findOne({ programId: req.programId }).sort({ quotationNumber: -1 });
-    let nextNum = 1;
-    if (lastQuotation && lastQuotation.quotationNumber) {
-      const parts = lastQuotation.quotationNumber.split('-');
-      const lastNum = parseInt(parts[parts.length - 1]);
-      if (!isNaN(lastNum)) nextNum = lastNum + 1;
-    }
+    let finalQuotationNumber = quotationNumber;
+    if (!finalQuotationNumber || finalQuotationNumber.trim() === '') {
+      // Get highest existing number for this program
+      const lastQuotation = await Quotation.findOne({ programId: req.programId }).sort({ quotationNumber: -1 });
+      let nextNum = 1;
+      if (lastQuotation && lastQuotation.quotationNumber) {
+        const parts = lastQuotation.quotationNumber.split('-');
+        const lastNum = parseInt(parts[parts.length - 1]);
+        if (!isNaN(lastNum)) nextNum = lastNum + 1;
+      }
 
-    const programSuffix = req.programId.toString().slice(-4).toUpperCase();
-    const quotationNumber = `Q-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
+      const programSuffix = req.programId.toString().slice(-4).toUpperCase();
+      finalQuotationNumber = `Q-${programSuffix}-${nextNum.toString().padStart(4, '0')}`;
+    }
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -45,7 +48,7 @@ router.post('/', protect, async (req, res) => {
 
     const quotation = new Quotation({
       programId: req.programId,
-      quotationNumber,
+      quotationNumber: finalQuotationNumber,
       customer,
       items: sanitizedItems,
       subTotal,
@@ -82,7 +85,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /quotations - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme, quotationNumber } = req.body;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -106,6 +109,9 @@ router.put('/:id', protect, async (req, res) => {
       theme: theme || 'classic',
       status
     };
+    if (quotationNumber && quotationNumber.trim() !== '') {
+      updateData.quotationNumber = quotationNumber;
+    }
     if (date) updateData.createdAt = date;
 
     const quotation = await Quotation.findOneAndUpdate(

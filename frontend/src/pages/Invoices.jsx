@@ -23,7 +23,8 @@ const Invoices = () => {
     showPaymentTerms: true,
     showSignature: true,
     theme: 'classic',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    invoiceNumber: ''
   });
   const [items, setItems] = useState([]);
 
@@ -78,7 +79,8 @@ const Invoices = () => {
       showPaymentTerms: true,
       showSignature: true,
       theme: 'classic',
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      invoiceNumber: ''
     });
     setItems([]);
     setEditingId(null);
@@ -96,7 +98,8 @@ const Invoices = () => {
       showPaymentTerms: inv.showPaymentTerms !== undefined ? inv.showPaymentTerms : true,
       showSignature: inv.showSignature !== undefined ? inv.showSignature : true,
       theme: inv.theme || 'classic',
-      date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      invoiceNumber: inv.invoiceNumber || ''
     });
     setItems(inv.items.map(item => ({
       ...item,
@@ -113,7 +116,7 @@ const Invoices = () => {
   const updateItem = (index, field, value) => {
     const newItems = [...items];
     if (field === 'product') {
-      const prod = products.find(p => p._id === value);
+      const prod = products.find(p => p._id === value || p.productName === value);
       if (prod) {
         newItems[index] = { ...newItems[index], product: prod._id, productName: prod.productName, price: prod.price, taxPercentage: prod.taxPercentage || 0 };
       } else {
@@ -497,8 +500,8 @@ const Invoices = () => {
               {editingId ? 'Update Invoice' : 'Invoice Details'}
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="form-group">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="form-group mb-0">
                   <label className="form-label">Select Customer</label>
                   <select 
                     className="form-control" 
@@ -510,7 +513,17 @@ const Invoices = () => {
                     {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-0">
+                  <label className="form-label">Invoice No. (Optional)</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Auto-generated if blank"
+                    value={formData.invoiceNumber} 
+                    onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} 
+                  />
+                </div>
+                <div className="form-group mb-0">
                   <label className="form-label">Invoice Date</label>
                   <input 
                     type="date" 
@@ -589,6 +602,16 @@ const Invoices = () => {
                       No items added yet.
                     </div>
                   )}
+                  <div className="flex justify-center mt-4">
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary flex items-center gap-2 w-full py-3 justify-center border-dashed border-2 hover:border-primary hover:text-primary transition-all duration-200" 
+                      onClick={addItem}
+                    >
+                      <Plus size={18} />
+                      <span>Add Another Line Item</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -746,7 +769,7 @@ const Invoices = () => {
         </div>
       </div>
       <datalist id="product-list">
-        {products.map(p => <option key={p._id} value={p._id}>{p.productName}</option>)}
+        {products.map(p => <option key={p._id} value={p.productName}>{p.price ? `₹${p.price}` : ''}</option>)}
       </datalist>
     </div>
   );
