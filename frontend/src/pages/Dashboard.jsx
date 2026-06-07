@@ -50,7 +50,7 @@ const Dashboard = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Krishna Accounting</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Krishna Smart Solutions</h1>
         <p className="text-gray-500">Multi-Program Business Management Platform</p>
       </div>
 

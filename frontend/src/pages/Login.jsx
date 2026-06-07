@@ -3,7 +3,7 @@ import { Mail, Lock, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-
+import logo from '../assets/logo.jpg';
 const Login = () => {
   const navigate = useNavigate();
   const { refreshPrograms } = useProgram();
@@ -113,7 +113,9 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-card" style={{ transition: 'all 0.3s ease' }}>
-        
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <img src={logo} alt="Krishna Logo" style={{ width: '80px', height: '80px', borderRadius: '16px', objectFit: 'cover', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+        </div>
         {forgotPasswordStep === 'login' ? (
           <>
             <h1 className="login-title">{isRegistering ? 'Create Account' : 'Welcome Back'}</h1>

@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon } from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
+import logo from '../assets/logo.jpg';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const isMobile = window.innerWidth < 1024;
@@ -30,10 +31,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           >
             ✕
           </button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <h1 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, color: '#fff', lineHeight: '1.2' }}>
-            Welcome to <br /> Krishna Accounting
-          </h1>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <img src={logo} alt="Krishna Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <h1 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: '#fff', lineHeight: '1.2' }}>
+                Welcome to <br /> Krishna Smart Solutions
+              </h1>
+            </div>
           <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Powered by Krishna IT Solutions
           </p>
@@ -110,7 +114,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       <div style={{ padding: '1.5rem 1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
           <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Version 2.1.0 - Enterprise</p>
-          <p style={{ fontSize: '0.75rem', color: '#fff', margin: '0.25rem 0 0.75rem 0', fontWeight: 'bold' }}>Krishna Accounting</p>
+          <p style={{ fontSize: '0.75rem', color: '#fff', margin: '0.25rem 0 0.75rem 0', fontWeight: 'bold' }}>Krishna Smart Solutions</p>
           <button 
             onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
             className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-bold transition-colors"

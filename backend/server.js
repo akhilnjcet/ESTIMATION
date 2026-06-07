@@ -125,7 +125,7 @@ const connectDB = async () => {
   const programExists = await Program.findOne({ owner: admin._id });
   if (!programExists) {
     await Program.create({
-      name: 'Krishna Accounting', owner: admin._id,
+      name: 'Krishna Smart Solutions', owner: admin._id,
       address: '123 Stadium Road', phone: '9999999999', email: 'admin@krishna.com'
     });
     console.log('Default program created');
