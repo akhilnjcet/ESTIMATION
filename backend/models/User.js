@@ -30,6 +30,20 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date
   },
+  resetOtp: {
+    type: String
+  },
+  resetOtpExpires: {
+    type: Date
+  },
+  resetOtpAttempts: {
+    type: Number,
+    default: 0
+  },
+  resetOtpVerified: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
