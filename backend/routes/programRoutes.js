@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Program = require('../models/Program');
+const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 
 // Get all programs for the logged-in user
@@ -54,7 +55,11 @@ router.delete('/:id', protect, async (req, res) => {
   
   try {
     // 1. Verify Password
-    const isMatch = await bcrypt.compare(password, req.user.password);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid password. Deletion cancelled.' });
     }
