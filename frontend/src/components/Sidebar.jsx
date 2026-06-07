@@ -1,11 +1,35 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon, Download } from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
 import logo from '../assets/logo.jpg';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const isMobile = window.innerWidth < 1024;
+  const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+  const [showInstallBtn, setShowInstallBtn] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
   
   return (
     <>
@@ -121,6 +145,28 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           >
             <LogOut size={16} /> Sign Out
           </button>
+
+          {showInstallBtn && (
+            <button 
+              onClick={handleInstallClick}
+              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold transition-colors"
+              style={{
+                width: '100%',
+                padding: '0.6rem',
+                backgroundColor: 'rgba(79, 70, 229, 0.15)',
+                border: '1px solid rgba(79, 70, 229, 0.3)',
+                borderRadius: '8px',
+                color: '#a5b4fc',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                marginTop: '0.75rem',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <Download size={16} /> Install App
+            </button>
+          )}
         </div>
       </div>
       </aside>
