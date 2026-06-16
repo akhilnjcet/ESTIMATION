@@ -166,7 +166,6 @@ const LabourBillsTab = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBills();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCustomers();
   }, [selectedProgram]);
 
