@@ -374,278 +374,169 @@ const LabourBillsTab = () => {
         <head>
           <title>Labour Bill - ${billData.billNumber}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-            body { font-family: 'Outfit', sans-serif; padding: 30px; color: #0f172a; background: white; margin: 0; }
-            .bill-wrapper { max-width: 850px; margin: auto; padding: 20px; box-sizing: border-box; }
-            
-            /* Theme Classic */
-            .theme-classic { border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-            .theme-classic .header-title { color: ${themeColor}; font-size: 28px; font-weight: 800; text-transform: uppercase; margin: 0; }
-            .theme-classic .divider { border-bottom: 2px solid ${themeColor}; margin: 20px 0; }
-            
-            /* Theme Modern */
-            .theme-modern { border: 1px solid #e2e8f0; border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-            .theme-modern .header-banner { background: ${themeColor}; color: white; padding: 35px; }
-            .theme-modern .header-title { font-size: 32px; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: 1px; color: white; }
-            .theme-modern .header-body { padding: 35px; }
-            .theme-modern .divider { border-bottom: 2px dashed #cbd5e1; margin: 20px 0; }
-
-            /* Theme Minimalist */
-            .theme-minimalist { padding: 10px; }
-            .theme-minimalist .header-title { color: #0f172a; font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0; border-left: 4px solid ${themeColor}; padding-left: 12px; }
-            .theme-minimalist .divider { border-bottom: 1px solid #cbd5e1; margin: 20px 0; }
-
-            /* Grid Layouts */
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-            .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-            .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-            
-            /* Typography details */
-            .meta-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px; }
-            .meta-value { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0; }
-            .meta-text { font-size: 13px; color: #334155; line-height: 1.5; margin: 0; }
-            
-            .box-card { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #f1f5f9; }
-            
-            /* Logistics Section */
-            .logistics-title { font-size: 12px; text-transform: uppercase; font-weight: 800; color: ${themeColor}; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
-
-            /* Tables */
-            table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-            th { text-align: left; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
-            td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-            tr:hover { background-color: #fafafa; }
-            
-            .totals-container { width: 320px; margin-left: auto; margin-top: 25px; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #475569; }
-            .grand-total-row { display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; font-weight: 800; color: ${themeColor}; border-top: 2px solid #0f172a; margin-top: 8px; }
-            
-            .words-box { margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 6px; border: 1px solid #dcfce7; font-size: 12px; color: #15803d; font-weight: 600; }
-            
-            .footer-grid { display: flex; justify-content: space-between; margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 25px; }
-            .signature-box { text-align: center; width: 200px; }
-            .signature-line { border-top: 1px solid #94a3b8; margin-top: 50px; font-size: 12px; font-weight: 600; color: #475569; padding-top: 5px; }
-
-            @media print {
-              body { padding: 0; margin: 0; background: white; }
-              .bill-wrapper { width: 100%; max-width: 100%; padding: 0; }
-              .box-card { background: #fafafa !important; border: 1px solid #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              .words-box { background: #f4fbf7 !important; border: 1px solid #e2f7eb !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              th { background: #fafafa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .doc-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #cbd5e1; font-size: 14px; line-height: 24px; color: #334155; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 25px; align-items: flex-end; }
+            .business-info h1 { margin: 0; color: ${themeColor}; font-size: 28px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+            .business-info p { margin: 3px 0 0 0; font-size: 12px; color: #475569; font-weight: 500; }
+            .doc-title { text-align: right; }
+            .doc-title h2 { color: ${themeColor}; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+            .doc-title p { font-weight: bold; color: #1e293b; margin: 5px 0 0 0; font-size: 16px; }
+            .details { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; }
+            .details div { width: 48%; }
+            .details h3 { font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; font-weight: bold; letter-spacing: 0.5px; }
+            .details p { margin: 0; font-weight: bold; font-size: 14px; color: #1e293b; }
+            table { width: 100%; border-collapse: collapse; margin-top: 25px; margin-bottom: 25px; }
+            table th { padding: 12px 10px; border-top: 1.5px solid #1e293b; border-bottom: 1.5px solid #1e293b; font-size: 11px; text-transform: uppercase; color: #475569; font-weight: bold; letter-spacing: 0.5px; }
+            table td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b; }
+            .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
+            .grand-total { font-size: 18px; font-weight: bold; color: ${themeColor}; border-top: 1.5px solid #1e293b; margin-top: 5px; padding-top: 10px; }
+            .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; text-align: center; color: #94a3b8; }
           </style>
         </head>
         <body>
-          <div class="bill-wrapper">
-            <div class="${theme === 'modern' ? 'theme-modern' : theme === 'minimalist' ? 'theme-minimalist' : 'theme-classic'}">
-              
-              <!-- Header Section -->
-              ${theme === 'modern' ? `
-                <div class="header-banner">
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <h1 class="header-title">${billData.serviceProviderName || 'CONTRACTOR'}</h1>
-                      <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">${billData.serviceProviderAddress || ''}</p>
-                      ${billData.serviceProviderPhone ? `<p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8;">Call: ${billData.serviceProviderPhone}</p>` : ''}
-                      ${billData.serviceProviderGstin ? `<p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8; font-weight: bold;">GSTIN: ${billData.serviceProviderGstin}</p>` : ''}
-                    </div>
-                    <div style="text-align: right;">
-                      <h2 style="margin: 0; font-size: 20px; font-weight: 600; opacity: 0.9;">LABOUR BILL</h2>
-                      <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold;"># ${billData.billNumber}</p>
-                      <p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8;">Date: ${new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="header-body">
-              ` : `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <div>
-                    <h1 class="header-title">${billData.serviceProviderName || 'CONTRACTOR'}</h1>
-                    <p class="meta-text" style="max-width: 400px; margin-top: 6px;">${billData.serviceProviderAddress || ''}</p>
-                    ${billData.serviceProviderPhone ? `<p class="meta-text" style="margin-top: 3px;">Phone: <b>${billData.serviceProviderPhone}</b></p>` : ''}
-                    ${billData.serviceProviderGstin ? `<p class="meta-text" style="margin-top: 3px;">GSTIN: <b>${billData.serviceProviderGstin}</b></p>` : ''}
-                  </div>
-                  <div style="text-align: right;">
-                    <div style="background: ${themeColor}10; color: ${themeColor}; padding: 6px 12px; border-radius: 6px; display: inline-block; font-weight: 800; font-size: 14px; margin-bottom: 10px;">LABOUR BILL</div>
-                    <p class="meta-value" style="font-size: 16px;"># ${billData.billNumber}</p>
-                    <p class="meta-text">Date: <b>${new Date(billData.billDate).toLocaleDateString('en-IN')}</b></p>
-                  </div>
-                </div>
-                <div class="divider"></div>
-              `}
+          <div class="doc-box">
+            
+            <!-- Header Section -->
+            <div class="header">
+              <div class="business-info">
+                <h1>${billData.serviceProviderName || selectedProgram?.name || 'CONTRACTOR'}</h1>
+                <p>${billData.serviceProviderAddress || selectedProgram?.address || ''}</p>
+                <p>Phone: ${billData.serviceProviderPhone || selectedProgram?.phone || ''} ${billData.serviceProviderGstin ? `| GSTIN: ${billData.serviceProviderGstin}` : ''}</p>
+              </div>
+              <div class="doc-title">
+                <h2>LABOUR BILL</h2>
+                <p>No: ${billData.billNumber}</p>
+                <p style="margin: 2px 0 0 0; font-size: 13px; font-weight: normal; color: #64748b;">Date: <strong>${new Date(billData.billDate).toLocaleDateString('en-GB')}</strong></p>
+              </div>
+            </div>
 
-              <!-- Addresses Section -->
-              <div class="grid-2">
-                <div class="box-card">
-                  <div class="meta-label">Consignee / Client</div>
-                  <p class="meta-value">${billData.clientName || 'Walk-in Client'}</p>
-                  ${billData.clientAddress ? `<p class="meta-text" style="margin-top: 5px;">${billData.clientAddress}</p>` : ''}
-                  ${billData.clientPhone ? `<p class="meta-text" style="margin-top: 3px;">Phone: ${billData.clientPhone}</p>` : ''}
-                  ${billData.clientGstin ? `<p class="meta-text" style="margin-top: 3px; font-weight: 600;">GSTIN: ${billData.clientGstin}</p>` : ''}
-                </div>
-                
-                <div class="box-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                  <div>
-                    <div class="meta-label">Billing Metadata</div>
-                    <p class="meta-text">Bill Status: <span style="font-weight: bold; color: ${billData.status === 'Paid' ? '#15803d' : '#b91c1c'};">${billData.status}</span></p>
-                    ${billData.showPaymentTerms && billData.paymentTerms ? `<p class="meta-text" style="margin-top: 5px;">Payment Terms: ${billData.paymentTerms}</p>` : ''}
-                  </div>
+            <!-- Details Section -->
+            <div class="details">
+              <div>
+                <h3>Consignee / Client:</h3>
+                <p style="font-size: 16px;">${billData.clientName || 'Walk-in Client'}</p>
+                <p style="font-weight: normal; color: #475569; font-size: 12px; margin-top: 4px; line-height: 1.5;">${billData.clientAddress || ''}</p>
+                <p style="font-weight: normal; color: #475569; font-size: 12px; margin-top: 2px;">Phone: ${billData.clientPhone || ''}</p>
+                ${billData.clientGstin ? `<p style="font-weight: normal; color: #1e293b; font-size: 12px; margin-top: 2px;">GSTIN: ${billData.clientGstin}</p>` : ''}
+              </div>
+              <div style="text-align: right">
+                <h3>Document Details:</h3>
+                <p style="font-weight: normal; margin: 0; font-size: 13px; color: #475569;">Payment Status: <strong style="color: ${billData.status === 'Paid' ? '#16a34a' : '#d97706'}">${billData.status}</strong></p>
+                ${billData.showPaymentTerms && billData.paymentTerms ? `<p style="font-weight: normal; margin: 4px 0 0 0; font-size: 13px; color: #475569;">Payment Terms: <strong>${billData.paymentTerms}</strong></p>` : ''}
+              </div>
+            </div>
+
+            <!-- Logistics / Dispatch Info Grid -->
+            ${(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) ? `
+              <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; line-height: 1.6;">
+                <h4 style="margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: ${themeColor}; font-weight: bold;">Logistics & Transport Information</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                  ${billData.vehicleNumber ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Vehicle No.</span><strong style="color: #1e293b;">${billData.vehicleNumber}</strong></div>` : ''}
+                  ${billData.lrGrNumber ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">LR / GR No.</span><strong style="color: #1e293b;">${billData.lrGrNumber}</strong></div>` : ''}
+                  ${billData.numberOfLabourers ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Labourers</span><strong style="color: #1e293b;">${billData.numberOfLabourers} Persons</strong></div>` : ''}
+                  ${billData.goodsDescription ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Goods</span><strong style="color: #1e293b;">${billData.goodsDescription}</strong></div>` : ''}
+                  ${billData.origin ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Origin</span><strong style="color: #1e293b;">${billData.origin}</strong></div>` : ''}
+                  ${billData.destination ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Destination</span><strong style="color: #1e293b;">${billData.destination}</strong></div>` : ''}
+                  ${billData.loadingDate ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Loading Date</span><strong style="color: #1e293b;">${new Date(billData.loadingDate).toLocaleDateString('en-GB')}</strong></div>` : ''}
+                  ${billData.unloadingDate ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Unloading Date</span><strong style="color: #1e293b;">${new Date(billData.unloadingDate).toLocaleDateString('en-GB')}</strong></div>` : ''}
                 </div>
               </div>
+            ` : ''}
 
-              <!-- Logistics / Dispatch Info Grid -->
-              ${(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) ? `
-                <div style="margin-top: 25px;">
-                  <div class="logistics-title">Logistics & Dispatch Information</div>
-                  <div class="grid-4" style="row-gap: 15px;">
-                    ${billData.vehicleNumber ? `
-                      <div>
-                        <div class="meta-label">Vehicle Number</div>
-                        <p class="meta-value">${billData.vehicleNumber}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.lrGrNumber ? `
-                      <div>
-                        <div class="meta-label">LR / GR Number</div>
-                        <p class="meta-value">${billData.lrGrNumber}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.origin ? `
-                      <div>
-                        <div class="meta-label">Origin (From)</div>
-                        <p class="meta-value">${billData.origin}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.destination ? `
-                      <div>
-                        <div class="meta-label">Destination (To)</div>
-                        <p class="meta-value">${billData.destination}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.goodsDescription ? `
-                      <div style="grid-column: span 2;">
-                        <div class="meta-label">Description of Goods</div>
-                        <p class="meta-value">${billData.goodsDescription}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.loadingDate ? `
-                      <div>
-                        <div class="meta-label">Loading Date</div>
-                        <p class="meta-value">${new Date(billData.loadingDate).toLocaleDateString('en-IN')}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.unloadingDate ? `
-                      <div>
-                        <div class="meta-label">Unloading Date</div>
-                        <p class="meta-value">${new Date(billData.unloadingDate).toLocaleDateString('en-IN')}</p>
-                      </div>
-                    ` : ''}
-                    ${billData.numberOfLabourers ? `
-                      <div>
-                        <div class="meta-label">No. of Labourers</div>
-                        <p class="meta-value">${billData.numberOfLabourers}</p>
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              ` : ''}
-
-              <!-- Charges Table (Work Items + Static Extra Charges) -->
-              <table>
-                <thead>
+            <!-- Charges Table -->
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">Sr.</th>
+                  <th style="text-align: left;">Work Description / Extra Charge</th>
+                  <th style="width: 100px; text-align: center;">Labourers</th>
+                  <th style="width: 80px; text-align: center;">Days</th>
+                  <th style="width: 120px; text-align: right;">Rate</th>
+                  <th style="width: 140px; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(billData.workItems || []).map((item, idx) => `
                   <tr>
-                    <th style="width: 50px;">Sr.</th>
-                    <th>Work Description / Extra Charge</th>
-                    <th style="text-align: center; width: 100px;">Labourers</th>
-                    <th style="text-align: center; width: 100px;">Days</th>
-                    <th style="text-align: right; width: 120px;">Rate</th>
-                    <th style="text-align: right; width: 150px;">Total</th>
+                    <td style="text-align: center; color: #64748b;">${String(idx + 1).padStart(2, '0')}</td>
+                    <td style="text-align: left; font-weight: bold; color: #1e293b;">${item.workDescription || 'Labour Work'}</td>
+                    <td style="text-align: center;">${item.labourCount}</td>
+                    <td style="text-align: center;">${item.workingDays || 1}</td>
+                    <td style="text-align: right;">₹${Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; font-weight: bold; color: #1e293b;">₹${Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${(billData.workItems || []).map((item, idx) => `
-                    <tr>
-                      <td>${String(idx + 1).padStart(2, '0')}</td>
-                      <td style="font-weight: 600; color: #1e293b;">${item.workDescription || 'Labour work'}</td>
-                      <td style="text-align: center;">${item.labourCount}</td>
-                      <td style="text-align: center;">${item.workingDays || 1}</td>
-                      <td style="text-align: right;">₹${Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  `).join('')}
-                  ${otherChargesList.map((item, idx) => `
-                    <tr>
-                      <td>${String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
-                      <td style="font-weight: 600; color: #1e293b;">${item.label}</td>
-                      <td style="text-align: center; color: #64748b;">-</td>
-                      <td style="text-align: center; color: #64748b;">-</td>
-                      <td style="text-align: right; color: #64748b;">-</td>
-                      <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
+                `).join('')}
+                ${otherChargesList.map((item, idx) => `
+                  <tr>
+                    <td style="text-align: center; color: #64748b;">${String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
+                    <td style="text-align: left; font-weight: bold; color: #1e293b;">${item.label}</td>
+                    <td style="text-align: center; color: #94a3b8;">-</td>
+                    <td style="text-align: center; color: #94a3b8;">-</td>
+                    <td style="text-align: right; color: #94a3b8;">-</td>
+                    <td style="text-align: right; font-weight: bold; color: #1e293b;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
 
-              <!-- Summary Section -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px;">
-                <div style="max-width: 450px;">
-                  <div class="words-box">
-                    <span style="display: block; font-size: 9px; text-transform: uppercase; color: #166534; margin-bottom: 2px;">Amount in Words</span>
-                    ${computed.amountInWords}
+            <!-- Summary / Totals block -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 30px;">
+              <div style="max-width: 450px; flex: 1;">
+                <div style="padding: 10px 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; color: #334155; font-weight: 600;">
+                  <span style="display: block; font-size: 9px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; font-weight: bold;">Amount in Words</span>
+                  ${computed.amountInWords}
+                </div>
+                ${billData.remarks ? `
+                  <div style="margin-top: 15px;">
+                    <div style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">Remarks / Instructions</div>
+                    <p style="margin: 0; font-size: 11px; font-style: italic; color: #555;">${billData.remarks}</p>
                   </div>
-                  ${billData.remarks ? `
-                    <div style="margin-top: 15px;">
-                      <div class="meta-label">Remarks / Instructions</div>
-                      <p class="meta-text" style="font-style: italic;">${billData.remarks}</p>
-                    </div>
-                  ` : ''}
-                </div>
-
-                <div class="totals-container">
-                  ${billData.showTax ? `
-                    <div class="total-row">
-                      <span>Subtotal:</span>
-                      <span style="font-weight: bold;">₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    ${Number(billData.taxPercentage) > 0 ? `
-                      <div class="total-row">
-                        <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
-                        <span style="font-weight: bold;">₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                    ` : ''}
-                  ` : ''}
-                  <div class="grand-total-row" style="${!billData.showTax ? 'border-top: 2px solid #0f172a; margin-top: 0;' : ''}">
-                    <span>Grand Total:</span>
-                    <span>₹${computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Terms & Conditions Section (Optional) -->
-              ${billData.showTerms && billData.paymentTerms ? `
-                <div style="margin-top: 25px; max-width: 600px;">
-                  <div class="meta-label">Terms & Conditions</div>
-                  <p class="meta-text" style="white-space: pre-wrap; font-size: 11px; color: #475569; line-height: 1.6;">${billData.paymentTerms}</p>
-                </div>
-              ` : ''}
-
-              <!-- Footer Section -->
-              <div class="footer-grid">
-                <div>
-                  <p style="font-size: 10px; color: #64748b; margin: 0;">1. Subject to local jurisdiction.</p>
-                  <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0;">2. Generated electronically on ${new Date().toLocaleDateString('en-IN')}</p>
-                </div>
-                ${billData.showSignature ? `
-                  <div class="signature-box">
-                    ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
-                    <div class="signature-line">For ${billData.serviceProviderName || 'Contractor'}</div>
-                    <p style="font-size: 9px; color: #64748b; margin: 2px 0 0 0;">Authorized Signature</p>
+                ` : ''}
+                ${billData.showTerms && billData.paymentTerms ? `
+                  <div style="margin-top: 15px;">
+                    <div style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">Terms & Conditions</div>
+                    <p style="margin: 0; font-size: 10px; color: #555; white-space: pre-wrap; line-height: 1.5;">${billData.paymentTerms}</p>
                   </div>
                 ` : ''}
               </div>
 
-              ${theme === 'modern' ? '</div></div>' : '</div>'}
+              <div style="width: 250px; flex-shrink: 0; margin-left: auto;">
+                ${billData.showTax ? `
+                  <div class="total-row" style="font-size: 13px; color: #555;">
+                    <span>Sub Total:</span>
+                    <span>₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  ${Number(billData.taxPercentage) > 0 ? `
+                    <div class="total-row" style="font-size: 13px; color: #555;">
+                      <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
+                      <span>₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  ` : ''}
+                ` : ''}
+                <div class="total-row grand-total">
+                  <span>Grand Total:</span>
+                  <span>₹${computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer section -->
+            <div class="footer" style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div style="text-align: left;">
+                <p style="margin: 0;">Generated electronically. Subject to jurisdiction terms.</p>
+                <p style="margin: 2px 0 0 0;">Thank you for your business! | Powered by Krishna ERP</p>
+              </div>
+              ${billData.showSignature ? `
+                <div style="text-align: center; min-width: 180px;">
+                  ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
+                  <div style="border-top: 1.5px solid #334155; margin-top: 40px; font-size: 11px; font-weight: bold; color: #1e293b; padding-top: 4px;">Authorized Signature</div>
+                  <p style="margin: 2px 0 0 0; font-size: 10px; color: #94a3b8;">For ${billData.serviceProviderName || selectedProgram?.name}</p>
+                </div>
+              ` : ''}
+            </div>
+
           </div>
           <script>
             window.onload = function() { window.print(); window.close(); }
@@ -670,114 +561,128 @@ const LabourBillsTab = () => {
       { label: 'Additional Charges', val: billData.additionalCharges }
     ].filter(item => Number(item.val) > 0);
 
+    const customer = customers.find(c => c._id === (billData.customer?._id || billData.customer));
+    const theme = billData.theme || 'classic';
+
     return (
-      <div className={`invoice-container theme-${billData.theme}`} style={{ '--theme-color': themeColor, background: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
+      <div className={`invoice-container theme-${theme}`} style={{ '--theme-color': themeColor, background: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
         
-        {billData.theme === 'modern' ? (
-          <div style={{ background: themeColor, color: 'white', padding: '24px' }}>
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'white' }}>{billData.serviceProviderName || 'CONTRACTOR'}</h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: '11px', opacity: 0.9 }}>{billData.serviceProviderAddress || ''}</p>
-                {billData.serviceProviderGstin && <p style={{ margin: '4px 0 0 0', fontSize: '11px', fontWeight: 'bold' }}>GSTIN: {billData.serviceProviderGstin}</p>}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span className="bg-white/20 px-2.5 py-1 rounded text-xs font-bold text-white uppercase tracking-wider">Labour Bill</span>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px', fontWeight: 'bold' }}># {billData.billNumber || 'DRAFT'}</p>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', opacity: 0.8 }}>Date: {new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
-              </div>
+        <div className="invoice-header">
+          <div className="company-section">
+            {selectedProgram?.showLogo && selectedProgram?.logo && (
+              <img src={selectedProgram.logo} alt="Logo" className="company-logo" />
+            )}
+            <div className="company-details">
+              <h1 className="company-name">{selectedProgram?.name}</h1>
+              <p className="company-address">{selectedProgram?.address}</p>
             </div>
           </div>
-        ) : (
-          <div style={{ padding: '24px 24px 0 24px' }}>
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>{billData.serviceProviderName || 'CONTRACTOR'}</h3>
-                <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b', maxWidth: '300px' }}>{billData.serviceProviderAddress || ''}</p>
-                {billData.serviceProviderGstin && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#0f172a' }}><b>GSTIN:</b> {billData.serviceProviderGstin}</p>}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ background: `${themeColor}15`, color: themeColor, padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', display: 'inline-block', marginBottom: '8px' }}>LABOUR BILL</span>
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#0f172a' }}># {billData.billNumber || 'DRAFT'}</p>
-                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>Date: {new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
-              </div>
+          
+          <div style={{ 
+            width: '100%', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-end',
+            marginTop: '10px'
+          }}>
+            <div>
+              <h2 style={{ margin: 0, color: 'inherit', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>LABOUR BILL</h2>
             </div>
-            <div style={{ borderBottom: `2px solid ${billData.theme === 'minimalist' ? '#cbd5e1' : themeColor}`, margin: '20px 0' }} />
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: 'inherit' }}>
+                <b>No:</b> {billData.billNumber || 'DRAFT'} | <b>Date:</b> {new Date(billData.billDate).toLocaleDateString('en-GB')}
+              </p>
+            </div>
           </div>
-        )}
+        </div>
 
-        <div style={{ padding: '24px' }}>
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-              <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Consignee / Client</h5>
-              <p className="text-sm font-bold text-slate-800">{billData.clientName || 'Walk-in Client'}</p>
-              {billData.clientAddress && <p className="text-xs text-slate-500 mt-1">{billData.clientAddress}</p>}
-              {billData.clientPhone && <p className="text-xs text-slate-500 mt-1">Phone: {billData.clientPhone}</p>}
-              {billData.clientGstin && <p className="text-xs text-slate-700 font-bold mt-1">GSTIN: {billData.clientGstin}</p>}
+        <div style={{ padding: theme === 'modern' ? '0 40px 40px 40px' : '24px' }}>
+          
+          <div className="invoice-info">
+            <div>
+              <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Consignee / Client:</h3>
+              <p style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{billData.clientName || 'Walk-in Client'}</p>
+              {billData.clientAddress && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666', maxWidth: '250px' }}>{billData.clientAddress}</p>}
+              {billData.clientPhone && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666' }}>Phone: {billData.clientPhone}</p>}
+              {billData.clientGstin && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}><b>GSTIN:</b> {billData.clientGstin}</p>}
             </div>
-
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 flex flex-col justify-between">
-              <div>
-                <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Billing Status</h5>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${billData.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
-                  {billData.status}
-                </span>
-                {billData.showPaymentTerms && billData.paymentTerms && <p className="text-xs text-slate-600 mt-2"><b>Terms:</b> {billData.paymentTerms}</p>}
+            {billData.showPaymentTerms && billData.paymentTerms && (
+              <div style={{ textAlign: 'right' }}>
+                <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Info:</h3>
+                <p style={{ margin: 0, fontSize: '13px', color: '#666', maxWidth: '250px', whiteSpace: 'pre-wrap' }}>{billData.paymentTerms}</p>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Logistics Details */}
           {(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) && (
-            <div className="mb-6">
-              <h4 style={{ color: themeColor, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px' }}>Logistics Information</h4>
-              <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-xs">
+            <div style={{ 
+              marginBottom: '30px', 
+              padding: '15px 20px', 
+              background: '#f8fafc', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px',
+              fontSize: '13px'
+            }}>
+              <h4 style={{ 
+                margin: '0 0 12px 0', 
+                fontSize: '11px', 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px', 
+                color: 'var(--theme-color, #4f46e5)', 
+                fontWeight: '700' 
+              }}>Logistics & Transport Information</h4>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                gap: '15px' 
+              }}>
                 {billData.vehicleNumber && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Vehicle No.</span>
-                    <span className="font-semibold text-slate-700">{billData.vehicleNumber}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Vehicle No.</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.vehicleNumber}</span>
                   </div>
                 )}
                 {billData.lrGrNumber && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">LR / GR No.</span>
-                    <span className="font-semibold text-slate-700">{billData.lrGrNumber}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>LR / GR No.</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.lrGrNumber}</span>
                   </div>
                 )}
                 {billData.numberOfLabourers && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Labourers</span>
-                    <span className="font-semibold text-slate-700">{billData.numberOfLabourers} Persons</span>
-                  </div>
-                )}
-                {billData.origin && (
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Origin</span>
-                    <span className="font-semibold text-slate-700">{billData.origin}</span>
-                  </div>
-                )}
-                {billData.destination && (
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Destination</span>
-                    <span className="font-semibold text-slate-700">{billData.destination}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Labour Count</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.numberOfLabourers} Persons</span>
                   </div>
                 )}
                 {billData.goodsDescription && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Goods</span>
-                    <span className="font-semibold text-slate-700">{billData.goodsDescription}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Goods Description</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.goodsDescription}</span>
+                  </div>
+                )}
+                {billData.origin && (
+                  <div>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Origin</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.origin}</span>
+                  </div>
+                )}
+                {billData.destination && (
+                  <div>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Destination</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.destination}</span>
                   </div>
                 )}
                 {billData.loadingDate && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Loading Date</span>
-                    <span className="font-semibold text-slate-700">{new Date(billData.loadingDate).toLocaleDateString('en-IN')}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Loading Date</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{new Date(billData.loadingDate).toLocaleDateString('en-GB')}</span>
                   </div>
                 )}
                 {billData.unloadingDate && (
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Unloading Date</span>
-                    <span className="font-semibold text-slate-700">{new Date(billData.unloadingDate).toLocaleDateString('en-IN')}</span>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Unloading Date</span>
+                    <span style={{ fontWeight: '600', color: '#334155' }}>{new Date(billData.unloadingDate).toLocaleDateString('en-GB')}</span>
                   </div>
                 )}
               </div>
@@ -787,99 +692,109 @@ const LabourBillsTab = () => {
           {/* Charges Grid */}
           <div className="mb-6">
             <h4 style={{ color: themeColor, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px' }}>Charges & Costing</h4>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Description</th>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Labourers</th>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Days</th>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Rate</th>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
+            <table className="invoice-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+              <thead>
+                <tr style={{ borderTop: '1.5px solid #1e293b', borderBottom: '1.5px solid #1e293b' }}>
+                  <th style={{ width: '50px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Sr.</th>
+                  <th style={{ padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'left' }}>Description</th>
+                  <th style={{ width: '100px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Labourers</th>
+                  <th style={{ width: '80px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Days</th>
+                  <th style={{ width: '120px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'right' }}>Rate</th>
+                  <th style={{ width: '140px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'right' }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(billData.workItems || []).map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ color: '#64748b', padding: '14px 10px', textAlign: 'center', fontSize: '13px' }}>{String(idx + 1).padStart(2, '0')}</td>
+                    <td style={{ fontWeight: '600', color: '#1e293b', padding: '14px 10px', textAlign: 'left', fontSize: '13px' }}>{item.workDescription || 'Labour Work'}</td>
+                    <td style={{ textAlign: 'center', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>{item.labourCount}</td>
+                    <td style={{ textAlign: 'center', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>{item.workingDays || 1}</td>
+                    <td style={{ textAlign: 'right', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>₹{Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td style={{ textAlign: 'right', fontWeight: '700', color: '#1e293b', padding: '14px 10px', fontSize: '13px' }}>₹{Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white text-xs">
-                  {(billData.workItems || []).map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="px-4 py-2.5 font-medium text-slate-700">{item.workDescription || 'Labour Work'}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-600">{item.labourCount}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-600">{item.workingDays || 1}</td>
-                      <td className="px-4 py-2.5 text-right text-slate-600">₹{Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  ))}
-                  {otherChargesList.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="px-4 py-2.5 font-medium text-slate-700">{item.label}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-400">-</td>
-                      <td className="px-4 py-2.5 text-center text-slate-400">-</td>
-                      <td className="px-4 py-2.5 text-right text-slate-400">-</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  ))}
-                  {(!billData.workItems || billData.workItems.length === 0) && otherChargesList.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="px-4 py-4 text-center italic text-gray-400">No charges entered yet</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+                {otherChargesList.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ color: '#64748b', padding: '14px 10px', textAlign: 'center', fontSize: '13px' }}>{String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
+                    <td style={{ fontWeight: '600', color: '#1e293b', padding: '14px 10px', textAlign: 'left', fontSize: '13px' }}>{item.label}</td>
+                    <td style={{ textAlign: 'center', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
+                    <td style={{ textAlign: 'center', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
+                    <td style={{ textAlign: 'right', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
+                    <td style={{ textAlign: 'right', fontWeight: '700', color: '#1e293b', padding: '14px 10px', fontSize: '13px' }}>₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+                {(!billData.workItems || billData.workItems.length === 0) && otherChargesList.length === 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ padding: '24px', textAlign: 'center', fontStyle: 'italic', color: '#999' }}>No charges entered yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1">
-              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 text-[11px] font-semibold">
-                <span className="text-[9px] uppercase tracking-wider text-emerald-600 block mb-0.5">Amount in Words</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '30px', marginTop: '30px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ 
+                padding: '10px 15px', 
+                background: '#f8fafc', 
+                border: '1px solid #cbd5e1', 
+                borderRadius: '6px', 
+                fontSize: '12px', 
+                color: '#1e293b', 
+                fontWeight: '600' 
+              }}>
+                <span style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>Amount in Words</span>
                 {computed.amountInWords}
               </div>
               {billData.remarks && (
-                <div className="mt-3">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Remarks</span>
-                  <span className="text-xs text-slate-500 italic">{billData.remarks}</span>
+                <div style={{ marginTop: '15px' }}>
+                  <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Remarks / Internal Notes</span>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#475569', fontStyle: 'italic' }}>{billData.remarks}</p>
                 </div>
               )}
               {billData.showTerms && billData.paymentTerms && (
-                <div className="mt-3">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Terms & Conditions</span>
-                  <span className="text-[10px] text-slate-500 block white-space-pre-wrap">{billData.paymentTerms}</span>
+                <div style={{ marginTop: '15px' }}>
+                  <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Terms & Conditions</span>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{billData.paymentTerms}</p>
                 </div>
               )}
             </div>
 
-            <div className="w-64 text-xs">
+            <div className="total-section" style={{ marginTop: 0 }}>
               {billData.showTax ? (
                 <>
-                  <div className="flex justify-between py-1 text-slate-500">
-                    <span>Subtotal:</span>
-                    <span className="font-bold text-slate-800">₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  <div className="total-row">
+                    <span style={{ color: '#666' }}>Sub Total</span>
+                    <span style={{ fontWeight: '600' }}>₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   {Number(billData.taxPercentage) > 0 && (
-                    <div className="flex justify-between py-1 text-slate-500">
-                      <span>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%):</span>
-                      <span className="font-bold text-slate-800">₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <div className="total-row">
+                      <span style={{ color: '#666' }}>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%)</span>
+                      <span style={{ fontWeight: '600' }}>₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
                 </>
               ) : null}
-              <div className="flex justify-between py-2 border-t border-slate-200 mt-1 font-bold text-base" style={{ color: themeColor }}>
-                <span>Grand Total:</span>
+              <div className="total-row grand-total" style={{ color: themeColor, borderTop: '1.5px solid #1e293b', paddingTop: '10px', marginTop: '5px' }}>
+                <span>Grand Total</span>
                 <span>₹{computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-between items-end mt-12 pt-4 border-t border-slate-100">
-            <div className="text-[9px] text-slate-400">
-              <p>Generated electronically. Subject to jurisdiction terms.</p>
+          <div className="invoice-footer">
+            <div>
+              <p style={{ fontSize: '10px', color: '#999', margin: 0 }}>Generated electronically. Subject to jurisdiction terms.</p>
+              <p style={{ fontSize: '10px', color: '#999', margin: '2px 0 0 0' }}>Thank you for your business! | Powered by Krishna ERP</p>
             </div>
             {billData.showSignature && (
-              <div className="text-center">
+              <div className="signature-section">
                 {selectedProgram?.signatureUrl && (
-                  <img src={selectedProgram.signatureUrl} alt="Signature" className="h-10 mx-auto object-contain mb-1" />
+                  <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" />
                 )}
-                <span className="block text-[10px] font-bold text-slate-800 border-t border-slate-300 pt-1 px-4">Authorized Signature</span>
-                <span className="block text-[9px] text-slate-400 mt-0.5">For {billData.serviceProviderName || 'Contractor'}</span>
+                <div className="signature-label">Authorized Signature</div>
+                <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {billData.serviceProviderName || selectedProgram?.name}</p>
               </div>
             )}
           </div>
@@ -891,7 +806,6 @@ const LabourBillsTab = () => {
 
   return (
     <div className="animate-in fade-in duration-300">
-      
       {/* Search Header */}
       {!showForm && (
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
