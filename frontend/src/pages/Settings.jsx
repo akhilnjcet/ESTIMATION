@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Building2, Plus, Edit2, Trash2, Globe, Phone, Mail, MapPin, Hash, Palette } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, Phone, Mail, MapPin, Hash, Palette } from 'lucide-react';
 
 const Settings = () => {
   const { programs, setPrograms } = useProgram();
@@ -225,6 +225,13 @@ const Settings = () => {
                   <input type="checkbox" className="w-5 h-5 accent-primary rounded" checked={formData.showTermsByDefault} onChange={e => setFormData({...formData, showTermsByDefault: e.target.checked})} />
                   <span className="font-bold text-sm text-gray-700">Show Terms by Default</span>
                 </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
+              <div className="form-group">
+                <label className="form-label">Default Footer Note</label>
+                <textarea className="form-control" rows="4" value={formData.footerText} onChange={e => setFormData({...formData, footerText: e.target.value})} placeholder="Generated electronically. Subject to jurisdiction terms..." />
               </div>
             </div>
 

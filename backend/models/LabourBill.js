@@ -67,7 +67,9 @@ const labourBillSchema = new mongoose.Schema({
   showTerms: { type: Boolean, default: true },
   showTax: { type: Boolean, default: true },
   showSignature: { type: Boolean, default: true },
-  showPaymentTerms: { type: Boolean, default: true }
+  showPaymentTerms: { type: Boolean, default: true },
+  showFooter: { type: Boolean, default: true },
+  footerText: { type: String, default: "Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP" }
 }, { timestamps: true });
 
 labourBillSchema.index({ programId: 1 });

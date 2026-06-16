@@ -86,6 +86,13 @@ const quotationSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  showFooter: {
+    type: Boolean,
+    default: true
+  },
+  footerText: {
+    type: String
+  },
   theme: {
     type: String,
     enum: ['classic', 'modern', 'minimalist'],

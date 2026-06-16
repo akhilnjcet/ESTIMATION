@@ -124,7 +124,9 @@ const LabourBillsTab = () => {
     showTerms: true,
     showTax: true,
     showSignature: true,
-    showPaymentTerms: true
+    showPaymentTerms: true,
+    showFooter: true,
+    footerText: selectedProgram?.footerText || 'Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP'
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -322,7 +324,9 @@ const LabourBillsTab = () => {
       showTerms: bill.showTerms !== undefined ? bill.showTerms : true,
       showTax: bill.showTax !== undefined ? bill.showTax : true,
       showSignature: bill.showSignature !== undefined ? bill.showSignature : true,
-      showPaymentTerms: bill.showPaymentTerms !== undefined ? bill.showPaymentTerms : true
+      showPaymentTerms: bill.showPaymentTerms !== undefined ? bill.showPaymentTerms : true,
+      showFooter: bill.showFooter !== undefined ? bill.showFooter : true,
+      footerText: bill.footerText !== undefined ? bill.footerText : (selectedProgram?.footerText || 'Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP')
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -523,19 +527,30 @@ const LabourBillsTab = () => {
             </div>
 
             <!-- Footer section -->
-            <div class="footer" style="display: flex; justify-content: space-between; align-items: flex-end;">
-              <div style="text-align: left;">
-                <p style="margin: 0;">Generated electronically. Subject to jurisdiction terms.</p>
-                <p style="margin: 2px 0 0 0;">Thank you for your business! | Powered by Krishna ERP</p>
+            ${billData.showFooter ? `
+              <div class="footer" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; width: 100%;">
+                <div style="text-align: left;">
+                  ${(billData.footerText || '').split('\n').map((line, idx) => `
+                    <p style="${idx > 0 ? 'margin: 2px 0 0 0;' : 'margin: 0;'}">${line}</p>
+                  `).join('')}
+                </div>
+                ${billData.showSignature ? `
+                  <div style="text-align: center; min-width: 180px;">
+                    ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
+                    <div style="border-top: 1.5px solid #334155; margin-top: 40px; font-size: 11px; font-weight: bold; color: #1e293b; padding-top: 4px;">Authorized Signature</div>
+                    <p style="margin: 2px 0 0 0; font-size: 10px; color: #94a3b8;">For ${billData.serviceProviderName || selectedProgram?.name}</p>
+                  </div>
+                ` : ''}
               </div>
-              ${billData.showSignature ? `
+            ` : billData.showSignature ? `
+              <div class="footer" style="display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; width: 100%;">
                 <div style="text-align: center; min-width: 180px;">
                   ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
                   <div style="border-top: 1.5px solid #334155; margin-top: 40px; font-size: 11px; font-weight: bold; color: #1e293b; padding-top: 4px;">Authorized Signature</div>
                   <p style="margin: 2px 0 0 0; font-size: 10px; color: #94a3b8;">For ${billData.serviceProviderName || selectedProgram?.name}</p>
                 </div>
-              ` : ''}
-            </div>
+              </div>
+            ` : ''}
 
           </div>
           <script>
@@ -783,21 +798,26 @@ const LabourBillsTab = () => {
             </div>
           </div>
 
-          <div className="invoice-footer">
-            <div>
-              <p style={{ fontSize: '10px', color: '#999', margin: 0 }}>Generated electronically. Subject to jurisdiction terms.</p>
-              <p style={{ fontSize: '10px', color: '#999', margin: '2px 0 0 0' }}>Thank you for your business! | Powered by Krishna ERP</p>
-            </div>
-            {billData.showSignature && (
-              <div className="signature-section">
-                {selectedProgram?.signatureUrl && (
-                  <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" />
-                )}
-                <div className="signature-label">Authorized Signature</div>
-                <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {billData.serviceProviderName || selectedProgram?.name}</p>
+          {(billData.showFooter || billData.showSignature) && (
+            <div className="invoice-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #e2e8f0', marginTop: '40px', paddingTop: '20px' }}>
+              <div>
+                {billData.showFooter && (billData.footerText || '').split('\n').map((line, idx) => (
+                  <p key={idx} style={{ fontSize: '10px', color: '#999', margin: idx > 0 ? '2px 0 0 0' : 0 }}>
+                    {line}
+                  </p>
+                ))}
               </div>
-            )}
-          </div>
+              {billData.showSignature && (
+                <div className="signature-section" style={{ textAlign: 'center', minWidth: '180px' }}>
+                  {selectedProgram?.signatureUrl && (
+                    <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" style={{ maxHeight: '50px', width: 'auto', marginBottom: '5px' }} />
+                  )}
+                  <div className="signature-label" style={{ borderTop: '1.5px solid #334155', padding: '4px 0 0 0', fontSize: '11px', fontWeight: 'bold', color: '#1e293b' }}>Authorized Signature</div>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {billData.serviceProviderName || selectedProgram?.name}</p>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </div>
@@ -1321,12 +1341,21 @@ const LabourBillsTab = () => {
                       />
                       <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showFooter} 
+                        onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Footer Note</span>
+                    </label>
                   </div>
                 </div>
               </div>
 
-              {/* Terms and Remarks */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Terms, Remarks and Footer */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="form-group">
                   <label className="form-label text-xs">Payment Terms</label>
                   <textarea 
@@ -1345,6 +1374,17 @@ const LabourBillsTab = () => {
                     value={formData.remarks} 
                     onChange={e => setFormData({...formData, remarks: e.target.value})} 
                     placeholder="Any special remarks..."
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label text-xs">Footer Note (Print bottom)</label>
+                  <textarea 
+                    className="form-control" 
+                    rows="3" 
+                    value={formData.footerText} 
+                    disabled={!formData.showFooter}
+                    onChange={e => setFormData({...formData, footerText: e.target.value})} 
+                    placeholder="Enter custom footer note..."
                   />
                 </div>
               </div>

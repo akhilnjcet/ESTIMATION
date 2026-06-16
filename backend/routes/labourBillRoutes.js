@@ -66,7 +66,9 @@ router.post('/', protect, async (req, res) => {
       showTerms,
       showTax,
       showSignature,
-      showPaymentTerms
+      showPaymentTerms,
+      showFooter,
+      footerText
     } = req.body;
 
     let finalBillNumber = billNumber;
@@ -124,7 +126,9 @@ router.post('/', protect, async (req, res) => {
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
       showSignature: showSignature !== undefined ? showSignature : true,
-      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP"
     });
 
     const createdBill = await bill.save();
@@ -182,7 +186,9 @@ router.put('/:id', protect, async (req, res) => {
       showTerms,
       showTax,
       showSignature,
-      showPaymentTerms
+      showPaymentTerms,
+      showFooter,
+      footerText
     } = req.body;
 
     const updateData = {
@@ -224,7 +230,9 @@ router.put('/:id', protect, async (req, res) => {
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
       showSignature: showSignature !== undefined ? showSignature : true,
-      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP"
     };
 
     if (billNumber && billNumber.trim() !== '') {

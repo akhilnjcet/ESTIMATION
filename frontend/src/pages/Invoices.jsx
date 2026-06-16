@@ -22,6 +22,8 @@ const Invoices = () => {
     showTax: true,
     showPaymentTerms: true,
     showSignature: true,
+    showFooter: true,
+    footerText: '',
     theme: 'classic',
     date: new Date().toISOString().split('T')[0],
     invoiceNumber: ''
@@ -55,24 +57,24 @@ const Invoices = () => {
     }
   };
 
+  const [prevProgramId, setPrevProgramId] = useState(selectedProgram?._id);
+  if (selectedProgram?._id !== prevProgramId) {
+    setPrevProgramId(selectedProgram?._id);
+    if (!editingId && selectedProgram) {
+      setFormData(prev => ({
+        ...prev,
+        terms: selectedProgram.defaultTerms || prev.terms,
+        showTerms: selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true,
+        footerText: selectedProgram.footerText || 'This is a computer generated invoice.\nThank you for your business! | Powered by Krishna ERP'
+      }));
+    }
+  }
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchInvoices();
     fetchCustomers();
     fetchProducts();
-    if (selectedProgram) {
-      setFormData(prev => {
-        const nextTerms = selectedProgram.defaultTerms || prev.terms;
-        const nextShowTerms = selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true;
-        if (prev.terms === nextTerms && prev.showTerms === nextShowTerms) {
-          return prev;
-        }
-        return {
-          ...prev,
-          terms: nextTerms,
-          showTerms: nextShowTerms
-        };
-      });
-    }
   }, [selectedProgram]);
 
   const filteredInvoices = invoices.filter(inv => 
@@ -96,11 +98,13 @@ const Invoices = () => {
     setFormData({ 
       customer: '', 
       notes: '', 
-      terms: '',
-      showTerms: true,
+      terms: selectedProgram?.defaultTerms || '',
+      showTerms: selectedProgram?.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true,
       showTax: true,
       showPaymentTerms: true,
       showSignature: true,
+      showFooter: true,
+      footerText: selectedProgram?.footerText || 'This is a computer generated invoice.\nThank you for your business! | Powered by Krishna ERP',
       theme: 'classic',
       date: new Date().toISOString().split('T')[0],
       invoiceNumber: ''
@@ -120,6 +124,8 @@ const Invoices = () => {
       showTax: inv.showTax !== undefined ? inv.showTax : true,
       showPaymentTerms: inv.showPaymentTerms !== undefined ? inv.showPaymentTerms : true,
       showSignature: inv.showSignature !== undefined ? inv.showSignature : true,
+      showFooter: inv.showFooter !== undefined ? inv.showFooter : true,
+      footerText: inv.footerText !== undefined ? inv.footerText : (selectedProgram?.footerText || 'This is a computer generated invoice.\nThank you for your business! | Powered by Krishna ERP'),
       theme: inv.theme || 'classic',
       date: inv.createdAt ? new Date(inv.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       invoiceNumber: inv.invoiceNumber || ''
@@ -286,7 +292,11 @@ const Invoices = () => {
                   </div>
                 </>
               )}
-              <p style={{ fontSize: '10px', color: '#999', marginTop: '10px' }}>This is a computer generated document.</p>
+              {docData.showFooter !== false && (docData.footerText || '').split('\n').map((line, idx) => (
+                <p key={idx} style={{ fontSize: '10px', color: '#999', margin: idx > 0 ? '2px 0 0 0' : '10px 0 0 0' }}>
+                  {line}
+                </p>
+              ))}
             </div>
             
             {docData.showSignature !== false && (selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
@@ -367,6 +377,8 @@ const Invoices = () => {
     showTax: formData.showTax,
     showPaymentTerms: formData.showPaymentTerms,
     showSignature: formData.showSignature,
+    showFooter: formData.showFooter,
+    footerText: formData.footerText,
     theme: formData.theme,
     date: formData.date
   };
@@ -569,31 +581,64 @@ const Invoices = () => {
                           />
                           <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
                         </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showFooter !== false} 
+                            onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Include Footer Note</span>
+                        </label>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mb-8 border-t pt-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 accent-primary rounded" 
-                          checked={formData.showTerms} 
-                          onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
-                        />
-                        <span className="text-sm font-bold text-gray-600">Show in Print</span>
-                      </label>
+                  <div className="mb-8 border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showTerms} 
+                            onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                        </label>
+                      </div>
+                      <textarea 
+                        className="form-control" 
+                        rows="4" 
+                        value={formData.terms} 
+                        onChange={e => setFormData({...formData, terms: e.target.value})} 
+                        placeholder="Enter specific terms for this invoice..."
+                        disabled={!formData.showTerms}
+                      />
                     </div>
-                    <textarea 
-                      className="form-control" 
-                      rows="4" 
-                      value={formData.terms} 
-                      onChange={e => setFormData({...formData, terms: e.target.value})} 
-                      placeholder="Enter specific terms for this invoice..."
-                      disabled={!formData.showTerms}
-                    />
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-700">Footer Note (Print bottom)</h3>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showFooter !== false} 
+                            onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                        </label>
+                      </div>
+                      <textarea 
+                        className="form-control" 
+                        rows="4" 
+                        value={formData.footerText} 
+                        onChange={e => setFormData({...formData, footerText: e.target.value})} 
+                        placeholder="Enter custom footer note..."
+                        disabled={formData.showFooter === false}
+                      />
+                    </div>
                   </div>
 
                   <div className="form-group mb-8">

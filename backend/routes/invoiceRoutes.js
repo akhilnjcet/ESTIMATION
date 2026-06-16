@@ -20,7 +20,7 @@ router.post('/', protect, async (req, res) => {
     console.log('POST /invoices - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
 
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme, invoiceNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, invoiceNumber } = req.body;
 
     let finalInvoiceNumber = invoiceNumber;
     if (!finalInvoiceNumber || finalInvoiceNumber.trim() === '') {
@@ -58,6 +58,8 @@ router.post('/', protect, async (req, res) => {
       showTax: showTax !== undefined ? showTax : true,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       createdAt: date || new Date()
     });
@@ -82,7 +84,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /invoices - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme, invoiceNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, invoiceNumber } = req.body;
     
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -103,6 +105,8 @@ router.put('/:id', protect, async (req, res) => {
       showTax: showTax !== undefined ? showTax : true,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       status
     };

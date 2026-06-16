@@ -23,7 +23,7 @@ router.post('/', protect, async (req, res) => {
   try {
     console.log('POST /quotations - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, theme, quotationNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, quotationNumber } = req.body;
     
     let finalQuotationNumber = quotationNumber;
     if (!finalQuotationNumber || finalQuotationNumber.trim() === '') {
@@ -61,6 +61,8 @@ router.post('/', protect, async (req, res) => {
       showTax: showTax !== undefined ? showTax : true,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       createdAt: date || new Date()
     });
@@ -85,7 +87,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /quotations - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, theme, quotationNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, quotationNumber } = req.body;
 
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
@@ -106,6 +108,8 @@ router.put('/:id', protect, async (req, res) => {
       showTax: showTax !== undefined ? showTax : true,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
+      showFooter: showFooter !== undefined ? showFooter : true,
+      footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       status
     };

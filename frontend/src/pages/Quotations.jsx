@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { Edit2, Printer, Plus, X, Eye, Trash2 } from 'lucide-react';
@@ -22,28 +22,60 @@ const Quotations = () => {
     showTax: true,
     showPaymentTerms: true,
     showSignature: true,
+    showFooter: true,
+    footerText: '',
     theme: 'classic',
     date: new Date().toISOString().split('T')[0],
     quotationNumber: ''
   });
   const [items, setItems] = useState([]);
 
-  useEffect(() => {
-    fetchQuotations();
-    fetchCustomers();
-    fetchProducts();
-    if (selectedProgram) {
+  const fetchQuotations = async () => {
+    try {
+      const { data } = await api.get('/quotations');
+      setQuotations(data);
+    } catch (err) {
+      console.error('Failed to fetch quotations:', err);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data } = await api.get('/customers');
+      setCustomers(data);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data } = await api.get('/products');
+      setProducts(data);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    }
+  };
+
+  const [prevProgramId, setPrevProgramId] = useState(selectedProgram?._id);
+  if (selectedProgram?._id !== prevProgramId) {
+    setPrevProgramId(selectedProgram?._id);
+    if (!editingId && selectedProgram) {
       setFormData(prev => ({
         ...prev,
         terms: selectedProgram.defaultTerms || prev.terms,
-        showTerms: selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true
+        showTerms: selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true,
+        footerText: selectedProgram.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP'
       }));
     }
-  }, [selectedProgram]);
+  }
 
-  const fetchQuotations = async () => {
-    try { const { data } = await api.get('/quotations'); setQuotations(data); } catch (err) {}
-  };
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchQuotations();
+    fetchCustomers();
+    fetchProducts();
+  }, [selectedProgram]);
 
   const filteredQuotations = quotations.filter(q => 
     q.quotationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,22 +94,17 @@ const Quotations = () => {
     }
   };
 
-  const fetchCustomers = async () => {
-    try { const { data } = await api.get('/customers'); setCustomers(data); } catch (err) {}
-  };
-  const fetchProducts = async () => {
-    try { const { data } = await api.get('/products'); setProducts(data); } catch (err) {}
-  };
-
   const resetForm = () => {
     setFormData({ 
       customer: '', 
       notes: '', 
-      terms: '',
-      showTerms: true,
+      terms: selectedProgram?.defaultTerms || '',
+      showTerms: selectedProgram?.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true,
       showTax: true,
       showPaymentTerms: true,
       showSignature: true,
+      showFooter: true,
+      footerText: selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP',
       theme: 'classic',
       date: new Date().toISOString().split('T')[0],
       quotationNumber: ''
@@ -97,6 +124,8 @@ const Quotations = () => {
       showTax: q.showTax !== undefined ? q.showTax : true,
       showPaymentTerms: q.showPaymentTerms !== undefined ? q.showPaymentTerms : true,
       showSignature: q.showSignature !== undefined ? q.showSignature : true,
+      showFooter: q.showFooter !== undefined ? q.showFooter : true,
+      footerText: q.footerText !== undefined ? q.footerText : (selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP'),
       theme: q.theme || 'classic',
       date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       quotationNumber: q.quotationNumber || ''
@@ -160,122 +189,7 @@ const Quotations = () => {
     }
   };
 
-  const handlePrint = (docData) => {
-    const printWindow = window.open('', '_blank');
-    const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Quotation - ${docData.quotationNumber}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; }
-            .doc-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 14px; line-height: 24px; color: #555; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${selectedProgram?.themeColor || '#4f46e5'}; padding-bottom: 20px; margin-bottom: 30px; }
-            .business-info h1 { margin: 0; color: ${selectedProgram?.themeColor || '#4f46e5'}; font-size: 28px; }
-            .business-info p { margin: 2px 0; font-size: 12px; color: #64748b; }
-            .doc-title { text-align: right; }
-            .doc-title h2 { margin: 0; font-size: 32px; color: #e2e8f0; font-weight: 800; letter-spacing: -1px; }
-            .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
-            .details div { width: 45%; }
-            .details h3 { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; font-weight: bold; }
-            .details p { margin: 0; font-weight: bold; font-size: 14px; color: #1e293b; }
-            table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; margin-bottom: 30px; }
-            table th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #edf2f7; font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
-            table td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px; color: #1e293b; }
-            .totals { width: 250px; margin-left: auto; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .grand-total { font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; margin-top: 10px; padding-top: 10px; }
-            .footer { margin-top: 100px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 11px; text-align: center; color: #94a3b8; }
-          </style>
-        </head>
-        <body>
-          <div class="doc-box">
-            <div class="header">
-              <div class="business-info">
-                <h1>${selectedProgram?.name}</h1>
-                <p>${selectedProgram?.address || ''}</p>
-                <p>Phone: ${selectedProgram?.phone || ''} | Email: ${selectedProgram?.email || ''}</p>
-              </div>
-              <div class="doc-title">
-                <h2 style="color: ${selectedProgram?.themeColor || '#4f46e5'}; opacity: 0.1">QUOTATION</h2>
-                <p style="font-weight: bold; color: #1e293b; margin: 0; font-size: 18px;">${docData.quotationNumber}</p>
-              </div>
-            </div>
-
-            <div class="details">
-              <div>
-                <h3>Quoted To:</h3>
-                <p style="font-size: 16px;">${docData.customer?.customerName || customer?.customerName}</p>
-                <p style="font-weight: normal; color: #64748b; font-size: 12px;">${docData.customer?.address || customer?.address || ''}</p>
-                <p style="font-weight: normal; color: #64748b; font-size: 12px;">Phone: ${docData.customer?.phone || customer?.phone || ''}</p>
-              </div>
-              <div style="text-align: right">
-                <h3>Document Details:</h3>
-                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString('en-GB')}</strong></p>
-                <p style="font-weight: normal">Valid Until: <strong>${new Date(new Date(docData.createdAt || docData.date).getTime() + 15*24*60*60*1000).toLocaleDateString('en-GB')}</strong></p>
-              </div>
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-              <thead>
-                <tr>
-                  <th style="width: 40px; text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Sr.</th>
-                  <th style="text-align: left; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Item Description</th>
-                  <th style="width: 60px; text-align: center; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Qty</th>
-                  <th style="width: 100px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Price</th>
-                  <th style="width: 120px; text-align: right; border-bottom: 2px solid #edf2f7; padding: 12px 0;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${docData.items.map((item, idx) => `
-                  <tr>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">${idx + 1}</td>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
-                      <div style="font-weight: bold; color: #1e293b;">${item.productName}</div>
-                      ${item.description ? `<div style="font-size: 11px; color: #64748b;">${item.description}</div>` : ''}
-                    </td>
-                    <td style="text-align: center; padding: 12px 0; border-bottom: 1px solid #edf2f7;">${item.quantity} ${item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                    <td style="text-align: right; padding: 12px 0; border-bottom: 1px solid #edf2f7;">₹${(item.price || 0).toLocaleString()}</td>
-                    <td style="text-align: right; font-weight: bold; padding: 12px 0; border-bottom: 1px solid #edf2f7;">₹${(item.total || 0).toLocaleString()}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div class="totals" style="margin-top: 30px;">
-              ${docData.showTax !== false ? `
-                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
-                  <span>Sub Total:</span>
-                  <span>₹${(docData.subTotal || docData.totalAmount || 0).toLocaleString()}</span>
-                </div>
-                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
-                  <span>Tax:</span>
-                  <span>₹${(docData.taxAmount || 0).toLocaleString()}</span>
-                </div>
-              ` : ''}
-              <div class="total-row grand-total" style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; padding-top: 15px;">
-                <span>Grand Total:</span>
-                <span>₹${(docData.totalAmount || 0).toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>This is a computer generated quotation.</p>
-              <p>Thank you for your interest! | Powered by Krishna ERP</p>
-            </div>
-          </div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  const renderPreviewDocument = (docData, isLive = false, activeTheme = null) => {
+  const renderPreviewDocument = (docData, activeTheme = null) => {
     const customer = customers.find(c => c._id === (docData.customer?._id || docData.customer));
     const theme = activeTheme || docData.theme || 'classic';
     return (
@@ -379,7 +293,11 @@ const Quotations = () => {
                 </div>
               </>
             )}
-            <p style={{ fontSize: '10px', color: '#999', marginTop: '10px' }}>This is a computer generated document.</p>
+            {docData.showFooter !== false && (docData.footerText || '').split('\n').map((line, idx) => (
+              <p key={idx} style={{ fontSize: '10px', color: '#999', margin: idx > 0 ? '2px 0 0 0' : '10px 0 0 0' }}>
+                {line}
+              </p>
+            ))}
           </div>
             
             {docData.showSignature !== false && (selectedProgram?.signatureUrl || selectedProgram?.signatureTitle) && (
@@ -442,7 +360,7 @@ const Quotations = () => {
             </button>
           </div>
           <div className="animate-in fade-in zoom-in-95 duration-300">
-            {renderPreviewDocument(previewData, false, previewTheme)}
+            {renderPreviewDocument(previewData, previewTheme)}
           </div>
         </div>
       </div>
@@ -460,6 +378,8 @@ const Quotations = () => {
     showTax: formData.showTax,
     showPaymentTerms: formData.showPaymentTerms,
     showSignature: formData.showSignature,
+    showFooter: formData.showFooter,
+    footerText: formData.footerText,
     theme: formData.theme,
     terms: formData.terms,
     date: formData.date
@@ -659,31 +579,64 @@ const Quotations = () => {
                       />
                       <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showFooter !== false} 
+                        onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Footer Note</span>
+                    </label>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-8 border-t pt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 accent-primary rounded" 
-                      checked={formData.showTerms} 
-                      onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
-                    />
-                    <span className="text-sm font-bold text-gray-600">Show in Print</span>
-                  </label>
+              <div className="mb-8 border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showTerms} 
+                        onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                    </label>
+                  </div>
+                  <textarea 
+                    className="form-control" 
+                    rows="4" 
+                    value={formData.terms} 
+                    onChange={e => setFormData({...formData, terms: e.target.value})} 
+                    placeholder="Enter specific terms for this quotation..."
+                    disabled={!formData.showTerms}
+                  />
                 </div>
-                <textarea 
-                  className="form-control" 
-                  rows="4" 
-                  value={formData.terms} 
-                  onChange={e => setFormData({...formData, terms: e.target.value})} 
-                  placeholder="Enter specific terms for this quotation..."
-                  disabled={!formData.showTerms}
-                />
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-700">Footer Note (Print bottom)</h3>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showFooter !== false} 
+                        onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                    </label>
+                  </div>
+                  <textarea 
+                    className="form-control" 
+                    rows="4" 
+                    value={formData.footerText} 
+                    onChange={e => setFormData({...formData, footerText: e.target.value})} 
+                    placeholder="Enter custom footer note..."
+                    disabled={formData.showFooter === false}
+                  />
+                </div>
               </div>
 
               <div className="form-group mb-8">
@@ -700,7 +653,7 @@ const Quotations = () => {
           <div className="hidden lg:block sticky top-8">
             <h2 className="text-xl font-bold mb-6 text-gray-400">Document Preview</h2>
             <div className="shadow-2xl rounded-2xl overflow-hidden border">
-              {renderPreviewDocument(livePreviewData, true, formData.theme)}
+              {renderPreviewDocument(livePreviewData, formData.theme)}
             </div>
           </div>
         </div>
