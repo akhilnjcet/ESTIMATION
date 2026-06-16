@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const workItemSchema = new mongoose.Schema({
   workDescription: { type: String, required: true },
   labourCount: { type: Number, required: true, default: 1 },
+  workingDays: { type: Number, required: true, default: 1 },
   rate: { type: Number, required: true, default: 0 },
   total: { type: Number, required: true, default: 0 }
 });

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Edit2, Printer, Trash2, Plus, X, Eye, Truck, User, DollarSign, Calendar, FileText } from 'lucide-react';
+import { Edit2, Printer, Trash2, Plus, X, Eye, Truck, User, DollarSign, FileText } from 'lucide-react';
 
 // Indian Number to Words Converter
 const toIndianRupeesWords = (num) => {
@@ -78,10 +78,10 @@ const LabourBillsTab = () => {
     billDate: new Date().toISOString().split('T')[0],
     
     // Service Provider Details (Pre-filled from program context)
-    serviceProviderName: '',
-    serviceProviderAddress: '',
-    serviceProviderPhone: '',
-    serviceProviderGstin: '',
+    serviceProviderName: selectedProgram?.name || '',
+    serviceProviderAddress: selectedProgram?.address || '',
+    serviceProviderPhone: selectedProgram?.phone || '',
+    serviceProviderGstin: selectedProgram?.gstNumber || '',
 
     // Customer Selection & Client details
     customer: '',
@@ -101,7 +101,7 @@ const LabourBillsTab = () => {
     numberOfLabourers: '',
 
     // Dynamic Labour Work Items Table
-    workItems: [{ workDescription: '', labourCount: 1, rate: 0, total: 0 }],
+    workItems: [{ workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }],
 
     // Extra Charges (Optional)
     loadingCharges: 0,
@@ -115,7 +115,7 @@ const LabourBillsTab = () => {
     taxPercentage: 0,
     taxDetails: 'GST',
 
-    paymentTerms: '',
+    paymentTerms: selectedProgram?.defaultTerms || '',
     remarks: '',
     theme: 'classic',
     status: 'Unpaid',
@@ -129,25 +129,20 @@ const LabourBillsTab = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  // Load Bills and Customers
-  useEffect(() => {
-    fetchBills();
-    fetchCustomers();
-  }, [selectedProgram]);
-
-  // Pre-fill Service Provider from Selected Program
-  useEffect(() => {
-    if (selectedProgram) {
+  const [prevProgramId, setPrevProgramId] = useState(selectedProgram?._id);
+  if (selectedProgram?._id !== prevProgramId) {
+    setPrevProgramId(selectedProgram?._id);
+    if (!editingId) {
       setFormData(prev => ({
         ...prev,
-        serviceProviderName: selectedProgram.name || '',
-        serviceProviderAddress: selectedProgram.address || '',
-        serviceProviderPhone: selectedProgram.phone || '',
-        serviceProviderGstin: selectedProgram.gstNumber || '',
-        paymentTerms: selectedProgram.defaultTerms || ''
+        serviceProviderName: selectedProgram?.name || '',
+        serviceProviderAddress: selectedProgram?.address || '',
+        serviceProviderPhone: selectedProgram?.phone || '',
+        serviceProviderGstin: selectedProgram?.gstNumber || '',
+        paymentTerms: selectedProgram?.defaultTerms || ''
       }));
     }
-  }, [selectedProgram, showForm]);
+  }
 
   const fetchBills = async () => {
     try {
@@ -166,6 +161,14 @@ const LabourBillsTab = () => {
       console.error('Failed to fetch customers:', err);
     }
   };
+
+  // Load Bills and Customers
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchBills();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCustomers();
+  }, [selectedProgram]);
 
   // Handle customer select change
   const handleCustomerChange = (customerId) => {
@@ -198,7 +201,7 @@ const LabourBillsTab = () => {
   const addWorkItem = () => {
     setFormData(prev => ({
       ...prev,
-      workItems: [...(prev.workItems || []), { workDescription: '', labourCount: 1, rate: 0, total: 0 }]
+      workItems: [...(prev.workItems || []), { workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }]
     }));
   };
 
@@ -207,10 +210,11 @@ const LabourBillsTab = () => {
     updatedItems[index] = { ...updatedItems[index], [field]: value };
     
     // Auto-calculate row total
-    if (field === 'labourCount' || field === 'rate') {
+    if (field === 'labourCount' || field === 'workingDays' || field === 'rate') {
       const count = Number(updatedItems[index].labourCount || 0);
+      const days = Number(updatedItems[index].workingDays !== undefined ? updatedItems[index].workingDays : 1);
       const rate = Number(updatedItems[index].rate || 0);
-      updatedItems[index].total = count * rate;
+      updatedItems[index].total = count * days * rate;
     }
     
     setFormData(prev => ({
@@ -244,8 +248,6 @@ const LabourBillsTab = () => {
 
     return { subTotal, taxAmount, totalAmount, amountInWords };
   };
-
-  const totals = calculateTotals(formData);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -298,8 +300,14 @@ const LabourBillsTab = () => {
       unloadingDate: bill.unloadingDate ? new Date(bill.unloadingDate).toISOString().split('T')[0] : '',
       numberOfLabourers: bill.numberOfLabourers || '',
       workItems: bill.workItems && bill.workItems.length > 0 
-        ? bill.workItems 
-        : [{ workDescription: '', labourCount: 1, rate: 0, total: 0 }],
+        ? bill.workItems.map(item => ({
+            workDescription: item.workDescription || '',
+            labourCount: item.labourCount !== undefined ? item.labourCount : 1,
+            workingDays: item.workingDays !== undefined ? item.workingDays : 1,
+            rate: item.rate !== undefined ? item.rate : 0,
+            total: item.total !== undefined ? item.total : 0
+          }))
+        : [{ workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }],
       loadingCharges: bill.loadingCharges || 0,
       unloadingCharges: bill.unloadingCharges || 0,
       handlingCharges: bill.handlingCharges || 0,
@@ -328,7 +336,8 @@ const LabourBillsTab = () => {
       fetchBills();
       alert('Labour Bill deleted successfully!');
     } catch (err) {
-      alert('Failed to delete Labour Bill');
+      console.error('Failed to delete Labour Bill:', err);
+      alert('Failed to delete Labour Bill: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -550,6 +559,7 @@ const LabourBillsTab = () => {
                     <th style="width: 50px;">Sr.</th>
                     <th>Work Description / Extra Charge</th>
                     <th style="text-align: center; width: 100px;">Labourers</th>
+                    <th style="text-align: center; width: 100px;">Days</th>
                     <th style="text-align: right; width: 120px;">Rate</th>
                     <th style="text-align: right; width: 150px;">Total</th>
                   </tr>
@@ -560,6 +570,7 @@ const LabourBillsTab = () => {
                       <td>${String(idx + 1).padStart(2, '0')}</td>
                       <td style="font-weight: 600; color: #1e293b;">${item.workDescription || 'Labour work'}</td>
                       <td style="text-align: center;">${item.labourCount}</td>
+                      <td style="text-align: center;">${item.workingDays || 1}</td>
                       <td style="text-align: right;">₹${Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                       <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
@@ -568,6 +579,7 @@ const LabourBillsTab = () => {
                     <tr>
                       <td>${String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
                       <td style="font-weight: 600; color: #1e293b;">${item.label}</td>
+                      <td style="text-align: center; color: #64748b;">-</td>
                       <td style="text-align: center; color: #64748b;">-</td>
                       <td style="text-align: right; color: #64748b;">-</td>
                       <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -782,6 +794,7 @@ const LabourBillsTab = () => {
                   <tr>
                     <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Description</th>
                     <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Labourers</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Days</th>
                     <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Rate</th>
                     <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
                   </tr>
@@ -791,6 +804,7 @@ const LabourBillsTab = () => {
                     <tr key={idx}>
                       <td className="px-4 py-2.5 font-medium text-slate-700">{item.workDescription || 'Labour Work'}</td>
                       <td className="px-4 py-2.5 text-center text-slate-600">{item.labourCount}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-600">{item.workingDays || 1}</td>
                       <td className="px-4 py-2.5 text-right text-slate-600">₹{Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                       <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
@@ -798,6 +812,7 @@ const LabourBillsTab = () => {
                   {otherChargesList.map((item, idx) => (
                     <tr key={idx}>
                       <td className="px-4 py-2.5 font-medium text-slate-700">{item.label}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-400">-</td>
                       <td className="px-4 py-2.5 text-center text-slate-400">-</td>
                       <td className="px-4 py-2.5 text-right text-slate-400">-</td>
                       <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -895,7 +910,7 @@ const LabourBillsTab = () => {
           </div>
           <button 
             className="btn btn-primary flex items-center gap-2 w-full md:w-auto justify-center"
-            onClick={() => setShowForm(true)}
+            onClick={() => { resetForm(); setShowForm(true); }}
           >
             <Plus size={18} />
             <span>Create New Labour Bill</span>
@@ -1181,7 +1196,7 @@ const LabourBillsTab = () => {
                 <div className="space-y-3">
                   {(formData.workItems || []).map((item, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-white rounded-lg border border-slate-200 relative group animate-in slide-in-from-top-1">
-                      <div className="col-span-12 md:col-span-5">
+                      <div className="col-span-12 md:col-span-4">
                         <label className="text-[10px] font-bold text-gray-400 uppercase">Work Description</label>
                         <input 
                           type="text" 
@@ -1192,8 +1207,8 @@ const LabourBillsTab = () => {
                           onChange={e => updateWorkItem(index, 'workDescription', e.target.value)} 
                         />
                       </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Labour Count</label>
+                      <div className="col-span-3 md:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Labourers</label>
                         <input 
                           type="number" 
                           className="form-control py-1.5" 
@@ -1203,7 +1218,18 @@ const LabourBillsTab = () => {
                           onChange={e => updateWorkItem(index, 'labourCount', parseInt(e.target.value) || 0)} 
                         />
                       </div>
-                      <div className="col-span-4 md:col-span-2">
+                      <div className="col-span-3 md:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Days</label>
+                        <input 
+                          type="number" 
+                          className="form-control py-1.5" 
+                          required 
+                          min="1"
+                          value={item.workingDays !== undefined ? item.workingDays : 1} 
+                          onChange={e => updateWorkItem(index, 'workingDays', parseInt(e.target.value) || 0)} 
+                        />
+                      </div>
+                      <div className="col-span-3 md:col-span-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase">Rate (₹)</label>
                         <input 
                           type="number" 
@@ -1214,8 +1240,8 @@ const LabourBillsTab = () => {
                           onChange={e => updateWorkItem(index, 'rate', parseFloat(e.target.value) || 0)} 
                         />
                       </div>
-                      <div className="col-span-3 md:col-span-2">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block">Total (₹)</label>
+                      <div className="col-span-2 md:col-span-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block">Total</label>
                         <div className="font-bold text-primary text-sm pt-2">₹{(item.total || 0).toLocaleString('en-IN')}</div>
                       </div>
                       <div className="col-span-1 flex items-end justify-center pb-2">
