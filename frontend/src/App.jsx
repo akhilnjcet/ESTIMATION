@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -7,6 +7,7 @@ import Customers from './pages/Customers';
 import Products from './pages/Products';
 import Quotations from './pages/Quotations';
 import Invoices from './pages/Invoices';
+import LabourBills from './pages/LabourBills';
 import Income from './pages/Income';
 import Expense from './pages/Expense';
 import Accounts from './pages/Accounts';
@@ -27,7 +28,9 @@ function PrivateRoute({ children }) {
 
   useEffect(() => {
     document.body.setAttribute('data-role', role);
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(prev => prev ? false : prev);
+    }
     
     if (role === 'viewer') {
       const timer = setTimeout(() => setShowAccessBar(false), 4000);
@@ -53,7 +56,9 @@ function PrivateRoute({ children }) {
 
   // Close sidebar on route change ONLY on mobile
   useEffect(() => {
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(prev => prev ? false : prev);
+    }
   }, [location.pathname]);
 
   if (!token) {
@@ -131,6 +136,7 @@ function App() {
           <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
           <Route path="/quotations" element={<PrivateRoute><Quotations /></PrivateRoute>} />
           <Route path="/invoices" element={<PrivateRoute><Invoices /></PrivateRoute>} />
+          <Route path="/labour-bills" element={<PrivateRoute><LabourBills /></PrivateRoute>} />
           <Route path="/income" element={<PrivateRoute><Income /></PrivateRoute>} />
           <Route path="/expense" element={<PrivateRoute><Expense /></PrivateRoute>} />
           <Route path="/accounts" element={<PrivateRoute><Accounts /></PrivateRoute>} />

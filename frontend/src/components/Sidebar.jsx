@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, FileText, Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon, Download } from 'lucide-react';
+import { LayoutDashboard, Users, Package, FileText, Receipt, Truck, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon, Download } from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
 import logo from '../assets/logo.jpg';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
-  const isMobile = window.innerWidth < 1024;
+
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [showInstallBtn, setShowInstallBtn] = React.useState(false);
 
@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     setShowInstallBtn(false);
   };
@@ -93,6 +93,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         <NavLink to="/invoices" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
           <Receipt />
           <span>Invoices</span>
+        </NavLink>
+        <NavLink to="/labour-bills" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+          <Truck />
+          <span>Labour Bills</span>
         </NavLink>
 
         <div style={{ margin: '1rem 0', borderTop: '1px solid var(--border)' }}></div>

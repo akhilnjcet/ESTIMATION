@@ -221,6 +221,7 @@ button {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 999;
   }
@@ -398,6 +399,7 @@ button {
   max-width: 400px;
   padding: 2.5rem;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
@@ -701,6 +703,7 @@ html, body {
   * {
     animation: none !important;
     transition: none !important;
+    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     filter: none !important;
     box-shadow: none !important;

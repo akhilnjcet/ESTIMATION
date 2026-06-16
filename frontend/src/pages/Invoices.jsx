@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { Edit2, Printer, Trash2, Plus, X, Eye } from 'lucide-react';
@@ -28,22 +28,52 @@ const Invoices = () => {
   });
   const [items, setItems] = useState([]);
 
+  const fetchInvoices = async () => {
+    try {
+      const { data } = await api.get('/invoices');
+      setInvoices(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data } = await api.get('/customers');
+      setCustomers(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data } = await api.get('/products');
+      setProducts(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
     fetchCustomers();
     fetchProducts();
     if (selectedProgram) {
-      setFormData(prev => ({
-        ...prev,
-        terms: selectedProgram.defaultTerms || prev.terms,
-        showTerms: selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true
-      }));
+      setFormData(prev => {
+        const nextTerms = selectedProgram.defaultTerms || prev.terms;
+        const nextShowTerms = selectedProgram.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true;
+        if (prev.terms === nextTerms && prev.showTerms === nextShowTerms) {
+          return prev;
+        }
+        return {
+          ...prev,
+          terms: nextTerms,
+          showTerms: nextShowTerms
+        };
+      });
     }
   }, [selectedProgram]);
-
-  const fetchInvoices = async () => {
-    try { const { data } = await api.get('/invoices'); setInvoices(data); } catch (err) {}
-  };
 
   const filteredInvoices = invoices.filter(inv => 
     inv.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,13 +90,6 @@ const Invoices = () => {
       console.error(err);
       alert('Failed to delete invoice');
     }
-  };
-
-  const fetchCustomers = async () => {
-    try { const { data } = await api.get('/customers'); setCustomers(data); } catch (err) {}
-  };
-  const fetchProducts = async () => {
-    try { const { data } = await api.get('/products'); setProducts(data); } catch (err) {}
   };
 
   const resetForm = () => {
@@ -160,118 +183,7 @@ const Invoices = () => {
     }
   };
 
-  const handlePrint = (docData) => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice - ${docData.invoiceNumber}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; }
-            .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 16px; line-height: 24px; color: #555; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${selectedProgram?.themeColor || '#4f46e5'}; padding-bottom: 20px; margin-bottom: 30px; }
-            .business-info h1 { margin: 0; color: ${selectedProgram?.themeColor || '#4f46e5'}; font-size: 28px; }
-            .business-info p { margin: 2px 0; font-size: 12px; color: #64748b; }
-            .invoice-title { text-align: right; }
-            .invoice-title h2 { margin: 0; font-size: 32px; color: #e2e8f0; font-weight: 800; letter-spacing: -1px; }
-            .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
-            .details div { width: 45%; }
-            .details h3 { font-size: 12px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
-            .details p { margin: 0; font-weight: bold; font-size: 14px; }
-            table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; margin-bottom: 30px; }
-            table th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #edf2f7; font-size: 12px; text-transform: uppercase; color: #64748b; }
-            table td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
-            .totals { width: 300px; margin-left: auto; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .grand-total { font-size: 20px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; margin-top: 10px; padding-top: 10px; }
-            .footer { margin-top: 100px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 11px; text-align: center; color: #94a3b8; }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-box">
-            <div class="header">
-              <div class="business-info">
-                <h1>${selectedProgram?.name}</h1>
-                <p>${selectedProgram?.address || ''}</p>
-                <p>Phone: ${selectedProgram?.phone || ''} | Email: ${selectedProgram?.email || ''}</p>
-                ${selectedProgram?.gstNumber ? `<p>GST: ${selectedProgram?.gstNumber}</p>` : ''}
-              </div>
-              <div class="invoice-title">
-                <h2>INVOICE</h2>
-                <p style="font-weight: bold; color: #1e293b;">${docData.invoiceNumber}</p>
-              </div>
-            </div>
-
-            <div class="details">
-              <div>
-                <h3>Billed To:</h3>
-                <p style="font-size: 18px;">${docData.customer?.customerName}</p>
-                <p style="font-weight: normal; color: #64748b;">${docData.customer?.phone || ''}</p>
-                <p style="font-weight: normal; color: #64748b;">${docData.customer?.email || ''}</p>
-              </div>
-              <div style="text-align: right">
-                <h3>Invoice Details:</h3>
-                <p style="font-weight: normal">Date: <strong>${new Date(docData.createdAt || docData.date).toLocaleDateString()}</strong></p>
-              </div>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th style="text-align: center">Qty</th>
-                  <th style="text-align: right">Price</th>
-                  <th style="text-align: right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${docData.items.map(item => `
-                  <tr>
-                    <td>
-                      <div style="font-weight: bold">${item.productName}</div>
-                      <div style="font-size: 11px; color: #64748b">${item.description || ''}</div>
-                    </td>
-                    <td style="text-align: center">${item.quantity} ${item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                    <td style="text-align: right">₹${item.price.toLocaleString()}</td>
-                    <td style="text-align: right">₹${item.total.toLocaleString()}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div class="totals">
-              ${docData.showTax !== false ? `
-                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
-                  <span>Sub Total:</span>
-                  <span>₹${(docData.subTotal || docData.totalAmount || 0).toLocaleString()}</span>
-                </div>
-                <div class="total-row" style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555;">
-                  <span>Tax:</span>
-                  <span>₹${(docData.taxAmount || 0).toLocaleString()}</span>
-                </div>
-              ` : ''}
-              <div class="total-row grand-total" style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: ${selectedProgram?.themeColor || '#4f46e5'}; border-top: 2px solid #edf2f7; padding-top: 15px;">
-                <span>Total Amount:</span>
-                <span>₹${docData.totalAmount.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>Thank you for your business!</p>
-              <p>Powered by Krishna IT Solutions</p>
-            </div>
-          </div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  const renderPreviewDocument = (docData, isLive = false, activeTheme = null) => {
+  const renderPreviewDocument = (docData, activeTheme = null) => {
     const theme = activeTheme || docData.theme || 'classic';
     return (
       <div className={`invoice-container theme-${theme}`} style={{ '--theme-color': selectedProgram?.themeColor || '#4f46e5' }}>
@@ -437,7 +349,7 @@ const Invoices = () => {
             </button>
           </div>
           <div className="animate-in fade-in zoom-in-95 duration-300">
-            {renderPreviewDocument(previewData, false, previewTheme)}
+            {renderPreviewDocument(previewData, previewTheme)}
           </div>
         </div>
       </div>
@@ -491,286 +403,285 @@ const Invoices = () => {
           </button>
         </div>
       </div>
-      
-      {showForm && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 animate-in fade-in slide-in-from-top-4">
-          <div className="card shadow-2xl border-t-4 border-primary">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
-              {editingId ? 'Update Invoice' : 'Invoice Details'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="form-group mb-0">
-                  <label className="form-label">Select Customer</label>
-                  <select 
-                    className="form-control" 
-                    required 
-                    value={formData.customer} 
-                    onChange={e => setFormData({...formData, customer: e.target.value})}
-                  >
-                    <option value="">Select a customer...</option>
-                    {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                  </select>
-                </div>
-                <div className="form-group mb-0">
-                  <label className="form-label">Invoice No. (Optional)</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Auto-generated if blank"
-                    value={formData.invoiceNumber} 
-                    onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} 
-                  />
-                </div>
-                <div className="form-group mb-0">
-                  <label className="form-label">Invoice Date</label>
-                  <input 
-                    type="date" 
-                    className="form-control" 
-                    required 
-                    value={formData.date} 
-                    onChange={e => setFormData({...formData, date: e.target.value})} 
-                  />
-                </div>
-              </div>
-
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-700">Line Items</h3>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}>+ Add Item</button>
-                </div>
-                
-                <div className="space-y-4">
-                  {items.map((item, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
-                      <button 
-                        type="button" 
-                        onClick={() => removeItem(index)} 
-                        className="absolute -top-2 -right-2 bg-white text-rose-500 rounded-full p-1 shadow-md border hover:bg-rose-50"
+          {showForm && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 animate-in fade-in slide-in-from-top-4">
+              <div className="card shadow-2xl border-t-4 border-primary">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
+                  {editingId ? 'Update Invoice' : 'Invoice Details'}
+                </h2>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="form-group mb-0">
+                      <label className="form-label">Select Customer</label>
+                      <select 
+                        className="form-control" 
+                        required 
+                        value={formData.customer} 
+                        onChange={e => setFormData({...formData, customer: e.target.value})}
                       >
-                        <X size={14} />
-                      </button>
-                      <div className="grid grid-cols-12 gap-3 mb-3">
-                        <div className="col-span-12 md:col-span-6">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Product / Service</label>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            required 
-                            value={item.productName} 
-                            onChange={e => updateItem(index, 'product', e.target.value)} 
-                            list="product-list" 
-                            placeholder="Name..." 
-                          />
-                        </div>
-                         <div className="col-span-4 md:col-span-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Qty</label>
-                          <div className="flex gap-1">
-                            <input 
-                              type="number" 
-                              className="form-control" 
-                              style={{ minWidth: '50px' }}
-                              required 
-                              value={item.quantity} 
-                              onChange={e => updateItem(index, 'quantity', e.target.value)} 
-                            />
-                            <select 
-                              className="form-control px-1" 
-                              style={{ width: '70px', flexShrink: 0 }}
-                              value={item.unit || 'Units'} 
-                              onChange={e => updateItem(index, 'unit', e.target.value)}
-                            >
-                              <option value="Units">Pcs</option>
-                              <option value="Kg">Kg</option>
-                            </select>
+                        <option value="">Select a customer...</option>
+                        {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group mb-0">
+                      <label className="form-label">Invoice No. (Optional)</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="Auto-generated if blank"
+                        value={formData.invoiceNumber} 
+                        onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} 
+                      />
+                    </div>
+                    <div className="form-group mb-0">
+                      <label className="form-label">Invoice Date</label>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        required 
+                        value={formData.date} 
+                        onChange={e => setFormData({...formData, date: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-gray-700">Line Items</h3>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}>+ Add Item</button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {items.map((item, index) => (
+                        <div key={index} className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
+                          <button 
+                            type="button" 
+                            onClick={() => removeItem(index)} 
+                            className="absolute -top-2 -right-2 bg-white text-rose-500 rounded-full p-1 shadow-md border hover:bg-rose-50"
+                          >
+                            <X size={14} />
+                          </button>
+                          <div className="grid grid-cols-12 gap-3 mb-3">
+                            <div className="col-span-12 md:col-span-6">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Product / Service</label>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                required 
+                                value={item.productName} 
+                                onChange={e => updateItem(index, 'product', e.target.value)} 
+                                list="product-list" 
+                                placeholder="Name..." 
+                              />
+                            </div>
+                             <div className="col-span-4 md:col-span-2">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Qty</label>
+                              <div className="flex gap-1">
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  style={{ minWidth: '50px' }}
+                                  required 
+                                  value={item.quantity} 
+                                  onChange={e => updateItem(index, 'quantity', e.target.value)} 
+                                />
+                                <select 
+                                  className="form-control px-1" 
+                                  style={{ width: '70px', flexShrink: 0 }}
+                                  value={item.unit || 'Units'} 
+                                  onChange={e => updateItem(index, 'unit', e.target.value)}
+                                >
+                                  <option value="Units">Pcs</option>
+                                  <option value="Kg">Kg</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="col-span-4 md:col-span-2">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
+                              <input type="number" className="form-control" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                            </div>
+                            <div className="col-span-4 md:col-span-2">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Total</label>
+                              <div className="h-[38px] flex items-center font-bold text-primary">&#8377; {item.total.toLocaleString()}</div>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-span-4 md:col-span-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
-                          <input type="number" className="form-control" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                      ))}
+                      {items.length === 0 && (
+                        <div className="text-center py-8 text-gray-400 italic bg-gray-50 rounded-xl border border-dashed">
+                          No items added yet.
                         </div>
-                        <div className="col-span-4 md:col-span-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Total</label>
-                          <div className="h-[38px] flex items-center font-bold text-primary">&#8377; {item.total.toLocaleString()}</div>
-                        </div>
+                      )}
+                      <div className="flex justify-center mt-4">
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary flex items-center gap-2 w-full py-3 justify-center border-dashed border-2 hover:border-primary hover:text-primary transition-all duration-200" 
+                          onClick={addItem}
+                        >
+                          <Plus size={18} />
+                          <span>Add Another Line Item</span>
+                        </button>
                       </div>
                     </div>
-                  ))}
-                  {items.length === 0 && (
-                    <div className="text-center py-8 text-gray-400 italic bg-gray-50 rounded-xl border border-dashed">
-                      No items added yet.
+                  </div>
+
+                  <div className="mb-8 border-t pt-6">
+                    <h3 className="font-bold text-gray-700 mb-4">Design & Tax Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="form-group mb-0">
+                        <label className="form-label">Document Theme</label>
+                        <select 
+                          className="form-control" 
+                          value={formData.theme} 
+                          onChange={e => setFormData({...formData, theme: e.target.value})}
+                        >
+                          <option value="classic">Classic / Professional</option>
+                          <option value="modern">Modern Banner</option>
+                          <option value="minimalist">Clean Minimalist</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-2 justify-end pb-1">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showTax} 
+                            onChange={e => setFormData({...formData, showTax: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Include Tax Info in Print</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showPaymentTerms} 
+                            onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 accent-primary rounded" 
+                            checked={formData.showSignature !== false} 
+                            onChange={e => setFormData({...formData, showSignature: e.target.checked})} 
+                          />
+                          <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
+                        </label>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex justify-center mt-4">
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary flex items-center gap-2 w-full py-3 justify-center border-dashed border-2 hover:border-primary hover:text-primary transition-all duration-200" 
-                      onClick={addItem}
-                    >
-                      <Plus size={18} />
-                      <span>Add Another Line Item</span>
-                    </button>
                   </div>
-                </div>
-              </div>
 
-              <div className="mb-8 border-t pt-6">
-                <h3 className="font-bold text-gray-700 mb-4">Design & Tax Settings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="form-group mb-0">
-                    <label className="form-label">Document Theme</label>
-                    <select 
+                  <div className="mb-8 border-t pt-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 accent-primary rounded" 
+                          checked={formData.showTerms} 
+                          onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                        />
+                        <span className="text-sm font-bold text-gray-600">Show in Print</span>
+                      </label>
+                    </div>
+                    <textarea 
                       className="form-control" 
-                      value={formData.theme} 
-                      onChange={e => setFormData({...formData, theme: e.target.value})}
-                    >
-                      <option value="classic">Classic / Professional</option>
-                      <option value="modern">Modern Banner</option>
-                      <option value="minimalist">Clean Minimalist</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2 justify-end pb-1">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showTax} 
-                        onChange={e => setFormData({...formData, showTax: e.target.checked})} 
-                      />
-                      <span className="text-sm font-bold text-gray-600">Include Tax Info in Print</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showPaymentTerms} 
-                        onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
-                      />
-                      <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showSignature !== false} 
-                        onChange={e => setFormData({...formData, showSignature: e.target.checked})} 
-                      />
-                      <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-8 border-t pt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-700">Terms & Conditions</h3>
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 accent-primary rounded" 
-                      checked={formData.showTerms} 
-                      onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                      rows="4" 
+                      value={formData.terms} 
+                      onChange={e => setFormData({...formData, terms: e.target.value})} 
+                      placeholder="Enter specific terms for this invoice..."
+                      disabled={!formData.showTerms}
                     />
-                    <span className="text-sm font-bold text-gray-600">Show in Print</span>
-                  </label>
-                </div>
-                <textarea 
-                  className="form-control" 
-                  rows="4" 
-                  value={formData.terms} 
-                  onChange={e => setFormData({...formData, terms: e.target.value})} 
-                  placeholder="Enter specific terms for this invoice..."
-                  disabled={!formData.showTerms}
-                />
+                  </div>
+
+                  <div className="form-group mb-8">
+                    <label className="form-label">Notes (Internal only)</label>
+                    <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Internal notes..." />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary w-full py-4 text-lg shadow-xl hover:scale-[1.01] transition-transform">
+                    {editingId ? 'Update & Save Changes' : 'Save & Generate Invoice'}
+                  </button>
+                </form>
               </div>
 
-              <div className="form-group mb-8">
-                <label className="form-label">Notes (Internal only)</label>
-                <input type="text" className="form-control" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Internal notes..." />
+              <div className="hidden lg:block sticky top-8">
+                <h2 className="text-xl font-bold mb-6 text-gray-400">Document Preview</h2>
+                <div className="shadow-2xl rounded-2xl overflow-hidden border">
+              {renderPreviewDocument(livePreviewData, formData.theme)}
+            </div>
               </div>
+            </div>
+          )}
 
-              <button type="submit" className="btn btn-primary w-full py-4 text-lg shadow-xl hover:scale-[1.01] transition-transform">
-                {editingId ? 'Update & Save Changes' : 'Save & Generate Invoice'}
-              </button>
-            </form>
-          </div>
-
-          <div className="hidden lg:block sticky top-8">
-            <h2 className="text-xl font-bold mb-6 text-gray-400">Document Preview</h2>
-            <div className="shadow-2xl rounded-2xl overflow-hidden border">
-              {renderPreviewDocument(livePreviewData, true, formData.theme)}
+          <div className="card shadow-xl border-none bg-white">
+            <div className="table-container border-none shadow-none">
+              <table className="data-table">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-4">Invoice No</th>
+                    <th className="py-4">Customer</th>
+                    <th className="py-4">Date</th>
+                    <th className="py-4">Amount</th>
+                    <th className="py-4 text-center">Status</th>
+                    <th className="py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredInvoices.map(inv => (
+                    <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 font-bold text-primary">{inv.invoiceNumber}</td>
+                      <td className="py-4">
+                        <div className="font-bold text-gray-900">{inv.customer?.customerName || 'Unknown'}</div>
+                      </td>
+                      <td className="py-4 text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                      <td className="py-4 font-bold text-gray-900">&#8377; {inv.totalAmount?.toLocaleString()}</td>
+                      <td className="py-4 text-center">
+                        <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            className="p-2 text-gray-400 hover:text-primary transition-colors bg-white border rounded-lg shadow-sm"
+                            onClick={() => { setPreviewData(inv); setPreviewTheme(inv.theme || 'classic'); }}
+                            title="View / Print"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-emerald-600 transition-colors bg-white border rounded-lg shadow-sm"
+                            onClick={() => handleEdit(inv)}
+                            title="Edit Invoice"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            className="p-2 text-gray-400 hover:text-rose-600 transition-colors bg-white border rounded-lg shadow-sm"
+                            onClick={() => handleDelete(inv._id)}
+                            title="Delete Invoice"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {invoices.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="py-20 text-center text-gray-400">No invoices found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      )}
-
-      <div className="card shadow-xl border-none">
-        <div className="table-container border-none shadow-none">
-          <table className="data-table">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-4">Invoice No</th>
-                <th className="py-4">Customer</th>
-                <th className="py-4">Date</th>
-                <th className="py-4">Amount</th>
-                <th className="py-4 text-center">Status</th>
-                <th className="py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredInvoices.map(inv => (
-                <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 font-bold text-primary">{inv.invoiceNumber}</td>
-                  <td className="py-4">
-                    <div className="font-bold text-gray-900">{inv.customer?.customerName || 'Unknown'}</div>
-                  </td>
-                  <td className="py-4 text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
-                  <td className="py-4 font-bold text-gray-900">&#8377; {inv.totalAmount?.toLocaleString()}</td>
-                  <td className="py-4 text-center">
-                    <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="py-4">
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        className="p-2 text-gray-400 hover:text-primary transition-colors bg-white border rounded-lg shadow-sm"
-                        onClick={() => { setPreviewData(inv); setPreviewTheme(inv.theme || 'classic'); }}
-                        title="View / Print"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button 
-                        className="p-2 text-gray-400 hover:text-emerald-600 transition-colors bg-white border rounded-lg shadow-sm"
-                        onClick={() => handleEdit(inv)}
-                        title="Edit Invoice"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        className="p-2 text-gray-400 hover:text-rose-600 transition-colors bg-white border rounded-lg shadow-sm"
-                        onClick={() => handleDelete(inv._id)}
-                        title="Delete Invoice"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {invoices.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="py-20 text-center text-gray-400">No invoices found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <datalist id="product-list">
-        {products.map(p => <option key={p._id} value={p.productName}>{p.price ? `₹${p.price}` : ''}</option>)}
-      </datalist>
+          <datalist id="product-list">
+            {products.map(p => <option key={p._id} value={p.productName}>{p.price ? `₹${p.price}` : ''}</option>)}
+          </datalist>
     </div>
   );
 };

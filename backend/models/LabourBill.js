@@ -1,0 +1,60 @@
+const mongoose = require('mongoose');
+
+const labourBillSchema = new mongoose.Schema({
+  programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
+  billNumber: { type: String, required: true, unique: true },
+  billDate: { type: Date, required: true },
+  
+  // Service Provider / Contractor Details
+  serviceProviderName: { type: String },
+  serviceProviderAddress: { type: String },
+  serviceProviderPhone: { type: String },
+  serviceProviderGstin: { type: String },
+  
+  // Client / Consignee Details
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+  clientName: { type: String },
+  clientAddress: { type: String },
+  clientPhone: { type: String },
+  clientGstin: { type: String },
+  
+  // Transport & Logistics Details
+  vehicleNumber: { type: String },
+  lrGrNumber: { type: String },
+  origin: { type: String },
+  destination: { type: String },
+  goodsDescription: { type: String },
+  loadingDate: { type: Date },
+  unloadingDate: { type: Date },
+  numberOfLabourers: { type: Number },
+  
+  // Charges
+  labourCharges: { type: Number, default: 0 },
+  loadingCharges: { type: Number, default: 0 },
+  unloadingCharges: { type: Number, default: 0 },
+  handlingCharges: { type: Number, default: 0 },
+  packingCharges: { type: Number, default: 0 },
+  overtimeCharges: { type: Number, default: 0 },
+  additionalCharges: { type: Number, default: 0 },
+  
+  // Tax Details
+  taxPercentage: { type: Number, default: 0 },
+  taxDetails: { type: String }, // e.g. "GST 18%", "CGST 9% + SGST 9%", etc.
+  
+  // Calculation Totals
+  subTotal: { type: Number, required: true, default: 0 },
+  taxAmount: { type: Number, required: true, default: 0 },
+  totalAmount: { type: Number, required: true, default: 0 },
+  amountInWords: { type: String },
+  
+  // Extra fields
+  paymentTerms: { type: String },
+  remarks: { type: String },
+  theme: { type: String, enum: ['classic', 'modern', 'minimalist'], default: 'classic' },
+  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' }
+}, { timestamps: true });
+
+labourBillSchema.index({ programId: 1 });
+labourBillSchema.index({ billNumber: 1 });
+
+module.exports = mongoose.model('LabourBill', labourBillSchema);

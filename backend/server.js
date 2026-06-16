@@ -56,6 +56,7 @@ app.use('/api/transactions', protect, restrictToView, verifyProgramAccess, requi
 app.use('/api/products', protect, restrictToView, verifyProgramAccess, require('./routes/productRoutes'));
 app.use('/api/quotations', protect, restrictToView, verifyProgramAccess, require('./routes/quotationRoutes'));
 app.use('/api/invoices', protect, restrictToView, verifyProgramAccess, require('./routes/invoiceRoutes'));
+app.use('/api/labour-bills', protect, restrictToView, verifyProgramAccess, require('./routes/labourBillRoutes'));
 app.use('/api/settings', protect, restrictToView, require('./routes/settingsRoutes'));
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
 app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));

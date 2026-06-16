@@ -1,0 +1,1366 @@
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import { useProgram } from '../context/ProgramContext';
+import { Edit2, Printer, Trash2, Plus, X, Eye, Truck, User, DollarSign, Calendar, FileText } from 'lucide-react';
+
+// Indian Number to Words Converter
+const toIndianRupeesWords = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return '';
+  let n = Math.floor(num);
+  if (n === 0) return 'Rupees Zero Only';
+
+  const a = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+  ];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const convertLessThanThousand = (val) => {
+    let str = '';
+    if (val >= 100) {
+      str += a[Math.floor(val / 100)] + ' Hundred ';
+      val %= 100;
+    }
+    if (val >= 20) {
+      str += b[Math.floor(val / 10)] + ' ';
+      val %= 10;
+    }
+    if (val > 0) {
+      str += a[val] + ' ';
+    }
+    return str.trim();
+  };
+
+  let rupeesStr = '';
+  // Crores
+  if (n >= 10000000) {
+    rupeesStr += convertLessThanThousand(Math.floor(n / 10000000)) + ' Crore ';
+    n %= 10000000;
+  }
+  // Lakhs
+  if (n >= 100000) {
+    rupeesStr += convertLessThanThousand(Math.floor(n / 100000)) + ' Lakh ';
+    n %= 100000;
+  }
+  // Thousands
+  if (n >= 1000) {
+    rupeesStr += convertLessThanThousand(Math.floor(n / 1000)) + ' Thousand ';
+    n %= 1000;
+  }
+  // Hundreds/Tens/Units
+  if (n > 0) {
+    rupeesStr += convertLessThanThousand(n);
+  }
+
+  // Handle paise
+  let paiseStr = '';
+  let paise = Math.round((num - Math.floor(num)) * 100);
+  if (paise > 0) {
+    paiseStr = ' and ' + convertLessThanThousand(paise) + ' Paise';
+  }
+
+  return `Rupees ${rupeesStr.trim().replace(/\s+/g, ' ')}${paiseStr} Only`;
+};
+
+const LabourBillsTab = () => {
+  const [bills, setBills] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const { selectedProgram } = useProgram();
+  const [showForm, setShowForm] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [previewTheme, setPreviewTheme] = useState('classic');
+  const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Initial Form State
+  const initialFormState = {
+    billNumber: '',
+    billDate: new Date().toISOString().split('T')[0],
+    
+    // Service Provider Details (Pre-filled from program context)
+    serviceProviderName: '',
+    serviceProviderAddress: '',
+    serviceProviderPhone: '',
+    serviceProviderGstin: '',
+
+    // Customer Selection & Client details
+    customer: '',
+    clientName: '',
+    clientAddress: '',
+    clientPhone: '',
+    clientGstin: '',
+
+    // Logistics & Dispatch Details
+    vehicleNumber: '',
+    lrGrNumber: '',
+    origin: '',
+    destination: '',
+    goodsDescription: '',
+    loadingDate: '',
+    unloadingDate: '',
+    numberOfLabourers: '',
+
+    // Charges (Optional)
+    labourCharges: 0,
+    loadingCharges: 0,
+    unloadingCharges: 0,
+    handlingCharges: 0,
+    packingCharges: 0,
+    overtimeCharges: 0,
+    additionalCharges: 0,
+
+    // Tax settings
+    taxPercentage: 0,
+    taxDetails: 'GST',
+
+    paymentTerms: '',
+    remarks: '',
+    theme: 'classic',
+    status: 'Unpaid'
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
+
+  // Load Bills and Customers
+  useEffect(() => {
+    fetchBills();
+    fetchCustomers();
+  }, [selectedProgram]);
+
+  // Pre-fill Service Provider from Selected Program
+  useEffect(() => {
+    if (selectedProgram) {
+      setFormData(prev => ({
+        ...prev,
+        serviceProviderName: selectedProgram.name || '',
+        serviceProviderAddress: selectedProgram.address || '',
+        serviceProviderPhone: selectedProgram.phone || '',
+        serviceProviderGstin: selectedProgram.gstNumber || '',
+        paymentTerms: selectedProgram.defaultTerms || ''
+      }));
+    }
+  }, [selectedProgram, showForm]);
+
+  const fetchBills = async () => {
+    try {
+      const { data } = await api.get('/labour-bills');
+      setBills(data);
+    } catch (err) {
+      console.error('Failed to fetch labour bills:', err);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data } = await api.get('/customers');
+      setCustomers(data);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+    }
+  };
+
+  // Handle customer select change
+  const handleCustomerChange = (customerId) => {
+    if (!customerId) {
+      setFormData(prev => ({
+        ...prev,
+        customer: '',
+        clientName: '',
+        clientAddress: '',
+        clientPhone: '',
+        clientGstin: ''
+      }));
+      return;
+    }
+
+    const selectedCust = customers.find(c => c._id === customerId);
+    if (selectedCust) {
+      setFormData(prev => ({
+        ...prev,
+        customer: customerId,
+        clientName: selectedCust.customerName || '',
+        clientAddress: selectedCust.address || '',
+        clientPhone: selectedCust.phone || '',
+        clientGstin: selectedCust.gstNumber || ''
+      }));
+    }
+  };
+
+  // Auto-calculated fields
+  const calculateTotals = (data) => {
+    const subTotal = 
+      Number(data.labourCharges || 0) +
+      Number(data.loadingCharges || 0) +
+      Number(data.unloadingCharges || 0) +
+      Number(data.handlingCharges || 0) +
+      Number(data.packingCharges || 0) +
+      Number(data.overtimeCharges || 0) +
+      Number(data.additionalCharges || 0);
+
+    const taxAmount = subTotal * (Number(data.taxPercentage || 0) / 100);
+    const totalAmount = subTotal + taxAmount;
+    const amountInWords = toIndianRupeesWords(totalAmount);
+
+    return { subTotal, taxAmount, totalAmount, amountInWords };
+  };
+
+  const totals = calculateTotals(formData);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const calculated = calculateTotals(formData);
+    const payload = {
+      ...formData,
+      ...calculated
+    };
+
+    try {
+      if (editingId) {
+        await api.put(`/labour-bills/${editingId}`, payload);
+        alert('Labour Bill updated successfully!');
+      } else {
+        await api.post('/labour-bills', payload);
+        alert('Labour Bill generated successfully!');
+      }
+      resetForm();
+      fetchBills();
+    } catch (err) {
+      alert('Failed to save Labour Bill: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleEdit = (bill) => {
+    setEditingId(bill._id);
+    setFormData({
+      billNumber: bill.billNumber || '',
+      billDate: bill.billDate ? new Date(bill.billDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      serviceProviderName: bill.serviceProviderName || '',
+      serviceProviderAddress: bill.serviceProviderAddress || '',
+      serviceProviderPhone: bill.serviceProviderPhone || '',
+      serviceProviderGstin: bill.serviceProviderGstin || '',
+      customer: bill.customer?._id || bill.customer || '',
+      clientName: bill.clientName || '',
+      clientAddress: bill.clientAddress || '',
+      clientPhone: bill.clientPhone || '',
+      clientGstin: bill.clientGstin || '',
+      vehicleNumber: bill.vehicleNumber || '',
+      lrGrNumber: bill.lrGrNumber || '',
+      origin: bill.origin || '',
+      destination: bill.destination || '',
+      goodsDescription: bill.goodsDescription || '',
+      loadingDate: bill.loadingDate ? new Date(bill.loadingDate).toISOString().split('T')[0] : '',
+      unloadingDate: bill.unloadingDate ? new Date(bill.unloadingDate).toISOString().split('T')[0] : '',
+      numberOfLabourers: bill.numberOfLabourers || '',
+      labourCharges: bill.labourCharges || 0,
+      loadingCharges: bill.loadingCharges || 0,
+      unloadingCharges: bill.unloadingCharges || 0,
+      handlingCharges: bill.handlingCharges || 0,
+      packingCharges: bill.packingCharges || 0,
+      overtimeCharges: bill.overtimeCharges || 0,
+      additionalCharges: bill.additionalCharges || 0,
+      taxPercentage: bill.taxPercentage || 0,
+      taxDetails: bill.taxDetails || 'GST',
+      paymentTerms: bill.paymentTerms || '',
+      remarks: bill.remarks || '',
+      theme: bill.theme || 'classic',
+      status: bill.status || 'Unpaid'
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this Labour Bill?')) return;
+    try {
+      await api.delete(`/labour-bills/${id}`);
+      fetchBills();
+      alert('Labour Bill deleted successfully!');
+    } catch (err) {
+      alert('Failed to delete Labour Bill');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const filteredBills = bills.filter(bill => 
+    bill.billNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    bill.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    bill.vehicleNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    bill.lrGrNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Print Logic with Custom Templates
+  const handlePrint = (billData) => {
+    const theme = billData.theme || 'classic';
+    const computed = calculateTotals(billData);
+    const themeColor = selectedProgram?.themeColor || '#4f46e5';
+    const printWindow = window.open('', '_blank');
+
+    // Filter charges to show only non-zero values
+    const chargesList = [
+      { label: 'Labour Charges', val: billData.labourCharges },
+      { label: 'Loading Charges', val: billData.loadingCharges },
+      { label: 'Unloading Charges', val: billData.unloadingCharges },
+      { label: 'Handling Charges', val: billData.handlingCharges },
+      { label: 'Packing Charges', val: billData.packingCharges },
+      { label: 'Overtime Charges', val: billData.overtimeCharges },
+      { label: 'Additional Charges', val: billData.additionalCharges }
+    ].filter(item => Number(item.val) > 0);
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Labour Bill - ${billData.billNumber}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+            body { font-family: 'Outfit', sans-serif; padding: 30px; color: #0f172a; background: white; margin: 0; }
+            .bill-wrapper { max-width: 850px; margin: auto; padding: 20px; box-sizing: border-box; }
+            
+            /* Theme Classic */
+            .theme-classic { border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+            .theme-classic .header-title { color: ${themeColor}; font-size: 28px; font-weight: 800; text-transform: uppercase; margin: 0; }
+            .theme-classic .divider { border-bottom: 2px solid ${themeColor}; margin: 20px 0; }
+            
+            /* Theme Modern */
+            .theme-modern { border: 1px solid #e2e8f0; border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+            .theme-modern .header-banner { background: ${themeColor}; color: white; padding: 35px; }
+            .theme-modern .header-title { font-size: 32px; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: 1px; color: white; }
+            .theme-modern .header-body { padding: 35px; }
+            .theme-modern .divider { border-bottom: 2px dashed #cbd5e1; margin: 20px 0; }
+
+            /* Theme Minimalist */
+            .theme-minimalist { padding: 10px; }
+            .theme-minimalist .header-title { color: #0f172a; font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0; border-left: 4px solid ${themeColor}; padding-left: 12px; }
+            .theme-minimalist .divider { border-bottom: 1px solid #cbd5e1; margin: 20px 0; }
+
+            /* Grid Layouts */
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+            .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+            .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+            
+            /* Typography details */
+            .meta-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px; }
+            .meta-value { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0; }
+            .meta-text { font-size: 13px; color: #334155; line-height: 1.5; margin: 0; }
+            
+            .box-card { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #f1f5f9; }
+            
+            /* Logistics Section */
+            .logistics-title { font-size: 12px; text-transform: uppercase; font-weight: 800; color: ${themeColor}; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+
+            /* Tables */
+            table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+            th { text-align: left; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+            td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+            tr:hover { background-color: #fafafa; }
+            
+            .totals-container { width: 320px; margin-left: auto; margin-top: 25px; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #475569; }
+            .grand-total-row { display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; font-weight: 800; color: ${themeColor}; border-top: 2px solid #0f172a; margin-top: 8px; }
+            
+            .words-box { margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 6px; border: 1px solid #dcfce7; font-size: 12px; color: #15803d; font-weight: 600; }
+            
+            .footer-grid { display: flex; justify-content: space-between; margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 25px; }
+            .signature-box { text-align: center; width: 200px; }
+            .signature-line { border-top: 1px solid #94a3b8; margin-top: 50px; font-size: 12px; font-weight: 600; color: #475569; padding-top: 5px; }
+
+            @media print {
+              body { padding: 0; margin: 0; background: white; }
+              .bill-wrapper { width: 100%; max-width: 100%; padding: 0; }
+              .box-card { background: #fafafa !important; border: 1px solid #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .words-box { background: #f4fbf7 !important; border: 1px solid #e2f7eb !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              th { background: #fafafa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="bill-wrapper">
+            <div class="${theme === 'modern' ? 'theme-modern' : theme === 'minimalist' ? 'theme-minimalist' : 'theme-classic'}">
+              
+              <!-- Header Section -->
+              ${theme === 'modern' ? `
+                <div class="header-banner">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <h1 class="header-title">${billData.serviceProviderName || 'CONTRACTOR'}</h1>
+                      <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">${billData.serviceProviderAddress || ''}</p>
+                      ${billData.serviceProviderPhone ? `<p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8;">Call: ${billData.serviceProviderPhone}</p>` : ''}
+                      ${billData.serviceProviderGstin ? `<p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8; font-weight: bold;">GSTIN: ${billData.serviceProviderGstin}</p>` : ''}
+                    </div>
+                    <div style="text-align: right;">
+                      <h2 style="margin: 0; font-size: 20px; font-weight: 600; opacity: 0.9;">LABOUR BILL</h2>
+                      <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold;"># ${billData.billNumber}</p>
+                      <p style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.8;">Date: ${new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="header-body">
+              ` : `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div>
+                    <h1 class="header-title">${billData.serviceProviderName || 'CONTRACTOR'}</h1>
+                    <p class="meta-text" style="max-width: 400px; margin-top: 6px;">${billData.serviceProviderAddress || ''}</p>
+                    ${billData.serviceProviderPhone ? `<p class="meta-text" style="margin-top: 3px;">Phone: <b>${billData.serviceProviderPhone}</b></p>` : ''}
+                    ${billData.serviceProviderGstin ? `<p class="meta-text" style="margin-top: 3px;">GSTIN: <b>${billData.serviceProviderGstin}</b></p>` : ''}
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="background: ${themeColor}10; color: ${themeColor}; padding: 6px 12px; border-radius: 6px; display: inline-block; font-weight: 800; font-size: 14px; margin-bottom: 10px;">LABOUR BILL</div>
+                    <p class="meta-value" style="font-size: 16px;"># ${billData.billNumber}</p>
+                    <p class="meta-text">Date: <b>${new Date(billData.billDate).toLocaleDateString('en-IN')}</b></p>
+                  </div>
+                </div>
+                <div class="divider"></div>
+              `}
+
+              <!-- Addresses Section -->
+              <div class="grid-2">
+                <div class="box-card">
+                  <div class="meta-label">Consignee / Client</div>
+                  <p class="meta-value">${billData.clientName || 'Walk-in Client'}</p>
+                  ${billData.clientAddress ? `<p class="meta-text" style="margin-top: 5px;">${billData.clientAddress}</p>` : ''}
+                  ${billData.clientPhone ? `<p class="meta-text" style="margin-top: 3px;">Phone: ${billData.clientPhone}</p>` : ''}
+                  ${billData.clientGstin ? `<p class="meta-text" style="margin-top: 3px; font-weight: 600;">GSTIN: ${billData.clientGstin}</p>` : ''}
+                </div>
+                
+                <div class="box-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div class="meta-label">Billing Metadata</div>
+                    <p class="meta-text">Bill Status: <span style="font-weight: bold; color: ${billData.status === 'Paid' ? '#15803d' : '#b91c1c'};">${billData.status}</span></p>
+                    ${billData.paymentTerms ? `<p class="meta-text" style="margin-top: 5px;">Payment Terms: ${billData.paymentTerms}</p>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logistics / Dispatch Info Grid -->
+              ${(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) ? `
+                <div style="margin-top: 25px;">
+                  <div class="logistics-title">Logistics & Dispatch Information</div>
+                  <div class="grid-4" style="row-gap: 15px;">
+                    ${billData.vehicleNumber ? `
+                      <div>
+                        <div class="meta-label">Vehicle Number</div>
+                        <p class="meta-value">${billData.vehicleNumber}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.lrGrNumber ? `
+                      <div>
+                        <div class="meta-label">LR / GR Number</div>
+                        <p class="meta-value">${billData.lrGrNumber}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.origin ? `
+                      <div>
+                        <div class="meta-label">Origin (From)</div>
+                        <p class="meta-value">${billData.origin}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.destination ? `
+                      <div>
+                        <div class="meta-label">Destination (To)</div>
+                        <p class="meta-value">${billData.destination}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.goodsDescription ? `
+                      <div style="grid-column: span 2;">
+                        <div class="meta-label">Description of Goods</div>
+                        <p class="meta-value">${billData.goodsDescription}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.loadingDate ? `
+                      <div>
+                        <div class="meta-label">Loading Date</div>
+                        <p class="meta-value">${new Date(billData.loadingDate).toLocaleDateString('en-IN')}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.unloadingDate ? `
+                      <div>
+                        <div class="meta-label">Unloading Date</div>
+                        <p class="meta-value">${new Date(billData.unloadingDate).toLocaleDateString('en-IN')}</p>
+                      </div>
+                    ` : ''}
+                    ${billData.numberOfLabourers ? `
+                      <div>
+                        <div class="meta-label">No. of Labourers</div>
+                        <p class="meta-value">${billData.numberOfLabourers}</p>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Charges Table -->
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">Sr.</th>
+                    <th>Charge Category / Description</th>
+                    <th style="text-align: right; width: 200px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${chargesList.map((item, idx) => `
+                    <tr>
+                      <td>${String(idx + 1).padStart(2, '0')}</td>
+                      <td style="font-weight: 600; color: #1e293b;">${item.label}</td>
+                      <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <!-- Summary Section -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px;">
+                <div style="max-width: 450px;">
+                  <div class="words-box">
+                    <span style="display: block; font-size: 9px; text-transform: uppercase; color: #166534; margin-bottom: 2px;">Amount in Words</span>
+                    ${computed.amountInWords}
+                  </div>
+                  ${billData.remarks ? `
+                    <div style="margin-top: 15px;">
+                      <div class="meta-label">Remarks / Instructions</div>
+                      <p class="meta-text" style="font-style: italic;">${billData.remarks}</p>
+                    </div>
+                  ` : ''}
+                </div>
+
+                <div class="totals-container">
+                  <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span style="font-weight: bold;">₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  ${Number(billData.taxPercentage) > 0 ? `
+                    <div class="total-row">
+                      <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
+                      <span style="font-weight: bold;">₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  ` : ''}
+                  <div class="grand-total-row">
+                    <span>Grand Total:</span>
+                    <span>₹${computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer Section -->
+              <div class="footer-grid">
+                <div>
+                  <p style="font-size: 10px; color: #64748b; margin: 0;">1. Subject to local jurisdiction.</p>
+                  <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0;">2. Generated electronically on ${new Date().toLocaleDateString('en-IN')}</p>
+                </div>
+                <div class="signature-box">
+                  ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
+                  <div class="signature-line">For ${billData.serviceProviderName || 'Contractor'}</div>
+                  <p style="font-size: 9px; color: #64748b; margin: 2px 0 0 0;">Authorized Signature</p>
+                </div>
+              </div>
+
+              ${theme === 'modern' ? '</div></div>' : '</div>'}
+          </div>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // Live Preview layout for form
+  const renderPreview = (billData) => {
+    const computed = calculateTotals(billData);
+    const themeColor = selectedProgram?.themeColor || '#4f46e5';
+
+    const chargesList = [
+      { label: 'Labour Charges', val: billData.labourCharges },
+      { label: 'Loading Charges', val: billData.loadingCharges },
+      { label: 'Unloading Charges', val: billData.unloadingCharges },
+      { label: 'Handling Charges', val: billData.handlingCharges },
+      { label: 'Packing Charges', val: billData.packingCharges },
+      { label: 'Overtime Charges', val: billData.overtimeCharges },
+      { label: 'Additional Charges', val: billData.additionalCharges }
+    ].filter(item => Number(item.val) > 0);
+
+    return (
+      <div className={`invoice-container theme-${billData.theme}`} style={{ '--theme-color': themeColor, background: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
+        
+        {billData.theme === 'modern' ? (
+          <div style={{ background: themeColor, color: 'white', padding: '24px' }}>
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'white' }}>{billData.serviceProviderName || 'CONTRACTOR'}</h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '11px', opacity: 0.9 }}>{billData.serviceProviderAddress || ''}</p>
+                {billData.serviceProviderGstin && <p style={{ margin: '4px 0 0 0', fontSize: '11px', fontWeight: 'bold' }}>GSTIN: {billData.serviceProviderGstin}</p>}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className="bg-white/20 px-2.5 py-1 rounded text-xs font-bold text-white uppercase tracking-wider">Labour Bill</span>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px', fontWeight: 'bold' }}># {billData.billNumber || 'DRAFT'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', opacity: 0.8 }}>Date: {new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: '24px 24px 0 24px' }}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>{billData.serviceProviderName || 'CONTRACTOR'}</h3>
+                <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b', maxWidth: '300px' }}>{billData.serviceProviderAddress || ''}</p>
+                {billData.serviceProviderGstin && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#0f172a' }}><b>GSTIN:</b> {billData.serviceProviderGstin}</p>}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ background: `${themeColor}15`, color: themeColor, padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', display: 'inline-block', marginBottom: '8px' }}>LABOUR BILL</span>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#0f172a' }}># {billData.billNumber || 'DRAFT'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>Date: {new Date(billData.billDate).toLocaleDateString('en-IN')}</p>
+              </div>
+            </div>
+            <div style={{ borderBottom: `2px solid ${billData.theme === 'minimalist' ? '#cbd5e1' : themeColor}`, margin: '20px 0' }} />
+          </div>
+        )}
+
+        <div style={{ padding: '24px' }}>
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+              <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Consignee / Client</h5>
+              <p className="text-sm font-bold text-slate-800">{billData.clientName || 'Walk-in Client'}</p>
+              {billData.clientAddress && <p className="text-xs text-slate-500 mt-1">{billData.clientAddress}</p>}
+              {billData.clientPhone && <p className="text-xs text-slate-500 mt-1">Phone: {billData.clientPhone}</p>}
+              {billData.clientGstin && <p className="text-xs text-slate-700 font-bold mt-1">GSTIN: {billData.clientGstin}</p>}
+            </div>
+
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 flex flex-col justify-between">
+              <div>
+                <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Billing Status</h5>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${billData.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                  {billData.status}
+                </span>
+                {billData.paymentTerms && <p className="text-xs text-slate-600 mt-2"><b>Terms:</b> {billData.paymentTerms}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Logistics Details */}
+          {(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) && (
+            <div className="mb-6">
+              <h4 style={{ color: themeColor, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px' }}>Logistics Information</h4>
+              <div className="grid grid-cols-3 gap-y-4 gap-x-2 text-xs">
+                {billData.vehicleNumber && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Vehicle No.</span>
+                    <span className="font-semibold text-slate-700">{billData.vehicleNumber}</span>
+                  </div>
+                )}
+                {billData.lrGrNumber && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">LR / GR No.</span>
+                    <span className="font-semibold text-slate-700">{billData.lrGrNumber}</span>
+                  </div>
+                )}
+                {billData.numberOfLabourers && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Labourers</span>
+                    <span className="font-semibold text-slate-700">{billData.numberOfLabourers} Persons</span>
+                  </div>
+                )}
+                {billData.origin && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Origin</span>
+                    <span className="font-semibold text-slate-700">{billData.origin}</span>
+                  </div>
+                )}
+                {billData.destination && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Destination</span>
+                    <span className="font-semibold text-slate-700">{billData.destination}</span>
+                  </div>
+                )}
+                {billData.goodsDescription && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Goods</span>
+                    <span className="font-semibold text-slate-700">{billData.goodsDescription}</span>
+                  </div>
+                )}
+                {billData.loadingDate && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Loading Date</span>
+                    <span className="font-semibold text-slate-700">{new Date(billData.loadingDate).toLocaleDateString('en-IN')}</span>
+                  </div>
+                )}
+                {billData.unloadingDate && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Unloading Date</span>
+                    <span className="font-semibold text-slate-700">{new Date(billData.unloadingDate).toLocaleDateString('en-IN')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Charges Grid */}
+          <div className="mb-6">
+            <h4 style={{ color: themeColor, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px' }}>Charges & Costing</h4>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Category</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white text-xs">
+                  {chargesList.length > 0 ? (
+                    chargesList.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-2.5 font-medium text-slate-700">{item.label}</td>
+                        <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="2" className="px-4 py-4 text-center italic text-gray-400">No charges entered yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1">
+              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 text-[11px] font-semibold">
+                <span className="text-[9px] uppercase tracking-wider text-emerald-600 block mb-0.5">Amount in Words</span>
+                {computed.amountInWords}
+              </div>
+              {billData.remarks && (
+                <div className="mt-3">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Remarks</span>
+                  <span className="text-xs text-slate-500 italic">{billData.remarks}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="w-64 text-xs">
+              <div className="flex justify-between py-1 text-slate-500">
+                <span>Subtotal:</span>
+                <span className="font-bold text-slate-800">₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              {Number(billData.taxPercentage) > 0 && (
+                <div className="flex justify-between py-1 text-slate-500">
+                  <span>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%):</span>
+                  <span className="font-bold text-slate-800">₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-2 border-t border-slate-200 mt-1 font-bold text-base" style={{ color: themeColor }}>
+                <span>Grand Total:</span>
+                <span>₹{computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-end mt-12 pt-4 border-t border-slate-100">
+            <div className="text-[9px] text-slate-400">
+              <p>Generated electronically. Subject to jurisdiction terms.</p>
+            </div>
+            <div className="text-center">
+              {selectedProgram?.signatureUrl && (
+                <img src={selectedProgram.signatureUrl} alt="Signature" className="h-10 mx-auto object-contain mb-1" />
+              )}
+              <span className="block text-[10px] font-bold text-slate-800 border-t border-slate-300 pt-1 px-4">Authorized Signature</span>
+              <span className="block text-[9px] text-slate-400 mt-0.5">For {billData.serviceProviderName || 'Contractor'}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="animate-in fade-in duration-300">
+      
+      {/* Search Header */}
+      {!showForm && (
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+          <div className="relative flex-1 w-full md:w-80">
+            <input 
+              type="text" 
+              className="form-control pl-10" 
+              placeholder="Search by Bill No, Client, Vehicle, or LR No..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute left-3 top-2.5 text-gray-400">
+              <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
+            </div>
+          </div>
+          <button 
+            className="btn btn-primary flex items-center gap-2 w-full md:w-auto justify-center"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus size={18} />
+            <span>Create New Labour Bill</span>
+          </button>
+        </div>
+      )}
+
+      {showForm && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 animate-in slide-in-from-top-4 duration-300">
+          
+          {/* Editor Form Card */}
+          <div className="card shadow-2xl border-t-4 border-primary bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                {editingId ? <Edit2 size={20} className="text-primary" /> : <Plus size={20} className="text-primary" />}
+                <span>{editingId ? 'Update Labour Bill' : 'New Labour Bill Details'}</span>
+              </h2>
+              <button className="text-gray-400 hover:text-rose-500" onClick={resetForm}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Row 1: General Info */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <FileText size={14} className="text-primary" />
+                  <span>General Bill Information</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Bill No. (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Auto-generated if blank"
+                      value={formData.billNumber} 
+                      onChange={e => setFormData({...formData, billNumber: e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Bill Date</label>
+                    <input 
+                      type="date" 
+                      className="form-control" 
+                      required 
+                      value={formData.billDate} 
+                      onChange={e => setFormData({...formData, billDate: e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Payment Status</label>
+                    <select 
+                      className="form-control" 
+                      value={formData.status} 
+                      onChange={e => setFormData({...formData, status: e.target.value})}
+                    >
+                      <option value="Unpaid">Unpaid</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Contractor Details */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <User size={14} className="text-primary" />
+                  <span>Contractor / Service Provider Details</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Contractor Name</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.serviceProviderName} 
+                      onChange={e => setFormData({...formData, serviceProviderName: e.target.value})} 
+                      placeholder="Enter provider business name"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">GSTIN (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.serviceProviderGstin} 
+                      onChange={e => setFormData({...formData, serviceProviderGstin: e.target.value})} 
+                      placeholder="GSTIN of service provider"
+                    />
+                  </div>
+                  <div className="form-group mb-0 md:col-span-2">
+                    <label className="form-label text-xs">Address</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.serviceProviderAddress} 
+                      onChange={e => setFormData({...formData, serviceProviderAddress: e.target.value})} 
+                      placeholder="Provider address details"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Contact Number</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.serviceProviderPhone} 
+                      onChange={e => setFormData({...formData, serviceProviderPhone: e.target.value})} 
+                      placeholder="Provider contact phone"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Client Details */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <User size={14} className="text-emerald-500" />
+                  <span>Client / Consignee Details</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="form-group mb-0 md:col-span-2">
+                    <label className="form-label text-xs">Select Saved Customer</label>
+                    <select 
+                      className="form-control" 
+                      value={formData.customer} 
+                      onChange={e => handleCustomerChange(e.target.value)}
+                    >
+                      <option value="">-- Quick Select Customer (Optional) --</option>
+                      {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Client Name</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      required
+                      value={formData.clientName} 
+                      onChange={e => setFormData({...formData, clientName: e.target.value})} 
+                      placeholder="Enter client/consignee name"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Client GSTIN (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.clientGstin} 
+                      onChange={e => setFormData({...formData, clientGstin: e.target.value})} 
+                      placeholder="Client GSTIN"
+                    />
+                  </div>
+                  <div className="form-group mb-0 md:col-span-2">
+                    <label className="form-label text-xs">Client Address</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.clientAddress} 
+                      onChange={e => setFormData({...formData, clientAddress: e.target.value})} 
+                      placeholder="Client address"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Client Phone</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.clientPhone} 
+                      onChange={e => setFormData({...formData, clientPhone: e.target.value})} 
+                      placeholder="Client contact number"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 4: Logistics & Dispatch Details */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Truck size={14} className="text-indigo-500" />
+                  <span>Logistics & Transport details (All Optional)</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Vehicle Number</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.vehicleNumber} 
+                      onChange={e => setFormData({...formData, vehicleNumber: e.target.value})} 
+                      placeholder="e.g. MH-12-AB-1234"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">LR / GR Number</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.lrGrNumber} 
+                      onChange={e => setFormData({...formData, lrGrNumber: e.target.value})} 
+                      placeholder="e.g. LR-4091"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Origin (From)</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.origin} 
+                      onChange={e => setFormData({...formData, origin: e.target.value})} 
+                      placeholder="Loading Point"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Destination (To)</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.destination} 
+                      onChange={e => setFormData({...formData, destination: e.target.value})} 
+                      placeholder="Delivery Point"
+                    />
+                  </div>
+                  <div className="form-group mb-0 md:col-span-2">
+                    <label className="form-label text-xs">Goods Description</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.goodsDescription} 
+                      onChange={e => setFormData({...formData, goodsDescription: e.target.value})} 
+                      placeholder="e.g. Industrial pipes, Machinery, Cotton bales"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Loading Date</label>
+                    <input 
+                      type="date" 
+                      className="form-control" 
+                      value={formData.loadingDate} 
+                      onChange={e => setFormData({...formData, loadingDate: e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Unloading Date</label>
+                    <input 
+                      type="date" 
+                      className="form-control" 
+                      value={formData.unloadingDate} 
+                      onChange={e => setFormData({...formData, unloadingDate: e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Number of Labourers</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.numberOfLabourers} 
+                      onChange={e => setFormData({...formData, numberOfLabourers: e.target.value})} 
+                      placeholder="Number of workers deployed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 5: Charges & Costing */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <DollarSign size={14} className="text-amber-500" />
+                  <span>Charges & Costing (in ₹)</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Labour Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.labourCharges || ''} 
+                      onChange={e => setFormData({...formData, labourCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Loading Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.loadingCharges || ''} 
+                      onChange={e => setFormData({...formData, loadingCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Unloading Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.unloadingCharges || ''} 
+                      onChange={e => setFormData({...formData, unloadingCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Handling Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.handlingCharges || ''} 
+                      onChange={e => setFormData({...formData, handlingCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Packing Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.packingCharges || ''} 
+                      onChange={e => setFormData({...formData, packingCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Overtime Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.overtimeCharges || ''} 
+                      onChange={e => setFormData({...formData, overtimeCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group mb-0 md:col-span-2">
+                    <label className="form-label text-xs">Additional Charges</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.additionalCharges || ''} 
+                      onChange={e => setFormData({...formData, additionalCharges: parseFloat(e.target.value) || 0})} 
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 6: Taxation settings */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <DollarSign size={14} className="text-rose-500" />
+                  <span>Tax & Theme Configuration</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Tax label</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.taxDetails} 
+                      onChange={e => setFormData({...formData, taxDetails: e.target.value})} 
+                      placeholder="e.g. GST, CGST+SGST"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Tax Percentage (%)</label>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={formData.taxPercentage || ''} 
+                      onChange={e => setFormData({...formData, taxPercentage: parseFloat(e.target.value) || 0})} 
+                      placeholder="e.g. 18"
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label text-xs">Bill Theme</label>
+                    <select 
+                      className="form-control" 
+                      value={formData.theme} 
+                      onChange={e => setFormData({...formData, theme: e.target.value})}
+                    >
+                      <option value="classic">Classic / Professional</option>
+                      <option value="modern">Modern Banner</option>
+                      <option value="minimalist">Clean Minimalist</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms and Remarks */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label text-xs">Payment Terms</label>
+                  <textarea 
+                    className="form-control" 
+                    rows="3" 
+                    value={formData.paymentTerms} 
+                    onChange={e => setFormData({...formData, paymentTerms: e.target.value})} 
+                    placeholder="Enter bill terms..."
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label text-xs">Remarks (Internal or Bill notes)</label>
+                  <textarea 
+                    className="form-control" 
+                    rows="3" 
+                    value={formData.remarks} 
+                    onChange={e => setFormData({...formData, remarks: e.target.value})} 
+                    placeholder="Any special remarks..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button type="button" className="btn btn-secondary w-1/3 py-3" onClick={resetForm}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary w-2/3 py-3 shadow-lg hover:scale-[1.01] transition-transform">
+                  {editingId ? 'Update Labour Bill' : 'Generate Labour Bill'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          {/* Interactive Document Preview Column */}
+          <div className="hidden lg:block sticky top-8">
+            <h3 className="text-xl font-bold mb-6 text-gray-400">Live Document Preview</h3>
+            <div className="shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
+              {renderPreview(formData)}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* Preview Overlay for existing bills */}
+      {previewData && (
+        <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-4 sticky top-0 z-10 p-2 no-print">
+              <button 
+                className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" 
+                onClick={() => setPreviewData(null)}
+              >
+                <X size={18} />
+                <span>Close</span>
+              </button>
+              
+              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-lg border shadow-sm">
+                <span className="text-xs font-bold text-gray-500 uppercase px-1">Theme</span>
+                <select 
+                  className="form-control py-1 px-3 border border-gray-300 rounded-lg text-sm bg-white"
+                  style={{ width: '180px' }}
+                  value={previewTheme}
+                  onChange={(e) => {
+                    setPreviewTheme(e.target.value);
+                    setPreviewData({ ...previewData, theme: e.target.value });
+                  }}
+                >
+                  <option value="classic">Classic / Professional</option>
+                  <option value="modern">Modern Banner</option>
+                  <option value="minimalist">Clean Minimalist</option>
+                </select>
+              </div>
+
+              <button 
+                className="btn btn-primary flex items-center gap-2 shadow-lg" 
+                onClick={() => handlePrint(previewData)}
+              >
+                <Printer size={18} />
+                <span>Print Bill</span>
+              </button>
+            </div>
+            
+            <div className="animate-in fade-in zoom-in-95 duration-300">
+              {renderPreview(previewData)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Labour Bills List Table */}
+      {!showForm && (
+        <div className="card shadow-xl border-none bg-white">
+          <div className="table-container border-none shadow-none">
+            <table className="data-table">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="py-4">Bill No</th>
+                  <th className="py-4">Client / Consignee</th>
+                  <th className="py-4">Date</th>
+                  <th className="py-4">Route</th>
+                  <th className="py-4">Total Amount</th>
+                  <th className="py-4 text-center">Status</th>
+                  <th className="py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredBills.map(bill => (
+                  <tr key={bill._id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-4 font-bold text-primary">{bill.billNumber}</td>
+                    <td className="py-4 font-bold text-slate-800">{bill.clientName}</td>
+                    <td className="py-4 text-slate-500">{new Date(bill.billDate).toLocaleDateString('en-IN')}</td>
+                    <td className="py-4 text-xs text-slate-600">
+                      {bill.origin && bill.destination ? (
+                        <span>{bill.origin} &rarr; {bill.destination}</span>
+                      ) : bill.origin || bill.destination || 'N/A'}
+                    </td>
+                    <td className="py-4 font-bold text-slate-900">
+                      ₹{bill.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                        bill.status === 'Paid' 
+                          ? 'bg-emerald-50 text-emerald-600' 
+                          : bill.status === 'Overdue' 
+                            ? 'bg-rose-50 text-rose-600' 
+                            : 'bg-amber-50 text-amber-600'
+                      }`}>
+                        {bill.status}
+                      </span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          className="p-2 text-gray-400 hover:text-primary transition-colors bg-white border rounded-lg shadow-sm"
+                          onClick={() => { setPreviewData(bill); setPreviewTheme(bill.theme || 'classic'); }}
+                          title="View / Print"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button 
+                          className="p-2 text-gray-400 hover:text-emerald-600 transition-colors bg-white border rounded-lg shadow-sm"
+                          onClick={() => handleEdit(bill)}
+                          title="Edit Bill"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="p-2 text-gray-400 hover:text-rose-600 transition-colors bg-white border rounded-lg shadow-sm"
+                          onClick={() => handleDelete(bill._id)}
+                          title="Delete Bill"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredBills.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="py-20 text-center text-gray-400 italic">No Labour Bills found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default LabourBillsTab;
