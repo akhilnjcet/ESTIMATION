@@ -46,7 +46,7 @@ router.post('/', protect, async (req, res) => {
       loadingDate,
       unloadingDate,
       numberOfLabourers,
-      labourCharges,
+      workItems,
       loadingCharges,
       unloadingCharges,
       handlingCharges,
@@ -62,7 +62,11 @@ router.post('/', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme,
-      status
+      status,
+      showTerms,
+      showTax,
+      showSignature,
+      showPaymentTerms
     } = req.body;
 
     let finalBillNumber = billNumber;
@@ -100,7 +104,7 @@ router.post('/', protect, async (req, res) => {
       loadingDate,
       unloadingDate,
       numberOfLabourers: numberOfLabourers || null,
-      labourCharges: labourCharges || 0,
+      workItems: workItems || [],
       loadingCharges: loadingCharges || 0,
       unloadingCharges: unloadingCharges || 0,
       handlingCharges: handlingCharges || 0,
@@ -116,7 +120,11 @@ router.post('/', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme: theme || 'classic',
-      status: status || 'Unpaid'
+      status: status || 'Unpaid',
+      showTerms: showTerms !== undefined ? showTerms : true,
+      showTax: showTax !== undefined ? showTax : true,
+      showSignature: showSignature !== undefined ? showSignature : true,
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true
     });
 
     const createdBill = await bill.save();
@@ -154,7 +162,7 @@ router.put('/:id', protect, async (req, res) => {
       loadingDate,
       unloadingDate,
       numberOfLabourers,
-      labourCharges,
+      workItems,
       loadingCharges,
       unloadingCharges,
       handlingCharges,
@@ -170,7 +178,11 @@ router.put('/:id', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme,
-      status
+      status,
+      showTerms,
+      showTax,
+      showSignature,
+      showPaymentTerms
     } = req.body;
 
     const updateData = {
@@ -192,7 +204,7 @@ router.put('/:id', protect, async (req, res) => {
       loadingDate,
       unloadingDate,
       numberOfLabourers: numberOfLabourers || null,
-      labourCharges: labourCharges || 0,
+      workItems: workItems || [],
       loadingCharges: loadingCharges || 0,
       unloadingCharges: unloadingCharges || 0,
       handlingCharges: handlingCharges || 0,
@@ -208,7 +220,11 @@ router.put('/:id', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme,
-      status
+      status,
+      showTerms: showTerms !== undefined ? showTerms : true,
+      showTax: showTax !== undefined ? showTax : true,
+      showSignature: showSignature !== undefined ? showSignature : true,
+      showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true
     };
 
     if (billNumber && billNumber.trim() !== '') {

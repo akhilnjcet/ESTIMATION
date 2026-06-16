@@ -100,8 +100,10 @@ const LabourBillsTab = () => {
     unloadingDate: '',
     numberOfLabourers: '',
 
-    // Charges (Optional)
-    labourCharges: 0,
+    // Dynamic Labour Work Items Table
+    workItems: [{ workDescription: '', labourCount: 1, rate: 0, total: 0 }],
+
+    // Extra Charges (Optional)
     loadingCharges: 0,
     unloadingCharges: 0,
     handlingCharges: 0,
@@ -116,7 +118,13 @@ const LabourBillsTab = () => {
     paymentTerms: '',
     remarks: '',
     theme: 'classic',
-    status: 'Unpaid'
+    status: 'Unpaid',
+
+    // Print config toggles
+    showTerms: true,
+    showTax: true,
+    showSignature: true,
+    showPaymentTerms: true
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -186,10 +194,43 @@ const LabourBillsTab = () => {
     }
   };
 
+  // Dynamic Work Items list helpers
+  const addWorkItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      workItems: [...(prev.workItems || []), { workDescription: '', labourCount: 1, rate: 0, total: 0 }]
+    }));
+  };
+
+  const updateWorkItem = (index, field, value) => {
+    const updatedItems = [...(formData.workItems || [])];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    
+    // Auto-calculate row total
+    if (field === 'labourCount' || field === 'rate') {
+      const count = Number(updatedItems[index].labourCount || 0);
+      const rate = Number(updatedItems[index].rate || 0);
+      updatedItems[index].total = count * rate;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      workItems: updatedItems
+    }));
+  };
+
+  const removeWorkItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      workItems: (prev.workItems || []).filter((_, i) => i !== index)
+    }));
+  };
+
   // Auto-calculated fields
   const calculateTotals = (data) => {
+    const workTotal = (data.workItems || []).reduce((sum, item) => sum + Number(item.total || 0), 0);
     const subTotal = 
-      Number(data.labourCharges || 0) +
+      workTotal +
       Number(data.loadingCharges || 0) +
       Number(data.unloadingCharges || 0) +
       Number(data.handlingCharges || 0) +
@@ -208,6 +249,11 @@ const LabourBillsTab = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.workItems || formData.workItems.length === 0) {
+      alert('Please add at least one labour work item');
+      return;
+    }
+
     const calculated = calculateTotals(formData);
     const payload = {
       ...formData,
@@ -251,7 +297,9 @@ const LabourBillsTab = () => {
       loadingDate: bill.loadingDate ? new Date(bill.loadingDate).toISOString().split('T')[0] : '',
       unloadingDate: bill.unloadingDate ? new Date(bill.unloadingDate).toISOString().split('T')[0] : '',
       numberOfLabourers: bill.numberOfLabourers || '',
-      labourCharges: bill.labourCharges || 0,
+      workItems: bill.workItems && bill.workItems.length > 0 
+        ? bill.workItems 
+        : [{ workDescription: '', labourCount: 1, rate: 0, total: 0 }],
       loadingCharges: bill.loadingCharges || 0,
       unloadingCharges: bill.unloadingCharges || 0,
       handlingCharges: bill.handlingCharges || 0,
@@ -263,7 +311,11 @@ const LabourBillsTab = () => {
       paymentTerms: bill.paymentTerms || '',
       remarks: bill.remarks || '',
       theme: bill.theme || 'classic',
-      status: bill.status || 'Unpaid'
+      status: bill.status || 'Unpaid',
+      showTerms: bill.showTerms !== undefined ? bill.showTerms : true,
+      showTax: bill.showTax !== undefined ? bill.showTax : true,
+      showSignature: bill.showSignature !== undefined ? bill.showSignature : true,
+      showPaymentTerms: bill.showPaymentTerms !== undefined ? bill.showPaymentTerms : true
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -300,9 +352,7 @@ const LabourBillsTab = () => {
     const themeColor = selectedProgram?.themeColor || '#4f46e5';
     const printWindow = window.open('', '_blank');
 
-    // Filter charges to show only non-zero values
-    const chargesList = [
-      { label: 'Labour Charges', val: billData.labourCharges },
+    const otherChargesList = [
       { label: 'Loading Charges', val: billData.loadingCharges },
       { label: 'Unloading Charges', val: billData.unloadingCharges },
       { label: 'Handling Charges', val: billData.handlingCharges },
@@ -431,7 +481,7 @@ const LabourBillsTab = () => {
                   <div>
                     <div class="meta-label">Billing Metadata</div>
                     <p class="meta-text">Bill Status: <span style="font-weight: bold; color: ${billData.status === 'Paid' ? '#15803d' : '#b91c1c'};">${billData.status}</span></p>
-                    ${billData.paymentTerms ? `<p class="meta-text" style="margin-top: 5px;">Payment Terms: ${billData.paymentTerms}</p>` : ''}
+                    ${billData.showPaymentTerms && billData.paymentTerms ? `<p class="meta-text" style="margin-top: 5px;">Payment Terms: ${billData.paymentTerms}</p>` : ''}
                   </div>
                 </div>
               </div>
@@ -493,20 +543,33 @@ const LabourBillsTab = () => {
                 </div>
               ` : ''}
 
-              <!-- Charges Table -->
+              <!-- Charges Table (Work Items + Static Extra Charges) -->
               <table>
                 <thead>
                   <tr>
                     <th style="width: 50px;">Sr.</th>
-                    <th>Charge Category / Description</th>
-                    <th style="text-align: right; width: 200px;">Amount</th>
+                    <th>Work Description / Extra Charge</th>
+                    <th style="text-align: center; width: 100px;">Labourers</th>
+                    <th style="text-align: right; width: 120px;">Rate</th>
+                    <th style="text-align: right; width: 150px;">Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${chargesList.map((item, idx) => `
+                  ${(billData.workItems || []).map((item, idx) => `
                     <tr>
                       <td>${String(idx + 1).padStart(2, '0')}</td>
+                      <td style="font-weight: 600; color: #1e293b;">${item.workDescription || 'Labour work'}</td>
+                      <td style="text-align: center;">${item.labourCount}</td>
+                      <td style="text-align: right;">₹${Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  `).join('')}
+                  ${otherChargesList.map((item, idx) => `
+                    <tr>
+                      <td>${String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
                       <td style="font-weight: 600; color: #1e293b;">${item.label}</td>
+                      <td style="text-align: center; color: #64748b;">-</td>
+                      <td style="text-align: right; color: #64748b;">-</td>
                       <td style="text-align: right; font-weight: 700; color: #0f172a;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   `).join('')}
@@ -529,22 +592,32 @@ const LabourBillsTab = () => {
                 </div>
 
                 <div class="totals-container">
-                  <div class="total-row">
-                    <span>Subtotal:</span>
-                    <span style="font-weight: bold;">₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  ${Number(billData.taxPercentage) > 0 ? `
+                  ${billData.showTax ? `
                     <div class="total-row">
-                      <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
-                      <span style="font-weight: bold;">₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span>Subtotal:</span>
+                      <span style="font-weight: bold;">₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
+                    ${Number(billData.taxPercentage) > 0 ? `
+                      <div class="total-row">
+                        <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
+                        <span style="font-weight: bold;">₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    ` : ''}
                   ` : ''}
-                  <div class="grand-total-row">
+                  <div class="grand-total-row" style="${!billData.showTax ? 'border-top: 2px solid #0f172a; margin-top: 0;' : ''}">
                     <span>Grand Total:</span>
                     <span>₹${computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
+
+              <!-- Terms & Conditions Section (Optional) -->
+              ${billData.showTerms && billData.paymentTerms ? `
+                <div style="margin-top: 25px; max-width: 600px;">
+                  <div class="meta-label">Terms & Conditions</div>
+                  <p class="meta-text" style="white-space: pre-wrap; font-size: 11px; color: #475569; line-height: 1.6;">${billData.paymentTerms}</p>
+                </div>
+              ` : ''}
 
               <!-- Footer Section -->
               <div class="footer-grid">
@@ -552,11 +625,13 @@ const LabourBillsTab = () => {
                   <p style="font-size: 10px; color: #64748b; margin: 0;">1. Subject to local jurisdiction.</p>
                   <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0;">2. Generated electronically on ${new Date().toLocaleDateString('en-IN')}</p>
                 </div>
-                <div class="signature-box">
-                  ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
-                  <div class="signature-line">For ${billData.serviceProviderName || 'Contractor'}</div>
-                  <p style="font-size: 9px; color: #64748b; margin: 2px 0 0 0;">Authorized Signature</p>
-                </div>
+                ${billData.showSignature ? `
+                  <div class="signature-box">
+                    ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
+                    <div class="signature-line">For ${billData.serviceProviderName || 'Contractor'}</div>
+                    <p style="font-size: 9px; color: #64748b; margin: 2px 0 0 0;">Authorized Signature</p>
+                  </div>
+                ` : ''}
               </div>
 
               ${theme === 'modern' ? '</div></div>' : '</div>'}
@@ -575,8 +650,7 @@ const LabourBillsTab = () => {
     const computed = calculateTotals(billData);
     const themeColor = selectedProgram?.themeColor || '#4f46e5';
 
-    const chargesList = [
-      { label: 'Labour Charges', val: billData.labourCharges },
+    const otherChargesList = [
       { label: 'Loading Charges', val: billData.loadingCharges },
       { label: 'Unloading Charges', val: billData.unloadingCharges },
       { label: 'Handling Charges', val: billData.handlingCharges },
@@ -637,7 +711,7 @@ const LabourBillsTab = () => {
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${billData.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                   {billData.status}
                 </span>
-                {billData.paymentTerms && <p className="text-xs text-slate-600 mt-2"><b>Terms:</b> {billData.paymentTerms}</p>}
+                {billData.showPaymentTerms && billData.paymentTerms && <p className="text-xs text-slate-600 mt-2"><b>Terms:</b> {billData.paymentTerms}</p>}
               </div>
             </div>
           </div>
@@ -706,21 +780,32 @@ const LabourBillsTab = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Category</th>
-                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Amount</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Description</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Labourers</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Rate</th>
+                    <th className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white text-xs">
-                  {chargesList.length > 0 ? (
-                    chargesList.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-2.5 font-medium text-slate-700">{item.label}</td>
-                        <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      </tr>
-                    ))
-                  ) : (
+                  {(billData.workItems || []).map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-2.5 font-medium text-slate-700">{item.workDescription || 'Labour Work'}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-600">{item.labourCount}</td>
+                      <td className="px-4 py-2.5 text-right text-slate-600">₹{Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                  {otherChargesList.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-2.5 font-medium text-slate-700">{item.label}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-400">-</td>
+                      <td className="px-4 py-2.5 text-right text-slate-400">-</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                  {(!billData.workItems || billData.workItems.length === 0) && otherChargesList.length === 0 && (
                     <tr>
-                      <td colSpan="2" className="px-4 py-4 text-center italic text-gray-400">No charges entered yet</td>
+                      <td colSpan="4" className="px-4 py-4 text-center italic text-gray-400">No charges entered yet</td>
                     </tr>
                   )}
                 </tbody>
@@ -740,19 +825,29 @@ const LabourBillsTab = () => {
                   <span className="text-xs text-slate-500 italic">{billData.remarks}</span>
                 </div>
               )}
+              {billData.showTerms && billData.paymentTerms && (
+                <div className="mt-3">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Terms & Conditions</span>
+                  <span className="text-[10px] text-slate-500 block white-space-pre-wrap">{billData.paymentTerms}</span>
+                </div>
+              )}
             </div>
 
             <div className="w-64 text-xs">
-              <div className="flex justify-between py-1 text-slate-500">
-                <span>Subtotal:</span>
-                <span className="font-bold text-slate-800">₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-              {Number(billData.taxPercentage) > 0 && (
-                <div className="flex justify-between py-1 text-slate-500">
-                  <span>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%):</span>
-                  <span className="font-bold text-slate-800">₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
+              {billData.showTax ? (
+                <>
+                  <div className="flex justify-between py-1 text-slate-500">
+                    <span>Subtotal:</span>
+                    <span className="font-bold text-slate-800">₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  {Number(billData.taxPercentage) > 0 && (
+                    <div className="flex justify-between py-1 text-slate-500">
+                      <span>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%):</span>
+                      <span className="font-bold text-slate-800">₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                </>
+              ) : null}
               <div className="flex justify-between py-2 border-t border-slate-200 mt-1 font-bold text-base" style={{ color: themeColor }}>
                 <span>Grand Total:</span>
                 <span>₹{computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
@@ -764,13 +859,15 @@ const LabourBillsTab = () => {
             <div className="text-[9px] text-slate-400">
               <p>Generated electronically. Subject to jurisdiction terms.</p>
             </div>
-            <div className="text-center">
-              {selectedProgram?.signatureUrl && (
-                <img src={selectedProgram.signatureUrl} alt="Signature" className="h-10 mx-auto object-contain mb-1" />
-              )}
-              <span className="block text-[10px] font-bold text-slate-800 border-t border-slate-300 pt-1 px-4">Authorized Signature</span>
-              <span className="block text-[9px] text-slate-400 mt-0.5">For {billData.serviceProviderName || 'Contractor'}</span>
-            </div>
+            {billData.showSignature && (
+              <div className="text-center">
+                {selectedProgram?.signatureUrl && (
+                  <img src={selectedProgram.signatureUrl} alt="Signature" className="h-10 mx-auto object-contain mb-1" />
+                )}
+                <span className="block text-[10px] font-bold text-slate-800 border-t border-slate-300 pt-1 px-4">Authorized Signature</span>
+                <span className="block text-[9px] text-slate-400 mt-0.5">For {billData.serviceProviderName || 'Contractor'}</span>
+              </div>
+            )}
           </div>
 
         </div>
@@ -1065,23 +1162,85 @@ const LabourBillsTab = () => {
                 </div>
               </div>
 
-              {/* Row 5: Charges & Costing */}
+              {/* Dynamic Labour Work Items Editor Table */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                    <User size={14} className="text-amber-500" />
+                    <span>Labour Work Breakdown (Work Count Rate Total)</span>
+                  </h4>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary btn-sm flex items-center gap-1 border-dashed py-1.5"
+                    onClick={addWorkItem}
+                  >
+                    <Plus size={14} /> Add Work Row
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {(formData.workItems || []).map((item, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-white rounded-lg border border-slate-200 relative group animate-in slide-in-from-top-1">
+                      <div className="col-span-12 md:col-span-5">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Work Description</label>
+                        <input 
+                          type="text" 
+                          className="form-control py-1.5" 
+                          required
+                          placeholder="e.g. Loading pipes" 
+                          value={item.workDescription} 
+                          onChange={e => updateWorkItem(index, 'workDescription', e.target.value)} 
+                        />
+                      </div>
+                      <div className="col-span-4 md:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Labour Count</label>
+                        <input 
+                          type="number" 
+                          className="form-control py-1.5" 
+                          required 
+                          min="1"
+                          value={item.labourCount} 
+                          onChange={e => updateWorkItem(index, 'labourCount', parseInt(e.target.value) || 0)} 
+                        />
+                      </div>
+                      <div className="col-span-4 md:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Rate (₹)</label>
+                        <input 
+                          type="number" 
+                          className="form-control py-1.5" 
+                          required 
+                          value={item.rate || ''} 
+                          placeholder="0.00"
+                          onChange={e => updateWorkItem(index, 'rate', parseFloat(e.target.value) || 0)} 
+                        />
+                      </div>
+                      <div className="col-span-3 md:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block">Total (₹)</label>
+                        <div className="font-bold text-primary text-sm pt-2">₹{(item.total || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="col-span-1 flex items-end justify-center pb-2">
+                        {formData.workItems.length > 1 && (
+                          <button 
+                            type="button" 
+                            className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-1.5 rounded"
+                            onClick={() => removeWorkItem(index)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 5: Static Extra Charges */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                   <DollarSign size={14} className="text-amber-500" />
-                  <span>Charges & Costing (in ₹)</span>
+                  <span>Other Transport Charges (Optional, in ₹)</span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Labour Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.labourCharges || ''} 
-                      onChange={e => setFormData({...formData, labourCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
                   <div className="form-group mb-0">
                     <label className="form-label text-xs">Loading Charges</label>
                     <input 
@@ -1132,7 +1291,7 @@ const LabourBillsTab = () => {
                       placeholder="0.00"
                     />
                   </div>
-                  <div className="form-group mb-0 md:col-span-2">
+                  <div className="form-group mb-0">
                     <label className="form-label text-xs">Additional Charges</label>
                     <input 
                       type="number" 
@@ -1145,11 +1304,11 @@ const LabourBillsTab = () => {
                 </div>
               </div>
 
-              {/* Row 6: Taxation settings */}
+              {/* Row 6: Taxation settings & Print Checkboxes */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                   <DollarSign size={14} className="text-rose-500" />
-                  <span>Tax & Theme Configuration</span>
+                  <span>Tax, Print & Theme Configuration</span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-group mb-0">
@@ -1183,6 +1342,46 @@ const LabourBillsTab = () => {
                       <option value="modern">Modern Banner</option>
                       <option value="minimalist">Clean Minimalist</option>
                     </select>
+                  </div>
+                  
+                  {/* Print Checkboxes */}
+                  <div className="md:col-span-3 flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-slate-200 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showTax} 
+                        onChange={e => setFormData({...formData, showTax: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Tax Breakdown in Print</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showTerms} 
+                        onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Terms & Conditions</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showPaymentTerms} 
+                        onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary rounded" 
+                        checked={formData.showSignature} 
+                        onChange={e => setFormData({...formData, showSignature: e.target.checked})} 
+                      />
+                      <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
+                    </label>
                   </div>
                 </div>
               </div>

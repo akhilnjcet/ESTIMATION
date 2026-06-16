@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const workItemSchema = new mongoose.Schema({
+  workDescription: { type: String, required: true },
+  labourCount: { type: Number, required: true, default: 1 },
+  rate: { type: Number, required: true, default: 0 },
+  total: { type: Number, required: true, default: 0 }
+});
+
 const labourBillSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
   billNumber: { type: String, required: true, unique: true },
@@ -28,8 +35,10 @@ const labourBillSchema = new mongoose.Schema({
   unloadingDate: { type: Date },
   numberOfLabourers: { type: Number },
   
-  // Charges
-  labourCharges: { type: Number, default: 0 },
+  // Dynamic Work Items (New table of work)
+  workItems: [workItemSchema],
+
+  // Extra Charges
   loadingCharges: { type: Number, default: 0 },
   unloadingCharges: { type: Number, default: 0 },
   handlingCharges: { type: Number, default: 0 },
@@ -47,11 +56,17 @@ const labourBillSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true, default: 0 },
   amountInWords: { type: String },
   
-  // Extra fields
+  // Extra fields & Print Toggles
   paymentTerms: { type: String },
   remarks: { type: String },
   theme: { type: String, enum: ['classic', 'modern', 'minimalist'], default: 'classic' },
-  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' }
+  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
+  
+  // Print Toggles
+  showTerms: { type: Boolean, default: true },
+  showTax: { type: Boolean, default: true },
+  showSignature: { type: Boolean, default: true },
+  showPaymentTerms: { type: Boolean, default: true }
 }, { timestamps: true });
 
 labourBillSchema.index({ programId: 1 });
