@@ -4,8 +4,8 @@
   "description": "Multi-Program Business Management Platform by Krishna IT Solutions",
   "icons": [
     {
-      "src": "/logo.jpg",
-      "type": "image/jpeg",
+      "src": "/logo.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
