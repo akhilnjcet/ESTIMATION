@@ -208,6 +208,15 @@ function PrivateRoute({ children }) {
   );
 }
 
+// ── Admin Only Route Guard ────────────────────────────────────────────────
+function AdminOnlyRoute({ children }) {
+  const role = localStorage.getItem('role') || 'user';
+  if (role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 // ── App Root ──────────────────────────────────────────────────────────────
 function App() {
   return (
@@ -231,8 +240,8 @@ function App() {
               <Route path="/ledger"          element={<PrivateRoute><Ledger /></PrivateRoute>} />
               <Route path="/settings"        element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/notes"           element={<PrivateRoute><Notes /></PrivateRoute>} />
-              <Route path="/user-access"     element={<PrivateRoute><UserAccess /></PrivateRoute>} />
-              <Route path="/login-manager"   element={<PrivateRoute><UserAccess /></PrivateRoute>} />
+              <Route path="/user-access"     element={<PrivateRoute><AdminOnlyRoute><UserAccess /></AdminOnlyRoute></PrivateRoute>} />
+              <Route path="/login-manager"   element={<PrivateRoute><AdminOnlyRoute><UserAccess /></AdminOnlyRoute></PrivateRoute>} />
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />

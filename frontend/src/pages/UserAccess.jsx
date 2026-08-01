@@ -290,6 +290,7 @@ const UserAccess = () => {
                   value={formData.role} 
                   onChange={e => setFormData({...formData, role: e.target.value})}
                 >
+                  <option value="user">User / Customer (Full ERP Access, No Login Mgmt)</option>
                   <option value="admin">Administrator (Full Access & Program Mgmt)</option>
                   <option value="manager">Manager (Operations & Data Management)</option>
                   <option value="accountant">Accountant (Finance, Income & Expense Control)</option>
@@ -448,10 +449,11 @@ const UserAccess = () => {
               className="form-select" 
               value={roleFilter} 
               onChange={e => setRoleFilter(e.target.value)}
-              style={{ width: '150px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+              style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="All">All Roles</option>
               <option value="admin">Administrator</option>
+              <option value="user">User / Customer</option>
               <option value="manager">Manager</option>
               <option value="accountant">Accountant</option>
               <option value="sales">Sales Staff</option>
@@ -496,6 +498,8 @@ const UserAccess = () => {
                           borderRadius: '12px', 
                           background: user.role === 'admin' 
                             ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' 
+                            : user.role === 'user'
+                            ? 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)'
                             : user.role === 'manager'
                             ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
                             : user.role === 'accountant'
@@ -527,11 +531,13 @@ const UserAccess = () => {
                     <td>
                       <span className={`badge ${
                         user.role === 'admin' ? 'badge-secondary' :
+                        user.role === 'user' ? 'badge-info' :
                         user.role === 'manager' ? 'badge-warning' :
                         user.role === 'accountant' ? 'badge-success' :
                         user.role === 'sales' ? 'badge-info' : 'badge-primary'
                       }`}>
                         {user.role === 'admin' ? 'Administrator' :
+                         user.role === 'user' ? 'User / Customer' :
                          user.role === 'manager' ? 'Manager' :
                          user.role === 'accountant' ? 'Accountant' :
                          user.role === 'sales' ? 'Sales Staff' : 'Staff Viewer'}

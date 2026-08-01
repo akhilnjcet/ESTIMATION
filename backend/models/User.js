@@ -16,8 +16,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'manager', 'accountant', 'sales', 'viewer'],
-    default: 'viewer'
+    enum: ['admin', 'user', 'manager', 'accountant', 'sales', 'viewer'],
+    default: 'user'
   },
   programAccess: [{
     type: mongoose.Schema.Types.ObjectId,
