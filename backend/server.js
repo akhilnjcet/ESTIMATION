@@ -135,6 +135,11 @@ const seedDefaultData = async () => {
   try {
     const User = require('./models/User');
     const Program = require('./models/Program');
+    const Customer = require('./models/Customer');
+    const Invoice = require('./models/Invoice');
+    const LabourBill = require('./models/LabourBill');
+    const Account = require('./models/Account');
+    const Transaction = require('./models/Transaction');
     const bcrypt = require('bcryptjs');
 
     const adminEmail = 'admin@krishna.com';
@@ -147,13 +152,59 @@ const seedDefaultData = async () => {
       console.log('Admin account created: admin@krishna.com');
     }
 
-    const programExists = await Program.findOne({ owner: admin._id });
-    if (!programExists) {
-      await Program.create({
+    let program = await Program.findOne({ owner: admin._id });
+    if (!program) {
+      program = await Program.create({
         name: 'Krishna Smart Solutions', owner: admin._id,
         address: '123 Stadium Road', phone: '9999999999', email: 'admin@krishna.com'
       });
       console.log('Default program created');
+    }
+
+    let customer = await Customer.findOne({ programId: program._id });
+    if (!customer) {
+      customer = await Customer.create({
+        programId: program._id,
+        customerName: 'General Client',
+        phone: '9876543210',
+        address: 'Main Market, City Center'
+      });
+    }
+
+    const invoiceCount = await Invoice.countDocuments({ programId: program._id });
+    if (invoiceCount === 0) {
+      await Invoice.create({
+        programId: program._id,
+        invoiceNumber: 'INV-2026-0001',
+        customer: customer._id,
+        items: [{ productName: 'Enterprise ERP Setup & Service', quantity: 1, unit: 'Units', price: 45000, total: 45000 }],
+        subTotal: 45000,
+        taxAmount: 0,
+        totalAmount: 45000,
+        status: 'Paid'
+      });
+    }
+
+    const billCount = await LabourBill.countDocuments({ programId: program._id });
+    if (billCount === 0) {
+      await LabourBill.create({
+        programId: program._id,
+        billNumber: 'LRB-2026-0001',
+        customer: customer._id,
+        clientName: 'General Client',
+        supervisorName: 'Supervisor Raj',
+        workLocation: 'Site Work',
+        workItems: [{ workDescription: 'Daily Wage Skilled Labour', labourCount: 5, workingDays: 4, rate: 700, total: 14000 }],
+        subTotal: 14000,
+        totalAmount: 14000,
+        status: 'Paid'
+      });
+    }
+
+    const accountCount = await Account.countDocuments({ programId: program._id });
+    if (accountCount === 0) {
+      await Account.create({ programId: program._id, accountName: 'Main Cash Box', type: 'Cash', balance: 25500 });
+      await Account.create({ programId: program._id, accountName: 'HDFC Bank Account', type: 'Bank', balance: 48000 });
     }
   } catch (err) {
     console.error('Seeding error:', err.message);
