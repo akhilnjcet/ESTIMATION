@@ -6,158 +6,157 @@ import {
   getDefaultMenuOrder,
 } from '../config/moduleRegistry';
 import { useProgram } from './ProgramContext';
-
 import api from '../utils/api';
 
 const ModuleContext = createContext();
 
+/**
+ * Derive enabled modules for the current program.
+ * Priority:
+ *   1. program.enabledModules from database (if array with items)
+ *   2. All default-enabled modules (fallback for unconfigured programs)
+ * 
+ * NEVER uses localStorage as the source of truth for visibility — only for
+ * menu order and favorites which are purely cosmetic.
+ */
+function deriveEnabledModules(selectedProgram) {
+  if (
+    selectedProgram &&
+    Array.isArray(selectedProgram.enabledModules) &&
+    selectedProgram.enabledModules.length > 0
+  ) {
+    // Always ensure dashboard is present
+    if (!selectedProgram.enabledModules.includes('dashboard')) {
+      return ['dashboard', ...selectedProgram.enabledModules];
+    }
+    return selectedProgram.enabledModules;
+  }
+  // No custom config saved yet → show all default enabled modules
+  return getDefaultEnabledModules();
+}
+
 export const ModuleProvider = ({ children }) => {
-  const { selectedProgram } = useProgram();
+  const { selectedProgram, updateProgramModules } = useProgram();
   const role = localStorage.getItem('role') || 'admin';
 
-  // ── helpers ────────────────────────────────────────────────────
   const storageKey = getModuleStorageKey(selectedProgram?._id);
 
-  const loadFromStorage = useCallback(() => {
-    // 1. If selectedProgram has saved enabledModules from database (and length > 0), use it!
-    if (selectedProgram && Array.isArray(selectedProgram.enabledModules) && selectedProgram.enabledModules.length > 0) {
-      const programModules = selectedProgram.enabledModules.includes('dashboard')
-        ? selectedProgram.enabledModules
-        : ['dashboard', ...selectedProgram.enabledModules];
-
-      return {
-        enabledModules: programModules,
-        menuOrder: getDefaultMenuOrder(),
-        favoriteModules: [],
-      };
-    }
-
-    // 2. Check local storage cache
+  // ── Load cosmetic prefs (menu order & favorites) from localStorage ─────────
+  const loadCosmeticPrefs = useCallback(() => {
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.enabledModules) && parsed.enabledModules.length > 0) {
-          return {
-            enabledModules: parsed.enabledModules,
-            menuOrder: parsed.menuOrder ?? getDefaultMenuOrder(),
-            favoriteModules: parsed.favoriteModules ?? [],
-          };
-        }
+        return {
+          menuOrder: Array.isArray(parsed.menuOrder) ? parsed.menuOrder : getDefaultMenuOrder(),
+          favoriteModules: Array.isArray(parsed.favoriteModules) ? parsed.favoriteModules : [],
+        };
       }
-    } catch {
-      /* ignore malformed data */
-    }
+    } catch { /* ignore */ }
+    return { menuOrder: getDefaultMenuOrder(), favoriteModules: [] };
+  }, [storageKey]);
 
-    // 3. Fall back to all default modules
-    return {
-      enabledModules: getDefaultEnabledModules(),
-      menuOrder: getDefaultMenuOrder(),
-      favoriteModules: [],
-    };
-  }, [storageKey, selectedProgram]);
+  // ── State ──────────────────────────────────────────────────────────────────
+  // enabledModules is derived from selectedProgram — single source of truth
+  const [enabledModules, setEnabledModules] = useState(() => deriveEnabledModules(null));
+  const [menuOrder, setMenuOrderState] = useState(() => loadCosmeticPrefs().menuOrder);
+  const [favoriteModules, setFavoriteModules] = useState(() => loadCosmeticPrefs().favoriteModules);
 
-  // ── state ──────────────────────────────────────────────────────
-  const [enabledModules, setEnabledModules] = useState(() => loadFromStorage().enabledModules);
-  const [menuOrder, setMenuOrderState] = useState(() => loadFromStorage().menuOrder);
-  const [favoriteModules, setFavoriteModules] = useState(() => loadFromStorage().favoriteModules);
-
-  // Re-load whenever selected program changes
+  // Re-derive enabledModules every time selectedProgram changes
   useEffect(() => {
-    const data = loadFromStorage();
-    setEnabledModules(data.enabledModules);
-    setMenuOrderState(data.menuOrder);
-    setFavoriteModules(data.favoriteModules);
-  }, [loadFromStorage, selectedProgram?._id, selectedProgram?.enabledModules]);
+    const derived = deriveEnabledModules(selectedProgram);
+    setEnabledModules(derived);
+  }, [selectedProgram, selectedProgram?.enabledModules]);
 
-  // ── persistence ────────────────────────────────────────────────
-  const persist = useCallback(
-    (enabled, order, favorites) => {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          enabledModules: enabled,
-          menuOrder: order,
-          favoriteModules: favorites,
-        })
-      );
+  // Re-load cosmetic prefs when program changes
+  useEffect(() => {
+    const prefs = loadCosmeticPrefs();
+    setMenuOrderState(prefs.menuOrder);
+    setFavoriteModules(prefs.favoriteModules);
+  }, [loadCosmeticPrefs, selectedProgram?._id]);
 
-      // Also persist to backend database & update selectedProgram in memory
-      if (selectedProgram?._id) {
-        selectedProgram.enabledModules = enabled;
-        api.put(`/programs/${selectedProgram._id}`, { enabledModules: enabled })
-          .catch((err) => console.error('Failed to sync enabledModules to database:', err));
+  // ── Persistence ────────────────────────────────────────────────────────────
+  // Saves enabled modules to DB (authoritative) AND cosmetic prefs to localStorage
+  const persistEnabled = useCallback(async (enabled) => {
+    // Update local state immediately
+    setEnabledModules(enabled);
+
+    // Sync to MongoDB — this is what viewers read on login
+    if (selectedProgram?._id) {
+      try {
+        const { data: updated } = await api.put(`/programs/${selectedProgram._id}`, { enabledModules: enabled });
+        const savedModules = updated?.enabledModules ?? enabled;
+        // Update React state in ProgramContext so selectedProgram.enabledModules is correct
+        updateProgramModules(selectedProgram._id, savedModules);
+      } catch (err) {
+        console.error('Failed to sync enabledModules to database:', err);
       }
-    },
-    [storageKey, selectedProgram]
-  );
+    }
+  }, [selectedProgram, updateProgramModules]);
 
-  // ── actions ────────────────────────────────────────────────────
+  const persistCosmetic = useCallback((order, favorites) => {
+    localStorage.setItem(storageKey, JSON.stringify({
+      menuOrder: order,
+      favoriteModules: favorites,
+    }));
+  }, [storageKey]);
+
+  // ── Actions ────────────────────────────────────────────────────────────────
   const toggleModule = (moduleId) => {
-    setEnabledModules((prev) => {
-      const next = prev.includes(moduleId)
-        ? prev.filter((id) => id !== moduleId)
-        : [...prev, moduleId];
-      persist(next, menuOrder, favoriteModules);
-      return next;
-    });
+    const next = enabledModules.includes(moduleId)
+      ? enabledModules.filter((id) => id !== moduleId)
+      : [...enabledModules, moduleId];
+    persistEnabled(next);
   };
 
   const setMenuOrder = (newOrder) => {
     setMenuOrderState(newOrder);
-    persist(enabledModules, newOrder, favoriteModules);
+    persistCosmetic(newOrder, favoriteModules);
   };
 
   const toggleFavorite = (moduleId) => {
-    setFavoriteModules((prev) => {
-      const next = prev.includes(moduleId)
-        ? prev.filter((id) => id !== moduleId)
-        : [...prev, moduleId];
-      persist(enabledModules, menuOrder, next);
-      return next;
-    });
+    const next = favoriteModules.includes(moduleId)
+      ? favoriteModules.filter((id) => id !== moduleId)
+      : [...favoriteModules, moduleId];
+    setFavoriteModules(next);
+    persistCosmetic(menuOrder, next);
   };
 
   const enableAll = () => {
     const all = ALL_MODULES.map((m) => m.id);
-    setEnabledModules(all);
-    persist(all, menuOrder, favoriteModules);
+    persistEnabled(all);
   };
 
   const disableAll = () => {
-    // Dashboard is always kept enabled so the user isn't locked out
-    const next = ['dashboard'];
-    setEnabledModules(next);
-    persist(next, menuOrder, favoriteModules);
+    persistEnabled(['dashboard']);
   };
 
   const resetDefaults = () => {
     const defaults = getDefaultEnabledModules();
+    persistEnabled(defaults);
     const order = getDefaultMenuOrder();
-    const faves = [];
-    setEnabledModules(defaults);
     setMenuOrderState(order);
-    setFavoriteModules(faves);
-    persist(defaults, order, faves);
+    setFavoriteModules([]);
+    persistCosmetic(order, []);
   };
 
   const saveSettings = (newEnabled, newOrder, newFavorites) => {
-    setEnabledModules(newEnabled);
+    persistEnabled(newEnabled);
     setMenuOrderState(newOrder);
     setFavoriteModules(newFavorites);
-    persist(newEnabled, newOrder, newFavorites);
+    persistCosmetic(newOrder, newFavorites);
   };
 
-  /** Returns true if a given path is accessible */
+  /** Returns true if a given path is accessible for current user */
   const isPathEnabled = (pathname) => {
     if (pathname === '/' || pathname === '/login') return true;
     const mod = ALL_MODULES.find((m) => m.path === pathname);
-    if (!mod) return true; // unknown routes pass through
+    if (!mod) return true;
 
-    // If module is adminOnly, block non-admins
+    // Block adminOnly routes from non-admins always
     if (mod.adminOnly && role !== 'admin') return false;
 
-    // Strictly check if module is enabled in workspace
+    // Strict check — module must be in the enabled list
     return enabledModules.includes(mod.id);
   };
 

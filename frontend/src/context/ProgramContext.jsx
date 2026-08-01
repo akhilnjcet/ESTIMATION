@@ -180,6 +180,16 @@ export const ProgramProvider = ({ children }) => {
     }
   };
 
+  // ── Update program module list (called from ModuleContext) ──────────────────
+  const updateProgramModules = useCallback((programId, enabledModules) => {
+    setPrograms(prev => prev.map(p =>
+      p._id === programId ? { ...p, enabledModules } : p
+    ));
+    if (selectedProgram?._id === programId) {
+      setSelectedProgram(prev => ({ ...prev, enabledModules }));
+    }
+  }, [selectedProgram?._id]);
+
   // ── Activity log ──────────────────────────────────────────────────────────
   const getActivityLog = () => loadLog();
 
@@ -206,6 +216,7 @@ export const ProgramProvider = ({ children }) => {
       revokeShare,
       deleteProgram,
       getActivityLog,
+      updateProgramModules,
     }}>
       {children}
     </ProgramContext.Provider>
