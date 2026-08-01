@@ -6,7 +6,7 @@ import {
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon,
   LogOut, UserCheck, FileCode, StickyNote, ChevronLeft, Star
 } from 'lucide-react';
-import ProgramSelector from './ProgramSelector';
+import WorkspaceSwitcher from './WorkspaceSwitcher';
 import logo from '../assets/logo.jpg';
 import { useModules } from '../context/ModuleContext';
 import { ALL_MODULES, MODULE_CATEGORIES } from '../config/moduleRegistry';
@@ -168,9 +168,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         </div>
       </div>
 
-      {/* Program Selector */}
+      {/* Workspace Switcher */}
       <div style={{ padding: '0.75rem 1rem' }}>
-        <ProgramSelector />
+        <WorkspaceSwitcher />
       </div>
 
       {/* Navigation Links */}
