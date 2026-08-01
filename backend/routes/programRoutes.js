@@ -67,8 +67,13 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this program' });
     }
 
-    Object.assign(program, req.body);
-    const updated = await program.save();
+    // Use $set to ensure Mongoose properly marks all fields as modified (esp. arrays)
+    const updated = await Program.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: false }
+    );
+
     res.json(updated);
   } catch (error) {
     console.error('PROGRAM_PUT_ERROR:', error);

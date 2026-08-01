@@ -19,11 +19,14 @@ const ICON_MAP = {
 };
 const getIcon = (name) => ICON_MAP[name] || FileText;
 
+import { useProgram } from '../context/ProgramContext';
+
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [showInstallBtn, setShowInstallBtn] = React.useState(false);
   const location = useLocation();
   const { enabledModules, menuOrder, favoriteModules } = useModules();
+  const { selectedProgram } = useProgram();
   const role = localStorage.getItem('role') || 'admin';
 
   React.useEffect(() => {
@@ -44,6 +47,17 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     setShowInstallBtn(false);
   };
 
+  // ── Compute the authoritative module list ─────────────────────
+  // Use program's enabledModules from DB if available (most up-to-date),
+  // otherwise fall back to context state.
+  const authoritativeEnabled = (
+    selectedProgram &&
+    Array.isArray(selectedProgram.enabledModules) &&
+    selectedProgram.enabledModules.length > 0
+  )
+    ? selectedProgram.enabledModules
+    : enabledModules;
+
   // ── Build dynamic nav groups ───────────────────────────────────
   // Sort all modules by menuOrder
   const orderedModules = [...ALL_MODULES].sort((a, b) => {
@@ -55,7 +69,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   // Filter: only enabled + role-appropriate modules
   const visibleModules = orderedModules.filter(
     (m) =>
-      enabledModules.includes(m.id) &&
+      authoritativeEnabled.includes(m.id) &&
       (!m.adminOnly || role === 'admin')
   );
 
