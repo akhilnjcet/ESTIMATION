@@ -350,6 +350,7 @@ const WorkspaceSwitcher = () => {
                             initial={{ opacity: 0, scale: 0.9, y: -4 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                            onClick={(e) => e.stopPropagation()}
                             style={{
                               position: 'absolute',
                               right: '0.5rem',
@@ -364,56 +365,56 @@ const WorkspaceSwitcher = () => {
                             }}
                           >
                             <button
-                              onClick={() => { selectProgram(p); setIsOpen(false); }}
+                              onClick={(e) => { e.stopPropagation(); selectProgram(p); setIsOpen(false); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Check size={13} style={{ color: 'var(--success)' }} /> Switch to Program
                             </button>
 
                             <button
-                              onClick={() => openModal('rename', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('rename', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Edit3 size={13} /> Rename
                             </button>
 
                             <button
-                              onClick={() => openModal('duplicate', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('duplicate', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Copy size={13} /> Duplicate
                             </button>
 
                             <button
-                              onClick={() => openModal('transfer', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('transfer', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Send size={13} /> Transfer
                             </button>
 
                             <button
-                              onClick={() => openModal('share', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('share', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Users size={13} /> Share & Roles
                             </button>
 
                             <button
-                              onClick={() => openModal('archive', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('archive', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Archive size={13} /> {p.status === 'archived' ? 'Restore' : 'Archive'}
                             </button>
 
                             <button
-                              onClick={() => { setIsOpen(false); navigate('/settings'); }}
+                              onClick={(e) => { e.stopPropagation(); setIsOpen(false); navigate('/settings'); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Settings size={13} /> Settings
                             </button>
 
                             <button
-                              onClick={() => openModal('delete', p)}
+                              onClick={(e) => { e.stopPropagation(); openModal('delete', p); }}
                               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: '#EF4444', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
                             >
                               <Trash2 size={13} /> Delete
