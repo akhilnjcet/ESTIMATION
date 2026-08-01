@@ -73,7 +73,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       className="sidebar no-print"
       initial={false}
       animate={{
-        width: isOpen ? 'var(--sidebar-width)' : '0px',
+        x: isOpen ? 0 : -280,
         opacity: isOpen ? 1 : 0,
       }}
       transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
@@ -82,6 +82,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         top: 0,
         left: 0,
         bottom: 0,
+        width: 'var(--sidebar-width)',
         background: 'var(--sidebar-glass)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
@@ -90,6 +91,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'visible',
+        pointerEvents: isOpen ? 'auto' : 'none',
         transition: 'background 0.3s ease, border-color 0.3s ease',
       }}
     >

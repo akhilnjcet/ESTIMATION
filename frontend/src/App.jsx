@@ -134,7 +134,7 @@ function PrivateRoute({ children }) {
     return <Navigate to="/" state={{ disabledModule: true }} replace />;
   }
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
   return (
     <div className={`app-container ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>

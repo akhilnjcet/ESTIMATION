@@ -38,11 +38,16 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
       {/* Left section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button 
-          onClick={toggleSidebar}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSidebar();
+          }}
           className="btn-icon"
           title="Toggle Navigation Menu"
+          style={{ touchAction: 'manipulation', cursor: 'pointer' }}
         >
-          <Menu size={18} />
+          <Menu size={20} />
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.825rem', fontWeight: '500' }}>
