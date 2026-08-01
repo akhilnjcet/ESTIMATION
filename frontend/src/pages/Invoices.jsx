@@ -812,7 +812,7 @@ const Invoices = () => {
             <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
               Document Live Preview
             </h3>
-            <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+            <div style={{ borderRadius: '14px', overflowX: 'auto', border: '1px solid var(--glass-border)' }}>
               {renderPreviewDocument(livePreviewData, formData.theme)}
             </div>
           </div>

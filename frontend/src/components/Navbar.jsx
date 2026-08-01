@@ -48,14 +48,15 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.825rem', fontWeight: '500' }}>
           <Clock size={15} style={{ color: 'var(--primary)' }} />
           <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{formattedTime}</span>
-          <span style={{ opacity: 0.4 }}>|</span>
-          <span style={{ color: 'var(--text-muted)' }}>{formattedDate}</span>
+          <span className="navbar-date-text" style={{ opacity: 0.4 }}>|</span>
+          <span className="navbar-date-text" style={{ color: 'var(--text-muted)' }}>{formattedDate}</span>
         </div>
       </div>
 
       {/* Center Search Trigger */}
       <div 
         onClick={onOpenCommandPalette}
+        className="navbar-search-btn"
         style={{
           display: 'flex',
           alignItems: 'center',

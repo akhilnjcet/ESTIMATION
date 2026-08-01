@@ -418,20 +418,68 @@ select option {
   background: rgba(59, 130, 246, 0.06);
 }
 
+/* ==========================================================================
+   MOBILE & RESPONSIVE COMPATIBILITY ENHANCEMENTS
+   ========================================================================== */
+@media screen and (max-width: 1024px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .main-content-inner {
+    padding: 0.85rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+  .grid-12 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  .col-span-12, .col-span-8, .col-span-6, .col-span-4, .col-span-3 {
+    grid-column: span 12 / span 12 !important;
+    width: 100% !important;
+  }
+}
+
 @media screen and (max-width: 768px) {
+  header {
+    padding: 0.65rem 0.85rem !important;
+  }
+  .navbar-search-btn {
+    max-width: 160px !important;
+    padding: 0.35rem 0.75rem !important;
+  }
+  .navbar-date-text {
+    display: none !important;
+  }
   .table-glass {
     min-width: 580px;
   }
   .table-glass th,
   .table-glass td {
-    padding: 0.75rem 0.75rem;
+    padding: 0.65rem 0.6rem;
     font-size: 0.8rem;
   }
-  .main-content-inner {
-    padding: 1rem 0.75rem 2rem 0.75rem !important;
+  .glass-panel, .glass-card {
+    padding: 0.85rem !important;
   }
-  .glass-panel {
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+  .page-title {
+    font-size: 1.2rem !important;
+  }
+  .page-subtitle {
+    font-size: 0.75rem !important;
+  }
+  .modal-print-overlay, .labour-preview-overlay {
+    padding: 0.75rem 0.4rem !important;
+  }
+  .invoice-container {
     padding: 1rem !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
   }
 }
 

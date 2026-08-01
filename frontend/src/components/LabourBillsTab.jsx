@@ -1142,7 +1142,7 @@ const LabourBillsTab = ({ initialCategory = 'Labour' }) => {
               </span>
             </div>
 
-            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-card)', border: '1px solid var(--glass-border)' }}>
+            <div style={{ borderRadius: '12px', overflowX: 'auto', boxShadow: 'var(--shadow-card)', border: '1px solid var(--glass-border)' }}>
               {renderPreviewDocument(formData)}
             </div>
           </div>
