@@ -7,14 +7,26 @@ const { protect } = require('../middleware/authMiddleware');
 // Get all programs for the logged-in user
 router.get('/', protect, async (req, res) => {
   try {
-    const programs = await Program.find({
-      $or: [
-        { owner: req.user._id },
-        { _id: { $in: req.user.programAccess } }
-      ]
-    });
+    let query;
+    if (req.user.role === 'admin' || !req.user.programAccess || req.user.programAccess.length === 0) {
+      // Admins or users with full/default access get all active programs
+      query = { status: { $ne: 'archived' } };
+    } else {
+      // Users with restricted programAccess
+      query = {
+        status: { $ne: 'archived' },
+        $or: [
+          { owner: req.user._id },
+          { _id: { $in: req.user.programAccess } },
+          { 'sharedUsers.userId': req.user._id }
+        ]
+      };
+    }
+
+    const programs = await Program.find(query).sort({ createdAt: -1 });
     res.json(programs);
   } catch (error) {
+    console.error('GET_PROGRAMS_ERROR:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -22,7 +34,14 @@ router.get('/', protect, async (req, res) => {
 // Create a new program
 router.post('/', protect, async (req, res) => {
   try {
+    const defaultModules = [
+      'dashboard', 'customers', 'products', 'quotations', 'invoices',
+      'labour-bills', 'transport-bills', 'income', 'expense', 'accounts',
+      'ledger', 'settings', 'notes', 'bill-upload'
+    ];
+
     const program = new Program({
+      enabledModules: defaultModules,
       ...req.body,
       owner: req.user._id
     });

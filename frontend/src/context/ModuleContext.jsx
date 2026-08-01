@@ -82,13 +82,14 @@ export const ModuleProvider = ({ children }) => {
         })
       );
 
-      // Also persist to backend database so viewers and other users inherit hidden module settings
+      // Also persist to backend database & update selectedProgram in memory
       if (selectedProgram?._id) {
+        selectedProgram.enabledModules = enabled;
         api.put(`/programs/${selectedProgram._id}`, { enabledModules: enabled })
           .catch((err) => console.error('Failed to sync enabledModules to database:', err));
       }
     },
-    [storageKey, selectedProgram?._id]
+    [storageKey, selectedProgram]
   );
 
   // ── actions ────────────────────────────────────────────────────
