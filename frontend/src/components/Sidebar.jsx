@@ -135,19 +135,31 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   lineHeight: '1.2',
                 }}
               >
-                Krishna Smart
+                Krishna Smart Solutions
               </h1>
-              <span
+              <div
                 style={{
-                  fontSize: '0.65rem',
+                  fontSize: '0.62rem',
                   color: 'var(--primary)',
                   fontWeight: '700',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
+                  letterSpacing: '0.02em',
+                  lineHeight: '1.2',
+                  marginTop: '0.15rem'
                 }}
               >
-                Enterprise ERP
-              </span>
+                Powered by Krishna IT Solution
+              </div>
+              <div
+                style={{
+                  fontSize: '0.58rem',
+                  color: 'var(--text-muted)',
+                  fontWeight: '600',
+                  letterSpacing: '0.02em',
+                  lineHeight: '1.2'
+                }}
+              >
+                A Krishna Group Concern
+              </div>
             </div>
           </div>
 
@@ -298,16 +310,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <div>
               <span
                 style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.68rem',
                   fontWeight: '700',
                   color: 'var(--sidebar-title)',
                   display: 'block',
                 }}
               >
-                Krishna ERP
+                Powered by Krishna IT Solution
               </span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                v2.5.0 Enterprise
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                A Krishna Group Concern
               </span>
             </div>
             <button

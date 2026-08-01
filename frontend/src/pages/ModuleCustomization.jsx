@@ -160,18 +160,26 @@ const LivePreview = ({ enabledModules, menuOrder, favoriteModules }) => {
                 color: '#FFF',
               }}
             >
-              Krishna Smart
+              Krishna Smart Solutions
             </div>
             <div
               style={{
-                fontSize: '0.55rem',
+                fontSize: '0.5rem',
                 color: '#3B82F6',
                 fontWeight: '700',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.02em',
               }}
             >
-              Enterprise ERP
+              Powered by Krishna IT Solution
+            </div>
+            <div
+              style={{
+                fontSize: '0.45rem',
+                color: 'rgba(255,255,255,0.5)',
+                fontWeight: '600',
+              }}
+            >
+              A Krishna Group Concern
             </div>
           </div>
         </div>

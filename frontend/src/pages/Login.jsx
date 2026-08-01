@@ -172,10 +172,13 @@ const Login = () => {
             WebkitTextFillColor: 'transparent',
             margin: '0 0 0.2rem 0'
           }}>
-            Krishna Smart ERP
+            Krishna Smart Solutions
           </h1>
-          <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
-            Enterprise Billing & Financial Portal
+          <p style={{ fontSize: '0.825rem', color: 'var(--primary)', fontWeight: '700', margin: '0 0 0.15rem 0' }}>
+            Powered by Krishna IT Solution
+          </p>
+          <p style={{ fontSize: '0.725rem', color: 'var(--text-muted)', margin: 0 }}>
+            A Krishna Group Concern
           </p>
         </div>
 
