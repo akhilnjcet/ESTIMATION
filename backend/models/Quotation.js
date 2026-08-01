@@ -100,7 +100,6 @@ const quotationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Rejected', 'Converted'],
     default: 'Pending'
   },
   createdAt: {

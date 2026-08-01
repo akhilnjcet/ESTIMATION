@@ -96,10 +96,7 @@ router.get('/combined', protect, async (req, res) => {
       else globalBank += bal;
     });
 
-    const totalLiquidBalance = globalAccountsExist(allAccounts) 
-      ? (globalCash + globalBank + globalUpi)
-      : (globalIncome - globalExpense);
-
+    const totalLiquidBalance = globalCash + globalBank + globalUpi;
     const globalBalance = totalLiquidBalance;
 
     const programSummaries = programsInfo.map(p => ({

@@ -320,6 +320,27 @@ const LabourBillsTab = ({ initialCategory = 'Labour' }) => {
     }
   };
 
+  const handleTogglePaymentStatus = async (bill) => {
+    const currentVal = (bill.status || bill.paymentStatus || 'Unpaid').toUpperCase();
+    const newStatus = currentVal === 'PAID' ? 'Unpaid' : 'Paid';
+    const customerId = typeof bill.customer === 'object' ? bill.customer?._id : bill.customer;
+
+    setBills(prev => prev.map(b => b._id === bill._id ? { ...b, status: newStatus, paymentStatus: newStatus } : b));
+
+    try {
+      await api.put(`/labour-bills/${bill._id}`, {
+        ...bill,
+        customer: customerId || null,
+        status: newStatus,
+        paymentStatus: newStatus
+      });
+      fetchBills();
+    } catch (err) {
+      alert('Failed to update status: ' + (err.response?.data?.message || err.message));
+      fetchBills();
+    }
+  };
+
   const triggerPrint = async () => {
     const images = document.querySelectorAll('.labour-preview-overlay img');
     await Promise.all(
@@ -351,27 +372,7 @@ const LabourBillsTab = ({ initialCategory = 'Labour' }) => {
     html2pdf().set(opt).from(element).save();
   };
 
-  const handleTogglePaymentStatus = async (bill) => {
-    const currentVal = bill.status || bill.paymentStatus || 'Unpaid';
-    const newStatus = currentVal === 'Paid' ? 'Unpaid' : 'Paid';
-    const customerId = typeof bill.customer === 'object' ? bill.customer?._id : bill.customer;
 
-    // Optimistic UI state update
-    setBills(prev => prev.map(b => b._id === bill._id ? { ...b, status: newStatus, paymentStatus: newStatus } : b));
-
-    try {
-      await api.put(`/labour-bills/${bill._id}`, {
-        ...bill,
-        customer: customerId || null,
-        status: newStatus,
-        paymentStatus: newStatus
-      });
-      fetchBills();
-    } catch (err) {
-      alert('Failed to update payment status: ' + (err.response?.data?.message || err.message));
-      fetchBills();
-    }
-  };
 
   const totals = calculateTotals(formData);
   

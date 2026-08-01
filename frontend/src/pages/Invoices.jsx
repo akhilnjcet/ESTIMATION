@@ -440,8 +440,8 @@ const Invoices = () => {
   };
 
   const handleToggleInvoiceStatus = async (inv) => {
-    const currentVal = inv.status || inv.paymentStatus || 'Unpaid';
-    const newStatus = currentVal === 'Paid' ? 'Unpaid' : 'Paid';
+    const currentVal = (inv.status || inv.paymentStatus || 'Unpaid').toUpperCase();
+    const newStatus = currentVal === 'PAID' ? 'Unpaid' : 'Paid';
     const customerId = typeof inv.customer === 'object' ? inv.customer?._id : inv.customer;
 
     // Optimistic UI state update
@@ -843,11 +843,11 @@ const Invoices = () => {
                   <button
                     type="button"
                     onClick={() => handleToggleInvoiceStatus(inv)}
-                    className={`badge ${(inv.status || 'PAID') === 'PAID' ? 'badge-success' : 'badge-warning'}`}
+                    className={`badge ${(inv.status || inv.paymentStatus || 'Unpaid').toUpperCase() === 'PAID' ? 'badge-success' : 'badge-warning'}`}
                     style={{ cursor: 'pointer', border: 'none', transition: 'transform 0.15s ease' }}
-                    title="Click to toggle PAID / UNPAID"
+                    title="Click to toggle Paid / Unpaid"
                   >
-                    <CheckCircle2 size={11} /> {(inv.status || 'PAID') === 'PAID' ? 'Paid' : 'Unpaid'}
+                    <CheckCircle2 size={11} /> {(inv.status || inv.paymentStatus || 'Unpaid').toUpperCase() === 'PAID' ? 'Paid' : 'Unpaid'}
                   </button>
                 </td>
                 <td style={{ textAlign: 'right' }}>

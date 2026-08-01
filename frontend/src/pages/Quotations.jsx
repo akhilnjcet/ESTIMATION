@@ -397,7 +397,8 @@ const Quotations = () => {
   };
 
   const handleToggleQuotationStatus = async (q) => {
-    const newStatus = (q.status || 'ISSUED') === 'APPROVED' ? 'ISSUED' : 'APPROVED';
+    const currentUpper = (q.status || 'ISSUED').toUpperCase();
+    const newStatus = (currentUpper === 'APPROVED' || currentUpper === 'ACCEPTED') ? 'ISSUED' : 'APPROVED';
     const customerId = typeof q.customer === 'object' ? q.customer?._id : q.customer;
 
     // Optimistic UI state update
