@@ -176,14 +176,14 @@ const WorkspaceSwitcher = () => {
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             style={{
               position: 'absolute',
-              top: 'calc(100% + 8px)',
+              top: 'calc(100% + 6px)',
               left: 0,
               right: 0,
-              width: '320px',
-              maxHeight: '480px',
+              width: '100%',
+              maxHeight: '380px',
               background: 'var(--bg-card-solid)',
               border: '1px solid var(--glass-border-hover)',
-              borderRadius: '18px',
+              borderRadius: '16px',
               boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
               zIndex: 1200,
               overflow: 'hidden',
@@ -216,7 +216,7 @@ const WorkspaceSwitcher = () => {
             </div>
 
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', padding: '0.4rem 0.6rem', borderBottom: '1px solid var(--glass-border)', gap: '0.2rem', background: 'rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', padding: '0.35rem 0.5rem', borderBottom: '1px solid var(--glass-border)', gap: '0.2rem', overflowX: 'auto', background: 'rgba(0,0,0,0.15)' }}>
               {[
                 { id: 'all', label: 'All' },
                 { id: 'favorites', label: 'Starred' },
@@ -227,15 +227,16 @@ const WorkspaceSwitcher = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
-                    flex: 1,
-                    padding: '0.3rem 0.4rem',
-                    fontSize: '0.7rem',
+                    flex: '1 0 auto',
+                    padding: '0.3rem 0.5rem',
+                    fontSize: '0.68rem',
                     fontWeight: '700',
                     borderRadius: '6px',
                     border: 'none',
                     background: activeTab === tab.id ? 'var(--primary-light)' : 'transparent',
                     color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease',
                   }}
                 >
