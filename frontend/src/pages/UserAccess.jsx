@@ -290,8 +290,11 @@ const UserAccess = () => {
                   value={formData.role} 
                   onChange={e => setFormData({...formData, role: e.target.value})}
                 >
-                  <option value="viewer">Staff Viewer (Read-only mutations blocked)</option>
                   <option value="admin">Administrator (Full Access & Program Mgmt)</option>
+                  <option value="manager">Manager (Operations & Data Management)</option>
+                  <option value="accountant">Accountant (Finance, Income & Expense Control)</option>
+                  <option value="sales">Sales Staff (Invoices, Quotations & Customer Records)</option>
+                  <option value="viewer">Staff Viewer (Read-only mutations blocked)</option>
                 </select>
               </div>
 
@@ -445,11 +448,14 @@ const UserAccess = () => {
               className="form-select" 
               value={roleFilter} 
               onChange={e => setRoleFilter(e.target.value)}
-              style={{ width: '140px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+              style={{ width: '150px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="All">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="viewer">Staff / Viewer</option>
+              <option value="admin">Administrator</option>
+              <option value="manager">Manager</option>
+              <option value="accountant">Accountant</option>
+              <option value="sales">Sales Staff</option>
+              <option value="viewer">Staff Viewer</option>
             </select>
 
             <select 
@@ -490,6 +496,10 @@ const UserAccess = () => {
                           borderRadius: '12px', 
                           background: user.role === 'admin' 
                             ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' 
+                            : user.role === 'manager'
+                            ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                            : user.role === 'accountant'
+                            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
                             : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', 
                           color: '#FFF', 
                           display: 'flex', 
@@ -515,8 +525,16 @@ const UserAccess = () => {
                     </td>
 
                     <td>
-                      <span className={`badge ${user.role === 'admin' ? 'badge-secondary' : 'badge-primary'}`}>
-                        {user.role === 'admin' ? 'Administrator' : 'Staff Viewer'}
+                      <span className={`badge ${
+                        user.role === 'admin' ? 'badge-secondary' :
+                        user.role === 'manager' ? 'badge-warning' :
+                        user.role === 'accountant' ? 'badge-success' :
+                        user.role === 'sales' ? 'badge-info' : 'badge-primary'
+                      }`}>
+                        {user.role === 'admin' ? 'Administrator' :
+                         user.role === 'manager' ? 'Manager' :
+                         user.role === 'accountant' ? 'Accountant' :
+                         user.role === 'sales' ? 'Sales Staff' : 'Staff Viewer'}
                       </span>
                     </td>
 
