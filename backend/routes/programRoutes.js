@@ -7,21 +7,17 @@ const { protect } = require('../middleware/authMiddleware');
 // Get all programs for the logged-in user
 router.get('/', protect, async (req, res) => {
   try {
-    let query;
-    if (req.user.role === 'admin' || !req.user.programAccess || req.user.programAccess.length === 0) {
-      // Admins or users with full/default access get all active programs
-      query = { status: { $ne: 'archived' } };
-    } else {
-      // Users with restricted programAccess
-      query = {
-        status: { $ne: 'archived' },
-        $or: [
-          { owner: req.user._id },
-          { _id: { $in: req.user.programAccess } },
-          { 'sharedUsers.userId': req.user._id }
-        ]
-      };
-    }
+    // Always scope by ownership or explicit access — never return ALL programs globally.
+    // Admin: own programs + programs where they have sharedUsers access.
+    // Viewer/other: only programs they own or have been given access to.
+    const query = {
+      status: { $ne: 'archived' },
+      $or: [
+        { owner: req.user._id },
+        { _id: { $in: req.user.programAccess || [] } },
+        { 'sharedUsers.userId': req.user._id },
+      ],
+    };
 
     const programs = await Program.find(query).sort({ createdAt: -1 });
     res.json(programs);
@@ -119,18 +115,17 @@ router.delete('/:id', protect, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // @route  POST /api/programs/:id/duplicate
-// @desc   Create an independent copy of a program (metadata only).
+// @desc   Create an independent copy of a program WITH all its data records.
 //         If targetEmail provided, the copy is owned by that user.
 router.post('/:id/duplicate', protect, async (req, res) => {
   try {
     const original = await Program.findById(req.params.id);
     if (!original) return res.status(404).json({ message: 'Program not found' });
 
-    // Must be owner or have access
-    const hasAccess =
-      original.owner.toString() === req.user._id.toString() ||
-      req.user.programAccess.some(pid => pid.toString() === req.params.id);
-    if (!hasAccess) return res.status(403).json({ message: 'Access denied' });
+    // Must be owner or admin
+    const isOwner = original.owner.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Access denied' });
 
     const { targetEmail } = req.body;
     let targetOwnerId = req.user._id;
@@ -141,7 +136,7 @@ router.post('/:id/duplicate', protect, async (req, res) => {
       targetOwnerId = targetUser._id;
     }
 
-    // Build the duplicate — strip identity fields
+    // ── 1. Copy the Program metadata ─────────────────────────────────────────
     const raw = original.toObject();
     delete raw._id;
     delete raw.__v;
@@ -160,13 +155,153 @@ router.post('/:id/duplicate', protect, async (req, res) => {
       sharedUsers: []
     });
 
-    // Grant programAccess to the target user if different
+    const oldProgramId = original._id;
+    const newProgramId = newProgram._id;
+
+    // Lazy require models to keep top of file clean
+    const Customer      = require('../models/Customer');
+    const Product       = require('../models/Product');
+    const Account       = require('../models/Account');
+    const Transaction   = require('../models/Transaction');
+    const Invoice       = require('../models/Invoice');
+    const Quotation     = require('../models/Quotation');
+    const LabourBill    = require('../models/LabourBill');
+    const Note          = require('../models/Note');
+    const Document      = require('../models/Document');
+
+    // ── Helper: copy a collection and return an old→new ID map ───────────────
+    async function copyCollection(Model, extraOmit = []) {
+      const docs = await Model.find({ programId: oldProgramId }).lean();
+      const idMap = {};
+      for (const doc of docs) {
+        const oldId = doc._id.toString();
+        const copy = { ...doc };
+        delete copy._id;
+        delete copy.__v;
+        delete copy.createdAt;
+        delete copy.updatedAt;
+        for (const field of extraOmit) delete copy[field];
+        copy.programId = newProgramId;
+        const created = await Model.create(copy);
+        idMap[oldId] = created._id;
+      }
+      return idMap;
+    }
+
+    // ── 2. Copy Customers ─────────────────────────────────────────────────────
+    const customerIdMap = await copyCollection(Customer);
+
+    // ── 3. Copy Products ──────────────────────────────────────────────────────
+    const productIdMap = await copyCollection(Product);
+
+    // ── 4. Copy Accounts — record old→new map for Transaction remapping ───────
+    const accountIdMap = await copyCollection(Account);
+
+    // ── 5. Copy Transactions (remap account & toAccount references) ───────────
+    const txDocs = await Transaction.find({ programId: oldProgramId }).lean();
+    for (const tx of txDocs) {
+      const copy = { ...tx };
+      delete copy._id;
+      delete copy.__v;
+      delete copy.createdAt;
+      delete copy.updatedAt;
+      copy.programId = newProgramId;
+      if (copy.account)   copy.account   = accountIdMap[copy.account.toString()]   || copy.account;
+      if (copy.toAccount) copy.toAccount = accountIdMap[copy.toAccount.toString()] || copy.toAccount;
+      if (copy.party)     copy.party     = customerIdMap[copy.party.toString()]    || copy.party;
+      await Transaction.create(copy);
+    }
+
+    // ── 6. Copy Invoices (remap customer + product refs) ──────────────────────
+    const invoiceDocs = await Invoice.find({ programId: oldProgramId }).lean();
+    for (const inv of invoiceDocs) {
+      const copy = { ...inv };
+      delete copy._id;
+      delete copy.__v;
+      delete copy.createdAt;
+      delete copy.updatedAt;
+      copy.programId = newProgramId;
+      copy.customer  = customerIdMap[copy.customer?.toString()] || copy.customer;
+      // Remap product refs inside line items
+      if (Array.isArray(copy.items)) {
+        copy.items = copy.items.map(item => {
+          const i = { ...item };
+          delete i._id;
+          if (i.product) i.product = productIdMap[i.product.toString()] || i.product;
+          return i;
+        });
+      }
+      await Invoice.create(copy);
+    }
+
+    // ── 7. Copy Quotations ────────────────────────────────────────────────────
+    const quotationDocs = await Quotation.find({ programId: oldProgramId }).lean();
+    for (const q of quotationDocs) {
+      const copy = { ...q };
+      delete copy._id;
+      delete copy.__v;
+      delete copy.createdAt;
+      delete copy.updatedAt;
+      copy.programId = newProgramId;
+      copy.customer  = customerIdMap[copy.customer?.toString()] || copy.customer;
+      if (Array.isArray(copy.items)) {
+        copy.items = copy.items.map(item => {
+          const i = { ...item };
+          delete i._id;
+          if (i.product) i.product = productIdMap[i.product.toString()] || i.product;
+          return i;
+        });
+      }
+      await Quotation.create(copy);
+    }
+
+    // ── 8. Copy Labour Bills ──────────────────────────────────────────────────
+    const labourDocs = await LabourBill.find({ programId: oldProgramId }).lean();
+    for (const lb of labourDocs) {
+      const copy = { ...lb };
+      delete copy._id;
+      delete copy.__v;
+      delete copy.createdAt;
+      delete copy.updatedAt;
+      copy.programId = newProgramId;
+      copy.customer  = customerIdMap[copy.customer?.toString()] || copy.customer;
+      if (Array.isArray(copy.items)) {
+        copy.items = copy.items.map(item => { const i = { ...item }; delete i._id; return i; });
+      }
+      await LabourBill.create(copy);
+    }
+
+    // ── 9. Copy Notes ─────────────────────────────────────────────────────────
+    try {
+      const noteDocs = await Note.find({ programId: oldProgramId }).lean();
+      for (const n of noteDocs) {
+        const copy = { ...n };
+        delete copy._id; delete copy.__v; delete copy.createdAt; delete copy.updatedAt;
+        copy.programId = newProgramId;
+        await Note.create(copy);
+      }
+    } catch (_) { /* Note model may not exist in all versions */ }
+
+    // ── 10. Copy Documents ────────────────────────────────────────────────────
+    try {
+      const docRecords = await Document.find({ programId: oldProgramId }).lean();
+      for (const d of docRecords) {
+        const copy = { ...d };
+        delete copy._id; delete copy.__v; delete copy.createdAt; delete copy.updatedAt;
+        copy.programId = newProgramId;
+        await Document.create(copy);
+      }
+    } catch (_) { /* Document model may not exist in all versions */ }
+
+    // ── 11. Grant programAccess to the target user if different ───────────────
     if (targetOwnerId.toString() !== req.user._id.toString()) {
       await User.findByIdAndUpdate(targetOwnerId, { $addToSet: { programAccess: newProgram._id } });
     }
 
+    console.log(`[DUPLICATE] Program ${oldProgramId} → ${newProgramId} with all data copied.`);
     res.status(201).json(newProgram);
   } catch (error) {
+    console.error('DUPLICATE_ERROR:', error);
     res.status(500).json({ message: error.message });
   }
 });

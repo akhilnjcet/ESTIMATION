@@ -32,6 +32,8 @@ const Login = () => {
     try {
       if (isRegistering) {
         const { data } = await api.post('/auth/register', { name, email, password });
+        // Clear any stale programId from a previous user's session
+        localStorage.removeItem('programId');
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('user', JSON.stringify(data));
@@ -39,6 +41,8 @@ const Login = () => {
         navigate('/');
       } else {
         const { data } = await api.post('/auth/login', { email, password });
+        // Clear any stale programId from a previous user's session
+        localStorage.removeItem('programId');
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('user', JSON.stringify(data));
