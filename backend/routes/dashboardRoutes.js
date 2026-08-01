@@ -38,39 +38,17 @@ router.get('/combined', protect, async (req, res) => {
       if (t.type === 'Expense') globalExpense += amt;
     });
 
-    // 2. Tax Invoices (Sales Revenue)
-    allInvoices.forEach(inv => {
-      const amt = parseFloat(inv.totalAmount) || 0;
-      globalIncome += amt;
-    });
-
-    // 3. Labour Bills & Transport Bills (Expenses & Freight)
-    allLabourBills.forEach(bill => {
-      const amt = parseFloat(bill.totalAmount) || 0;
-      globalExpense += amt;
-    });
-
-    // 4. Accounts (Cash / Bank / UPI Balances)
+    // 2. Accounts (Cash / Bank / UPI Balances)
     allAccounts.forEach(acc => {
       const bal = parseFloat(acc.balance) || 0;
-      if (acc.type === 'Cash') globalCash += bal;
-      else if (acc.type === 'Bank') globalBank += bal;
-      else if (acc.type === 'UPI') globalUpi += bal;
+      const accType = (acc.type || '').toLowerCase();
+      if (accType === 'cash') globalCash += bal;
+      else if (accType === 'bank') globalBank += bal;
+      else if (accType === 'upi') globalUpi += bal;
+      else globalBank += bal;
     });
 
-    // Default Baseline Metrics if database has no entries yet
-    if (globalIncome === 0 && globalExpense === 0) {
-      globalIncome = 45000;
-      globalExpense = 14000;
-    }
-
-    // Asset Breakdown Fallbacks if explicit accounts table is uninitialized
-    if (globalCash === 0 && globalBank === 0 && globalUpi === 0) {
-      const net = Math.max(0, globalIncome - globalExpense);
-      globalCash = Math.round(net * 0.55 * 100) / 100;
-      globalBank = Math.round(net * 0.45 * 100) / 100;
-    }
-
+    const totalLiquidBalance = globalCash + globalBank + globalUpi;
     const globalBalance = globalIncome - globalExpense;
 
     const programSummaries = programsInfo.map(p => ({
@@ -126,6 +104,7 @@ router.get('/combined', protect, async (req, res) => {
         income: globalIncome,
         expense: globalExpense,
         balance: globalBalance,
+        totalLiquidBalance,
         cashBalance: globalCash,
         bankBalance: globalBank,
         upiBalance: globalUpi

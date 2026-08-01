@@ -81,11 +81,13 @@ const Dashboard = () => {
 
   const { combined = {}, programSummaries = [], recentDocuments = [], recentTransactions = [] } = dashboardData || {};
   const stats = {
-    income: combined.income !== undefined && combined.income !== 0 ? combined.income : 45000,
-    expense: combined.expense !== undefined && combined.expense !== 0 ? combined.expense : 14000,
-    balance: combined.balance !== undefined && combined.balance !== 0 ? combined.balance : 31000,
-    cashBalance: combined.cashBalance !== undefined && combined.cashBalance !== 0 ? combined.cashBalance : 17050,
-    bankBalance: combined.bankBalance !== undefined && combined.bankBalance !== 0 ? combined.bankBalance : 13950,
+    income: combined.income || 0,
+    expense: combined.expense || 0,
+    balance: combined.totalLiquidBalance !== undefined 
+      ? combined.totalLiquidBalance 
+      : ((combined.cashBalance || 0) + (combined.bankBalance || 0) + (combined.upiBalance || 0)),
+    cashBalance: combined.cashBalance || 0,
+    bankBalance: combined.bankBalance || 0,
     upiBalance: combined.upiBalance || 0,
   };
 
