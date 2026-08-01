@@ -19,8 +19,8 @@ export const ModuleProvider = ({ children }) => {
   const storageKey = getModuleStorageKey(selectedProgram?._id);
 
   const loadFromStorage = useCallback(() => {
-    // 1. Prioritize program workspace enabledModules configuration if present
-    if (selectedProgram && Array.isArray(selectedProgram.enabledModules)) {
+    // 1. If selectedProgram has saved enabledModules from database (and length > 0), use it!
+    if (selectedProgram && Array.isArray(selectedProgram.enabledModules) && selectedProgram.enabledModules.length > 0) {
       const programModules = selectedProgram.enabledModules.includes('dashboard')
         ? selectedProgram.enabledModules
         : ['dashboard', ...selectedProgram.enabledModules];
@@ -37,7 +37,7 @@ export const ModuleProvider = ({ children }) => {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.enabledModules)) {
+        if (Array.isArray(parsed.enabledModules) && parsed.enabledModules.length > 0) {
           return {
             enabledModules: parsed.enabledModules,
             menuOrder: parsed.menuOrder ?? getDefaultMenuOrder(),
@@ -49,7 +49,7 @@ export const ModuleProvider = ({ children }) => {
       /* ignore malformed data */
     }
 
-    // 3. Fall back to defaults
+    // 3. Fall back to all default modules
     return {
       enabledModules: getDefaultEnabledModules(),
       menuOrder: getDefaultMenuOrder(),
