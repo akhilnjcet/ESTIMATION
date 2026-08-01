@@ -169,7 +169,7 @@ const Ledger = () => {
       </div>
 
       {/* Overview Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+      <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
         <div className="glass-card">
           <span className="form-label">Total Credit (+)</span>
           <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.25rem' }}>
