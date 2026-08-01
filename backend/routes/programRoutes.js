@@ -38,14 +38,22 @@ const bcrypt = require('bcryptjs');
 // Update program
 router.put('/:id', protect, async (req, res) => {
   try {
-    const updated = await Program.findOneAndUpdate(
-      { _id: req.params.id, owner: req.user._id },
-      req.body,
-      { new: true }
-    );
+    const program = await Program.findById(req.params.id);
+    if (!program) return res.status(404).json({ message: 'Program workspace not found' });
+
+    const isOwner = program.owner && program.owner.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to update this program' });
+    }
+
+    Object.assign(program, req.body);
+    const updated = await program.save();
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('PROGRAM_PUT_ERROR:', error);
+    res.status(500).json({ message: 'Server error updating program' });
   }
 });
 
