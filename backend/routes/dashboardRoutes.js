@@ -130,11 +130,19 @@ router.get('/combined', protect, async (req, res) => {
       }))
     ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
 
-    const recentTransactions = await Transaction.find({})
-      .sort({ date: -1, createdAt: -1 })
-      .limit(6)
-      .populate('customer', 'customerName')
-      .populate('account', 'accountName');
+    let recentTransactions = [];
+    try {
+      recentTransactions = await Transaction.find(filter)
+        .sort({ date: -1, createdAt: -1 })
+        .limit(6)
+        .populate('party', 'customerName')
+        .populate('account', 'name type');
+    } catch (txErr) {
+      console.warn('Recent transactions populate fallback:', txErr.message);
+      recentTransactions = await Transaction.find(filter)
+        .sort({ date: -1, createdAt: -1 })
+        .limit(6);
+    }
 
     res.json({
       combined: {
