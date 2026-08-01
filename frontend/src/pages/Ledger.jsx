@@ -198,15 +198,15 @@ const Ledger = () => {
             Transaction History Logs
           </h2>
 
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', width: '220px' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flex: '1 1 300px', justifyContent: 'flex-end' }}>
+            <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '160px' }}>
               <input 
                 type="text" 
                 className="form-input" 
                 placeholder="Search transactions..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '2.5rem', padding: '0.5rem 0.75rem 0.5rem 2.5rem', fontSize: '0.85rem' }}
+                style={{ paddingLeft: '2.5rem', padding: '0.5rem 0.75rem 0.5rem 2.5rem', fontSize: '0.85rem', width: '100%' }}
               />
               <Search size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
@@ -215,7 +215,7 @@ const Ledger = () => {
               className="form-select"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+              style={{ flex: '1 1 120px', minWidth: '120px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="All">All Types</option>
               <option value="Income">Income Only</option>
@@ -226,7 +226,7 @@ const Ledger = () => {
               className="form-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+              style={{ flex: '1 1 130px', minWidth: '130px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="date_desc">Newest First</option>
               <option value="date_asc">Oldest First</option>
@@ -240,30 +240,30 @@ const Ledger = () => {
           <table className="table-glass">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Transaction Details</th>
-                <th>Payment Account</th>
-                <th style={{ textAlign: 'right' }}>Debit (-)</th>
-                <th style={{ textAlign: 'right' }}>Credit (+)</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Date</th>
+                <th style={{ minWidth: '180px' }}>Transaction Details</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Payment Account</th>
+                <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Debit (-)</th>
+                <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Credit (+)</th>
               </tr>
             </thead>
             <tbody>
               {filteredTransactions.map(txn => (
                 <tr key={txn._id}>
-                  <td style={{ color: 'var(--text-muted)' }}>
+                  <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                     {new Date(txn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </td>
                   <td>
                     <div style={{ fontWeight: '700' }}>{txn.category}</div>
                     {txn.description && <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>{txn.description}</div>}
                   </td>
-                  <td>
-                    <span className="badge badge-primary">{txn.account?.name || 'Account'}</span>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>{txn.account?.name || 'Account'}</span>
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)' }}>
+                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)', whiteSpace: 'nowrap' }}>
                     {txn.type === 'Expense' ? `- ₹${txn.amount.toLocaleString()}` : '-'}
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)' }}>
+                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)', whiteSpace: 'nowrap' }}>
                     {txn.type === 'Income' ? `+ ₹${txn.amount.toLocaleString()}` : '-'}
                   </td>
                 </tr>

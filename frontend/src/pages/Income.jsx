@@ -215,26 +215,26 @@ const Income = () => {
           <tbody>
             {filteredIncomes.map(inc => (
               <tr key={inc._id}>
-                <td style={{ color: 'var(--text-muted)' }}>
+                <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {new Date(inc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </td>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span className="badge badge-success">{inc.category}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="badge badge-success" style={{ whiteSpace: 'nowrap' }}>{inc.category}</span>
                     {inc.editCount > 3 && <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>EDITED</span>}
                   </div>
                   {inc.description && <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '2px' }}>{inc.description}</div>}
                 </td>
-                <td style={{ fontWeight: '600' }}>
+                <td style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Wallet size={14} style={{ color: 'var(--primary)' }} />
                     <span>{inc.account?.name || 'Account'}</span>
                   </div>
                 </td>
-                <td style={{ color: 'var(--success)', fontWeight: '900', fontSize: '0.95rem' }}>
+                <td style={{ color: 'var(--success)', fontWeight: '900', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
                   + &#8377; {Number(inc.amount).toLocaleString()}
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                     <button className="btn-icon" onClick={() => handleEdit(inc)} title="Edit Record"><Edit2 size={16} /></button>
                     <button className="btn-icon" onClick={() => handleDelete(inc._id)} title="Delete Record" style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>

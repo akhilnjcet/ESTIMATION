@@ -373,12 +373,15 @@ select option {
   backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-card);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-card);
+  width: 100%;
 }
 
 .table-glass {
   width: 100%;
+  min-width: 620px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -396,6 +399,7 @@ select option {
   position: sticky;
   top: 0;
   z-index: 2;
+  white-space: nowrap;
 }
 
 .table-glass td {
@@ -412,6 +416,23 @@ select option {
 
 .table-glass tbody tr:hover {
   background: rgba(59, 130, 246, 0.06);
+}
+
+@media screen and (max-width: 768px) {
+  .table-glass {
+    min-width: 580px;
+  }
+  .table-glass th,
+  .table-glass td {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  .main-content-inner {
+    padding: 1rem 0.75rem 2rem 0.75rem !important;
+  }
+  .glass-panel {
+    padding: 1rem !important;
+  }
 }
 
 /* Status Badges */
