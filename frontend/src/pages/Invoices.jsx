@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Edit2, Printer, Trash2, Plus, X, Eye, Receipt, Search, CheckCircle2, Download } from 'lucide-react';
+import { Edit2, Printer, Trash2, Plus, X, Eye, Receipt, Search, CheckCircle2, Download, Settings } from 'lucide-react';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
