@@ -7,37 +7,57 @@ const mongoose = require('mongoose');
 const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/dashboard/combined
-// @desc    Get aggregated data across all programs
+// @desc    Get dashboard metrics strictly isolated for the active program
 router.get('/combined', protect, async (req, res) => {
   try {
     const Invoice = require('../models/Invoice');
     const Quotation = require('../models/Quotation');
     const LabourBill = require('../models/LabourBill');
 
-    const filter = (req.programId && mongoose.Types.ObjectId.isValid(req.programId)) 
-      ? { programId: req.programId } 
-      : {};
+    let activeProgramId = null;
 
-    let [allTransactions, allInvoices, allLabourBills, allAccounts, programsInfo, invoices, quotations, labourBills] = await Promise.all([
+    if (req.programId && mongoose.Types.ObjectId.isValid(req.programId)) {
+      activeProgramId = req.programId;
+    } else {
+      // Find the user's default/first accessible program
+      const userProg = await Program.findOne({
+        $or: [
+          { owner: req.user._id },
+          { _id: { $in: req.user.programAccess || [] } }
+        ]
+      });
+      if (userProg) activeProgramId = userProg._id;
+    }
+
+    // Strict program filter — if no active program exists, query with non-matching ID
+    const filter = activeProgramId
+      ? { programId: activeProgramId }
+      : { programId: new mongoose.Types.ObjectId() };
+
+    const [
+      allTransactions,
+      allInvoices,
+      allLabourBills,
+      allAccounts,
+      programsInfo,
+      invoices,
+      quotations,
+      labourBills
+    ] = await Promise.all([
       Transaction.find(filter),
       Invoice.find(filter),
       LabourBill.find(filter),
       Account.find(filter),
-      Program.find({}, 'name'),
+      Program.find({
+        $or: [
+          { owner: req.user._id },
+          { _id: { $in: req.user.programAccess || [] } }
+        ]
+      }, 'name'),
       Invoice.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
       Quotation.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
       LabourBill.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName')
     ]);
-
-    // Fallback: If filtered program returned 0 entries but global DB has records, query all
-    if (allAccounts.length === 0 && allTransactions.length === 0) {
-      [allTransactions, allAccounts, allInvoices, allLabourBills] = await Promise.all([
-        Transaction.find({}),
-        Account.find({}),
-        Invoice.find({}),
-        LabourBill.find({})
-      ]);
-    }
 
     let globalIncome = 0;
     let globalExpense = 0;
@@ -45,28 +65,28 @@ router.get('/combined', protect, async (req, res) => {
     let globalBank = 0;
     let globalUpi = 0;
 
-    // 1. Transactions (Income / Expense)
+    // 1. Calculate Income & Expense from program's transactions
     allTransactions.forEach(t => {
       const amt = Number(t.amount) || 0;
       if (t.type === 'Income') globalIncome += amt;
       if (t.type === 'Expense') globalExpense += amt;
     });
 
-    // 2. Fallback to Tax Invoices for Sales Revenue if no transaction records exist
+    // 2. Fallback to Tax Invoices for Income if no explicit Income transactions recorded
     if (globalIncome === 0 && allInvoices.length > 0) {
       allInvoices.forEach(inv => {
         globalIncome += (Number(inv.totalAmount) || 0);
       });
     }
 
-    // 3. Fallback to Labour & Transport Bills for Expenses if no transaction records exist
+    // 3. Fallback to Labour & Transport Bills for Expenses if no explicit Expense transactions recorded
     if (globalExpense === 0 && allLabourBills.length > 0) {
       allLabourBills.forEach(bill => {
         globalExpense += (Number(bill.totalAmount) || 0);
       });
     }
 
-    // 4. Accounts (Cash / Bank / UPI Balances)
+    // 4. Calculate actual Account balances for this program
     allAccounts.forEach(acc => {
       const bal = Number(acc.balance) || 0;
       const accType = (acc.type || '').toLowerCase();
@@ -76,15 +96,9 @@ router.get('/combined', protect, async (req, res) => {
       else globalBank += bal;
     });
 
-    let totalLiquidBalance = globalCash + globalBank + globalUpi;
-
-    // 5. Fallback calculation for Liquid Balances if accounts table is uninitialized
-    if (totalLiquidBalance === 0 && (globalIncome > 0 || globalExpense > 0)) {
-      const net = Math.max(0, globalIncome - globalExpense);
-      globalCash = Math.round(net * 0.5);
-      globalBank = Math.round(net * 0.5);
-      totalLiquidBalance = net;
-    }
+    const totalLiquidBalance = globalAccountsExist(allAccounts) 
+      ? (globalCash + globalBank + globalUpi)
+      : (globalIncome - globalExpense);
 
     const globalBalance = totalLiquidBalance;
 
@@ -96,7 +110,7 @@ router.get('/combined', protect, async (req, res) => {
       balance: globalBalance
     }));
 
-    // Normalize recent documents
+    // Normalize recent documents for this program
     const combinedDocs = [
       ...invoices.map(doc => ({
         _id: doc._id,
@@ -166,5 +180,9 @@ router.get('/combined', protect, async (req, res) => {
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
+
+function globalAccountsExist(accounts) {
+  return Array.isArray(accounts) && accounts.length > 0;
+}
 
 module.exports = router;
