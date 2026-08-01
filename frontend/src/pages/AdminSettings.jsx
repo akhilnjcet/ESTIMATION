@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Shield, Database, Lock, Key, Server, Download, RefreshCw, 
-  Activity, CheckCircle2, AlertTriangle, Globe, Clock, FileCheck, Layers
+  Activity, CheckCircle2, AlertTriangle, Globe, Clock, FileCheck, Layers, ToggleLeft
 } from 'lucide-react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
+import ModuleCustomization from './ModuleCustomization';
 
 const AdminSettings = () => {
   const { selectedProgram } = useProgram();
-  const [activeTab, setActiveTab] = useState('security'); // 'security' | 'database' | 'audit' | 'defaults'
+  const [activeTab, setActiveTab] = useState('security'); // 'security' | 'database' | 'audit' | 'defaults' | 'modules'
 
   // Security Toggles State
   const [securitySettings, setSecuritySettings] = useState({
@@ -170,12 +171,13 @@ const AdminSettings = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
         {[
-          { id: 'security', label: 'Security & Access Policies', icon: Lock },
-          { id: 'database', label: 'Database Backup & Maintenance', icon: Database },
-          { id: 'audit', label: 'System Audit Logs', icon: Activity },
-          { id: 'defaults', label: 'Global System Defaults', icon: Globe },
+          { id: 'security', label: 'Security & Access', icon: Lock },
+          { id: 'database', label: 'Database & Backup', icon: Database },
+          { id: 'audit', label: 'Audit Logs', icon: Activity },
+          { id: 'defaults', label: 'Global Defaults', icon: Globe },
+          { id: 'modules', label: 'Module Visibility', icon: ToggleLeft },
         ].map((tab) => {
           const IconComp = tab.icon;
           const isActive = activeTab === tab.id;
@@ -401,6 +403,12 @@ const AdminSettings = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Tab 5: Module Visibility */}
+      {activeTab === 'modules' && (
+        <div>
+          <ModuleCustomization />
         </div>
       )}
     </div>
