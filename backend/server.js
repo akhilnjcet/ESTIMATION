@@ -109,7 +109,7 @@ const connectDB = async () => {
   if (mongoose.connection.readyState === 2) {
     await new Promise(resolve => {
       const interval = setInterval(() => {
-        if (mongoose.connection.readyState === 1) {
+        if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 0) {
           clearInterval(interval);
           resolve();
         }
@@ -118,8 +118,17 @@ const connectDB = async () => {
     return;
   }
 
-  await mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
-  await seedDefaultData();
+  if (!MONGO_URI) {
+    console.error('MONGO_URI missing in environment');
+    return;
+  }
+
+  try {
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 8000 });
+    await seedDefaultData();
+  } catch (err) {
+    console.error('Production DB connection error:', err.message);
+  }
 };
 
 const seedDefaultData = async () => {

@@ -38,15 +38,36 @@ const Dashboard = () => {
     const fetchDashboard = async () => {
       try {
         const { data } = await api.get('/dashboard/combined');
-        setDashboardData(data);
+        if (data && !data.message) {
+          setDashboardData(data);
+        } else {
+          setDashboardData({
+            combined: { income: 0, expense: 0, balance: 0, cashBalance: 0, bankBalance: 0, upiBalance: 0 },
+            programSummaries: [],
+            recentDocuments: [],
+            recentTransactions: []
+          });
+        }
       } catch (err) {
-        console.error(err);
+        console.error('Dashboard error:', err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        setDashboardData({
+          combined: { income: 0, expense: 0, balance: 0, cashBalance: 0, bankBalance: 0, upiBalance: 0 },
+          programSummaries: [],
+          recentDocuments: [],
+          recentTransactions: [],
+          error: err.response?.data?.message || 'Database connecting...'
+        });
       } finally {
         setLoading(false);
       }
     };
     fetchDashboard();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -54,19 +75,6 @@ const Dashboard = () => {
         <div className="glass-card col-span-4" style={{ height: '140px' }} />
         <div className="glass-card col-span-4" style={{ height: '140px' }} />
         <div className="glass-card col-span-4" style={{ height: '140px' }} />
-      </div>
-    );
-  }
-
-  if (!dashboardData || dashboardData.message) {
-    return (
-      <div className="glass-card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-        <div style={{ color: 'var(--danger)', fontWeight: '700', marginBottom: '1rem' }}>
-          {dashboardData?.message || 'Error loading dashboard data.'}
-        </div>
-        <button onClick={() => window.location.reload()} className="btn-gradient">
-          Retry Dashboard
-        </button>
       </div>
     );
   }
