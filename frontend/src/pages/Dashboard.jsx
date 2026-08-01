@@ -31,7 +31,7 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeDocTab, setActiveDocTab] = useState('All');
-  const { selectProgram } = useProgram();
+  const { selectedProgram } = useProgram();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const Dashboard = () => {
       }
     };
     fetchDashboard();
-  }, [navigate]);
+  }, [navigate, selectedProgram]);
 
   if (loading) {
     return (

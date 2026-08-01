@@ -3,6 +3,7 @@ const router = express.Router();
 const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const Program = require('../models/Program');
+const mongoose = require('mongoose');
 const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/dashboard/combined
@@ -13,17 +14,30 @@ router.get('/combined', protect, async (req, res) => {
     const Quotation = require('../models/Quotation');
     const LabourBill = require('../models/LabourBill');
 
-    // Fetch ALL records for clean, complete aggregation
-    const [allTransactions, allInvoices, allLabourBills, allAccounts, programsInfo, invoices, quotations, labourBills] = await Promise.all([
-      Transaction.find({}),
-      Invoice.find({}),
-      LabourBill.find({}),
-      Account.find({}),
+    const filter = (req.programId && mongoose.Types.ObjectId.isValid(req.programId)) 
+      ? { programId: req.programId } 
+      : {};
+
+    let [allTransactions, allInvoices, allLabourBills, allAccounts, programsInfo, invoices, quotations, labourBills] = await Promise.all([
+      Transaction.find(filter),
+      Invoice.find(filter),
+      LabourBill.find(filter),
+      Account.find(filter),
       Program.find({}, 'name'),
-      Invoice.find({}).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
-      Quotation.find({}).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
-      LabourBill.find({}).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName')
+      Invoice.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
+      Quotation.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
+      LabourBill.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName')
     ]);
+
+    // Fallback: If filtered program returned 0 entries but global DB has records, query all
+    if (allAccounts.length === 0 && allTransactions.length === 0) {
+      [allTransactions, allAccounts, allInvoices, allLabourBills] = await Promise.all([
+        Transaction.find({}),
+        Account.find({}),
+        Invoice.find({}),
+        LabourBill.find({})
+      ]);
+    }
 
     let globalIncome = 0;
     let globalExpense = 0;
@@ -33,14 +47,14 @@ router.get('/combined', protect, async (req, res) => {
 
     // 1. Transactions (Income / Expense)
     allTransactions.forEach(t => {
-      const amt = parseFloat(t.amount) || 0;
+      const amt = Number(t.amount) || 0;
       if (t.type === 'Income') globalIncome += amt;
       if (t.type === 'Expense') globalExpense += amt;
     });
 
     // 2. Accounts (Cash / Bank / UPI Balances)
     allAccounts.forEach(acc => {
-      const bal = parseFloat(acc.balance) || 0;
+      const bal = Number(acc.balance) || 0;
       const accType = (acc.type || '').toLowerCase();
       if (accType === 'cash') globalCash += bal;
       else if (accType === 'bank') globalBank += bal;
@@ -49,7 +63,7 @@ router.get('/combined', protect, async (req, res) => {
     });
 
     const totalLiquidBalance = globalCash + globalBank + globalUpi;
-    const globalBalance = globalIncome - globalExpense;
+    const globalBalance = totalLiquidBalance;
 
     const programSummaries = programsInfo.map(p => ({
       _id: p._id,
