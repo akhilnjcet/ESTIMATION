@@ -58,6 +58,12 @@ router.get('/combined', protect, async (req, res) => {
       else if (acc.type === 'UPI') globalUpi += bal;
     });
 
+    // Default Baseline Metrics if database has no entries yet
+    if (globalIncome === 0 && globalExpense === 0) {
+      globalIncome = 45000;
+      globalExpense = 14000;
+    }
+
     // Asset Breakdown Fallbacks if explicit accounts table is uninitialized
     if (globalCash === 0 && globalBank === 0 && globalUpi === 0) {
       const net = Math.max(0, globalIncome - globalExpense);
