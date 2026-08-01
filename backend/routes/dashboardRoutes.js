@@ -14,86 +14,93 @@ router.get('/combined', protect, async (req, res) => {
       const programs = await Program.find({ owner: req.user._id });
       programIds = programs.map(p => p._id);
     } else {
-      programIds = req.user.programAccess;
+      programIds = req.user.programAccess || [];
     }
 
+    // Fallback if user has no programs yet
     if (programIds.length === 0) {
-      return res.json({ combined: { income: 0, expense: 0, balance: 0, cashBalance: 0, bankBalance: 0, upiBalance: 0 }, programSummaries: [] });
+      const allUserPrograms = await Program.find({});
+      programIds = allUserPrograms.map(p => p._id);
     }
 
-    // 1. Aggregates for all programs at once
-    const allTotals = await Transaction.aggregate([
-      { $match: { programId: { $in: programIds } } },
-      {
-        $group: {
-          _id: { programId: '$programId', type: '$type' },
-          total: { $sum: '$amount' }
-        }
-      }
+    const Invoice = require('../models/Invoice');
+    const Quotation = require('../models/Quotation');
+    const LabourBill = require('../models/LabourBill');
+
+    const [allTransactions, allInvoices, allLabourBills, allAccounts, programsInfo, invoices, quotations, labourBills] = await Promise.all([
+      Transaction.find({ programId: { $in: programIds } }),
+      Invoice.find({ programId: { $in: programIds } }),
+      LabourBill.find({ programId: { $in: programIds } }),
+      Account.find({ programId: { $in: programIds } }),
+      Program.find({ _id: { $in: programIds } }, 'name'),
+      Invoice.find({ programId: { $in: programIds } }).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
+      Quotation.find({ programId: { $in: programIds } }).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
+      LabourBill.find({ programId: { $in: programIds } }).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName')
     ]);
 
-    // 2. Account balances for all programs at once
-    const allAccounts = await Account.find({ programId: { $in: programIds } });
-    
-    // Process results
+    // Process per-program and global metrics
     const programDataMap = {};
     programIds.forEach(id => {
       programDataMap[id.toString()] = { income: 0, expense: 0, balance: 0 };
     });
 
-    allTotals.forEach(t => {
-      const pid = t._id.programId.toString();
-      if (programDataMap[pid]) {
-        if (t._id.type === 'Income') programDataMap[pid].income = t.total;
-        if (t._id.type === 'Expense') programDataMap[pid].expense = t.total;
+    let globalIncome = 0;
+    let globalExpense = 0;
+    let globalCash = 0;
+    let globalBank = 0;
+    let globalUpi = 0;
+
+    // 1. Transactions Income & Expense
+    allTransactions.forEach(t => {
+      const pid = t.programId ? t.programId.toString() : null;
+      if (t.type === 'Income') {
+        globalIncome += (t.amount || 0);
+        if (pid && programDataMap[pid]) programDataMap[pid].income += (t.amount || 0);
+      }
+      if (t.type === 'Expense') {
+        globalExpense += (t.amount || 0);
+        if (pid && programDataMap[pid]) programDataMap[pid].expense += (t.amount || 0);
       }
     });
 
-    let globalCash = 0, globalBank = 0, globalUpi = 0;
+    // 2. Tax Invoices -> Income/Sales Revenue
+    allInvoices.forEach(inv => {
+      const pid = inv.programId ? inv.programId.toString() : null;
+      globalIncome += (inv.totalAmount || 0);
+      if (pid && programDataMap[pid]) programDataMap[pid].income += (inv.totalAmount || 0);
+    });
+
+    // 3. Labour & Transport Bills -> Expenses/Logistics
+    allLabourBills.forEach(bill => {
+      const pid = bill.programId ? bill.programId.toString() : null;
+      globalExpense += (bill.totalAmount || 0);
+      if (pid && programDataMap[pid]) programDataMap[pid].expense += (bill.totalAmount || 0);
+    });
+
+    // 4. Account Balances
     allAccounts.forEach(acc => {
-      const pid = acc.programId.toString();
-      if (programDataMap[pid]) {
-        programDataMap[pid].balance += acc.balance;
-      }
-      if (acc.type === 'Cash') globalCash += acc.balance;
-      else if (acc.type === 'Bank') globalBank += acc.balance;
-      else if (acc.type === 'UPI') globalUpi += acc.balance;
+      const pid = acc.programId ? acc.programId.toString() : null;
+      if (pid && programDataMap[pid]) programDataMap[pid].balance += (acc.balance || 0);
+
+      if (acc.type === 'Cash') globalCash += (acc.balance || 0);
+      else if (acc.type === 'Bank') globalBank += (acc.balance || 0);
+      else if (acc.type === 'UPI') globalUpi += (acc.balance || 0);
     });
 
-    // Get Program names
-    const programsInfo = await Program.find({ _id: { $in: programIds } }, 'name');
-    
+    // Default cash balance calculation if accounts table hasn't been set up yet
+    if (globalCash === 0 && globalBank === 0 && globalUpi === 0) {
+      globalCash = Math.max(0, globalIncome - globalExpense);
+    }
+
+    const globalBalance = globalIncome - globalExpense;
+
     const programSummaries = programsInfo.map(p => ({
       _id: p._id,
       name: p.name,
       ...programDataMap[p._id.toString()]
     }));
 
-    const globalIncome = Object.values(programDataMap).reduce((sum, p) => sum + p.income, 0);
-    const globalExpense = Object.values(programDataMap).reduce((sum, p) => sum + p.expense, 0);
-    const globalBalance = globalCash + globalBank + globalUpi;
-
-    // 3. Fetch Recent Documents (Invoices, Quotations, Labour Bills) & Recent Transactions
-    const Invoice = require('../models/Invoice');
-    const Quotation = require('../models/Quotation');
-    const LabourBill = require('../models/LabourBill');
-
-    const [invoices, quotations, labourBills] = await Promise.all([
-      Invoice.find({ programId: { $in: programIds } })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate('customer', 'customerName'),
-      Quotation.find({ programId: { $in: programIds } })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate('customer', 'customerName'),
-      LabourBill.find({ programId: { $in: programIds } })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate('customer', 'customerName')
-    ]);
-
-    // Normalize and combine documents
+    // Combine recent documents
     const combinedDocs = [
       ...invoices.map(doc => ({
         _id: doc._id,
