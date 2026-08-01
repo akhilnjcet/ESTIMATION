@@ -122,7 +122,8 @@ router.post('/', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme: theme || 'classic',
-      status: status || 'Unpaid',
+      status: req.body.status || req.body.paymentStatus || 'Unpaid',
+      paymentStatus: req.body.status || req.body.paymentStatus || 'Unpaid',
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
       showSignature: showSignature !== undefined ? showSignature : true,
@@ -183,6 +184,7 @@ router.put('/:id', protect, async (req, res) => {
       remarks,
       theme,
       status,
+      paymentStatus,
       showTerms,
       showTax,
       showSignature,
@@ -190,6 +192,8 @@ router.put('/:id', protect, async (req, res) => {
       showFooter,
       footerText
     } = req.body;
+
+    const billStatus = status || paymentStatus || 'Unpaid';
 
     const updateData = {
       billDate,
@@ -226,7 +230,8 @@ router.put('/:id', protect, async (req, res) => {
       paymentTerms,
       remarks,
       theme,
-      status,
+      status: billStatus,
+      paymentStatus: billStatus,
       showTerms: showTerms !== undefined ? showTerms : true,
       showTax: showTax !== undefined ? showTax : true,
       showSignature: showSignature !== undefined ? showSignature : true,

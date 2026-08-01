@@ -27,9 +27,9 @@ const invoiceSchema = new mongoose.Schema({
   showPaymentTerms: { type: Boolean, default: true },
   showSignature: { type: Boolean, default: true },
   showFooter: { type: Boolean, default: true },
-  footerText: { type: String },
-  theme: { type: String, enum: ['classic', 'modern', 'minimalist'], default: 'classic' },
-  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' }
+  theme: { type: String, default: 'classic' },
+  status: { type: String, default: 'Unpaid' },
+  paymentStatus: { type: String, default: 'Unpaid' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);

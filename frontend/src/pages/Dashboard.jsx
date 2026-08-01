@@ -1,15 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { 
   TrendingUp, TrendingDown, Wallet, Building2, CreditCard, 
-  Layers, ArrowRight, UserCheck, Activity, Landmark
+  Layers, ArrowRight, UserCheck, Activity, Landmark, Plus, FileText, Users, 
+  ArrowUpRight, ArrowDownRight, Receipt, Truck, ChevronRight, CheckCircle2, FileCode, Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TrendAreaChart, AssetDonutChart } from '../components/ChartComponents';
+import AnimatedCounter from '../components/AnimatedCounter';
+import DashboardCalendar from '../components/DashboardCalendar';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+};
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeDocTab, setActiveDocTab] = useState('All');
   const { selectProgram } = useProgram();
   const navigate = useNavigate();
 
@@ -27,17 +48,30 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
-  if (loading) return <div className="p-12 text-center text-gray-500">Loading Krishva ERP Dashboard...</div>;
-  if (!dashboardData || dashboardData.message) {
+  if (loading) {
     return (
-      <div className="p-12 text-center">
-        <div className="text-red-500 mb-4">{dashboardData?.message || 'Error loading dashboard data.'}</div>
-        <button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>
+      <div className="grid-12">
+        <div className="glass-card col-span-4" style={{ height: '140px' }} />
+        <div className="glass-card col-span-4" style={{ height: '140px' }} />
+        <div className="glass-card col-span-4" style={{ height: '140px' }} />
       </div>
     );
   }
 
-  const { combined = {}, programSummaries = [] } = dashboardData;
+  if (!dashboardData || dashboardData.message) {
+    return (
+      <div className="glass-card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
+        <div style={{ color: 'var(--danger)', fontWeight: '700', marginBottom: '1rem' }}>
+          {dashboardData?.message || 'Error loading dashboard data.'}
+        </div>
+        <button onClick={() => window.location.reload()} className="btn-gradient">
+          Retry Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const { combined = {}, programSummaries = [], recentDocuments = [], recentTransactions = [] } = dashboardData;
   const stats = {
     balance: combined.balance || 0,
     income: combined.income || 0,
@@ -47,125 +81,454 @@ const Dashboard = () => {
     upiBalance: combined.upiBalance || 0,
   };
 
+  const filteredDocs = activeDocTab === 'All' 
+    ? recentDocuments 
+    : recentDocuments.filter(d => d.docType === activeDocTab);
+
+  const getDocIcon = (type) => {
+    if (type === 'Invoice') return <Receipt size={15} />;
+    if (type === 'Quotation') return <FileText size={15} />;
+    return <Truck size={15} />;
+  };
+
+  const getDocBadgeClass = (type) => {
+    if (type === 'Invoice') return 'badge-primary';
+    if (type === 'Quotation') return 'badge-info';
+    return 'badge-warning';
+  };
+
+  const quickActions = [
+    { title: 'Tax Invoice', icon: Receipt, path: '/invoices', color: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' },
+    { title: 'Quotation', icon: FileText, path: '/quotations', color: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' },
+    { title: 'Labour Bill', icon: Truck, path: '/labour-bills', color: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' },
+    { title: 'Customer', icon: Users, path: '/customers', color: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)' },
+    { title: 'Log Income', icon: ArrowUpRight, path: '/income', color: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)' },
+    { title: 'Log Expense', icon: ArrowDownRight, path: '/expense', color: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' },
+    { title: 'Upload Bill', icon: FileCode, path: '/bill-upload', color: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)' },
+  ];
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Krishna Smart Solutions</h1>
-        <p className="text-gray-500">Multi-Program Business Management Platform</p>
-      </div>
-
-      {/* Main Combined Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="card" style={{ borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, #fff 0%, #f0f4ff 100%)' }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Combined Total Balance</p>
-              <h2 className="text-3xl font-bold text-primary mt-1">&#8377; {stats.balance.toLocaleString()}</h2>
-            </div>
-            <div className="p-3 bg-primary/10 rounded-xl text-primary">
-              <Wallet size={24} />
-            </div>
-          </div>
-          <div className="mt-4 flex gap-4 text-xs">
-            <span className="flex items-center gap-1 text-green-600 font-bold">
-              <TrendingUp size={12} /> Income: &#8377; {stats.income.toLocaleString()}
-            </span>
-            <span className="flex items-center gap-1 text-red-600 font-bold">
-              <TrendingDown size={12} /> Expense: &#8377; {stats.expense.toLocaleString()}
-            </span>
-          </div>
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+    >
+      {/* Header & Launcher */}
+      <div className="page-header" style={{ marginBottom: '0.75rem' }}>
+        <div>
+          <h1 className="page-title">
+            Executive Command Center
+          </h1>
+          <p className="page-subtitle">Multi-Program Financial Overview & Asset Portfolio</p>
         </div>
 
-        <div className="card" style={{ borderLeft: '4px solid var(--secondary)', background: 'linear-gradient(135deg, #fff 0%, #f0fdf4 100%)' }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Cash on Hand</p>
-              <h2 className="text-3xl font-bold text-secondary mt-1">&#8377; {stats.cashBalance.toLocaleString()}</h2>
-            </div>
-            <div className="p-3 bg-secondary/10 rounded-xl text-secondary">
-              <Activity size={24} />
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-gray-400 font-medium">Physical cash across all programs</p>
-        </div>
-
-        <div className="card" style={{ borderLeft: '4px solid #f59e0b', background: 'linear-gradient(135deg, #fff 0%, #fffbeb 100%)' }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Digital & Bank Assets</p>
-              <h2 className="text-3xl font-bold text-[#b45309] mt-1">&#8377; {(stats.bankBalance + stats.upiBalance).toLocaleString()}</h2>
-            </div>
-            <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
-              <Landmark size={24} />
-            </div>
-          </div>
-          <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase">
-            <span className="text-amber-700">Bank: &#8377; {stats.bankBalance.toLocaleString()}</span>
-            <span className="text-amber-700">UPI: &#8377; {stats.upiBalance.toLocaleString()}</span>
-          </div>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <motion.button 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/invoices')}
+            className="btn-gradient"
+            style={{ padding: '0.55rem 1.1rem', fontSize: '0.825rem' }}
+          >
+            <Plus size={15} /> New Invoice
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/customers')}
+            className="btn-secondary-glass"
+            style={{ padding: '0.55rem 1.1rem', fontSize: '0.825rem' }}
+          >
+            <Users size={15} /> Add Customer
+          </motion.button>
         </div>
       </div>
 
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Layers size={20} className="text-primary" />
-        Program-wise Summary
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {programSummaries.map(prog => (
-          <div key={prog._id} className="card hover:shadow-xl transition-all border-t-4 border-primary group">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{prog.name}</h3>
-              <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                <Building2 size={20} />
-              </div>
+      {/* Main Stats 12-Column Grid */}
+      <div className="grid-12">
+        {/* Total Net Balance */}
+        <motion.div variants={cardVariants} className="glass-card glass-card-interactive col-span-4" style={{ padding: '1.1rem', borderLeft: '4px solid var(--primary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="form-label">Combined Net Balance</span>
+              <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: 'var(--primary)', marginTop: '0.15rem', letterSpacing: '-0.02em' }}>
+                <AnimatedCounter value={stats.balance} />
+              </h2>
             </div>
-            
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Income</span>
-                <span className="font-bold text-green-600">&#8377; {prog.income.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Expense</span>
-                <span className="font-bold text-red-600">&#8377; {prog.expense.toLocaleString()}</span>
-              </div>
-              <div className="pt-2 border-t flex justify-between font-bold">
-                <span>Net Balance</span>
-                <span className={prog.balance >= 0 ? 'text-primary' : 'text-red-600'}>
-                  &#8377; {prog.balance.toLocaleString()}
+            <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Wallet size={18} />
+            </div>
+          </div>
+          <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '0.85rem', fontSize: '0.725rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--success)', fontWeight: '700' }}>
+              <TrendingUp size={12} /> Income: &#8377;{stats.income.toLocaleString()}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--danger)', fontWeight: '700' }}>
+              <TrendingDown size={12} /> Expense: &#8377;{stats.expense.toLocaleString()}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Physical Cash */}
+        <motion.div variants={cardVariants} className="glass-card glass-card-interactive col-span-4" style={{ padding: '1.1rem', borderLeft: '4px solid var(--success)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="form-label">Physical Cash on Hand</span>
+              <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.15rem', letterSpacing: '-0.02em' }}>
+                <AnimatedCounter value={stats.cashBalance} />
+              </h2>
+            </div>
+            <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--success-light)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Activity size={18} />
+            </div>
+          </div>
+          <p style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.725rem', color: 'var(--text-muted)' }}>
+            Cash reserves across active programs
+          </p>
+        </motion.div>
+
+        {/* Bank & Digital Assets */}
+        <motion.div variants={cardVariants} className="glass-card glass-card-interactive col-span-4" style={{ padding: '1.1rem', borderLeft: '4px solid var(--warning)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="form-label">Digital & Bank Assets</span>
+              <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: 'var(--warning)', marginTop: '0.15rem', letterSpacing: '-0.02em' }}>
+                <AnimatedCounter value={stats.bankBalance + stats.upiBalance} />
+              </h2>
+            </div>
+            <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--warning-light)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Landmark size={18} />
+            </div>
+          </div>
+          <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '0.85rem', fontSize: '0.725rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+            <span>Bank: &#8377;{stats.bankBalance.toLocaleString()}</span>
+            <span>UPI: &#8377;{stats.upiBalance.toLocaleString()}</span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Row 2: Trend Graph (col-span-6), Asset Donut (col-span-3), Compact Calendar (col-span-3) */}
+      <div className="grid-12">
+        <motion.div variants={cardVariants} className="glass-card col-span-6" style={{ padding: '1.1rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
+            Financial Flow Trend Analytics
+          </h3>
+          <TrendAreaChart income={stats.income} expense={stats.expense} />
+        </motion.div>
+
+        <motion.div variants={cardVariants} className="glass-card col-span-3" style={{ padding: '0.85rem' }}>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: '800', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Landmark size={15} style={{ color: 'var(--secondary)' }} />
+            Asset Portfolio
+          </h3>
+          <AssetDonutChart cash={stats.cashBalance} bank={stats.bankBalance} upi={stats.upiBalance} />
+        </motion.div>
+
+        <motion.div variants={cardVariants} className="col-span-3">
+          <DashboardCalendar />
+        </motion.div>
+      </div>
+
+      {/* Row 3: Quick Actions Launcher Bar */}
+      <motion.div variants={cardVariants} className="glass-card" style={{ padding: '0.85rem 1.1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Zap size={15} style={{ color: 'var(--warning)' }} />
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+              Quick Actions Launcher
+            </h3>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+          {quickActions.map((action, index) => {
+            const Icon = action.icon;
+            return (
+              <motion.button
+                key={index}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate(action.path)}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '12px',
+                  padding: '0.55rem 0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '8px',
+                  background: action.color,
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Icon size={14} />
+                </div>
+                <span style={{ fontSize: '0.775rem', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                  {action.title}
                 </span>
-              </div>
-            </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
 
+      {/* Row 4: Recent Documents & Recent Transactions */}
+      <div className="grid-12">
+        {/* Recent Documents Card (Invoices, Quotations & Labour Bills) */}
+        <motion.div variants={cardVariants} className="glass-card col-span-6" style={{ padding: '1.1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
+              <FileCode size={16} style={{ color: 'var(--primary)' }} />
+              Recent Documents (Invoices, Quotations & Labour Bills)
+            </h3>
+            
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              {['All', 'Invoice', 'Quotation', 'Labour Bill'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveDocTab(tab)}
+                  style={{
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: '6px',
+                    fontSize: '0.65rem',
+                    fontWeight: '700',
+                    border: '1px solid var(--glass-border)',
+                    background: activeDocTab === tab ? 'var(--primary)' : 'transparent',
+                    color: activeDocTab === tab ? '#FFFFFF' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {filteredDocs.map((doc) => (
+              <div 
+                key={doc._id}
+                onClick={() => navigate(doc.path)}
+                style={{
+                  display: 'flex',
+                  justify: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.6rem 0.75rem',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {getDocIcon(doc.docType)}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ fontWeight: '800', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                        {doc.docNumber || `${doc.docType} #${doc._id.slice(-4)}`}
+                      </span>
+                      <span className={`badge ${getDocBadgeClass(doc.docType)}`} style={{ fontSize: '0.575rem', padding: '0.08rem 0.35rem' }}>
+                        {doc.docType}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      {doc.partyName} • {new Date(doc.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: '800', fontSize: '0.825rem', color: 'var(--text-primary)' }}>&#8377;{(doc.totalAmount || 0).toLocaleString()}</div>
+                  <span className="badge badge-success" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', marginTop: '0.15rem' }}>
+                    <CheckCircle2 size={9} /> {doc.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {filteredDocs.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                No recent {activeDocTab === 'All' ? 'documents' : activeDocTab.toLowerCase() + 's'} recorded.
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Recent Transactions */}
+        <motion.div variants={cardVariants} className="glass-card col-span-6" style={{ padding: '1.1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
+              <ArrowUpRight size={16} style={{ color: 'var(--success)' }} />
+              Recent Transactions (Income & Expense)
+            </h3>
             <button 
-              onClick={() => {
-                selectProgram(prog);
-                navigate('/accounts');
-              }}
-              className="w-full py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all"
+              onClick={() => navigate('/income')} 
+              style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.15rem' }}
             >
-              Open Program <ArrowRight size={16} />
+              View All <ChevronRight size={13} />
             </button>
           </div>
-        ))}
 
-        {localStorage.getItem('role') === 'admin' && (
-          <div 
-            onClick={() => navigate('/settings')}
-            className="card border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all min-h-[240px]"
-          >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-              <Layers size={24} />
-            </div>
-            <div className="text-center">
-              <p className="font-bold text-gray-900">Create New Program</p>
-              <p className="text-xs text-gray-500 px-6">Add another club, tuition center, or organization</p>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {recentTransactions.map((tx) => {
+              const isIncome = tx.type === 'Income';
+              return (
+                <div 
+                  key={tx._id}
+                  onClick={() => navigate(isIncome ? '/income' : '/expense')}
+                  style={{
+                    display: 'flex',
+                    justify: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid var(--glass-border)',
+                    cursor: 'pointer',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '8px', 
+                      background: isIncome ? 'var(--success-light)' : 'var(--danger-light)', 
+                      color: isIncome ? 'var(--success)' : 'var(--danger)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justify: 'center' 
+                    }}>
+                      {isIncome ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: '800', fontSize: '0.8rem', color: 'var(--text-primary)' }}>{tx.description || (isIncome ? 'Customer Payment' : 'Operating Expense')}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {tx.customer?.customerName || tx.account?.accountName || 'Account Register'} • {new Date(tx.date || tx.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ 
+                      fontWeight: '800', 
+                      fontSize: '0.85rem', 
+                      color: isIncome ? 'var(--success)' : 'var(--danger)' 
+                    }}>
+                      {isIncome ? '+' : '-'} &#8377;{(tx.amount || 0).toLocaleString()}
+                    </div>
+                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700' }}>
+                      {tx.type}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {recentTransactions.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                No recent transactions recorded.
+              </div>
+            )}
           </div>
-        )}
+        </motion.div>
       </div>
-    </div>
+
+      {/* Row 5: Program Summaries */}
+      <div>
+        <h2 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Layers size={16} style={{ color: 'var(--primary)' }} />
+          Program-Wise Enterprise Breakdowns
+        </h2>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+          {programSummaries.map((prog) => (
+            <motion.div key={prog._id} variants={cardVariants} className="glass-card glass-card-interactive" style={{ padding: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                  {prog.name}
+                </h3>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={15} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.65rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Income</span>
+                  <span style={{ fontWeight: '700', color: 'var(--success)' }}>&#8377; {prog.income.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Expense</span>
+                  <span style={{ fontWeight: '700', color: 'var(--danger)' }}>&#8377; {prog.expense.toLocaleString()}</span>
+                </div>
+                <div style={{ paddingTop: '0.35rem', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '0.8rem' }}>
+                  <span>Net</span>
+                  <span style={{ color: prog.balance >= 0 ? 'var(--primary)' : 'var(--danger)' }}>
+                    &#8377; {prog.balance.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  selectProgram(prog);
+                  navigate('/accounts');
+                }}
+                className="btn-secondary-glass"
+                style={{ width: '100%', fontSize: '0.725rem', padding: '0.35rem' }}
+              >
+                Open Program <ArrowRight size={12} />
+              </button>
+            </motion.div>
+          ))}
+
+          {localStorage.getItem('role') === 'admin' && (
+            <motion.div 
+              variants={cardVariants}
+              onClick={() => navigate('/settings')}
+              className="glass-card"
+              style={{
+                border: '2px dashed var(--glass-border-hover)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                textAlign: 'center',
+                minHeight: '140px',
+                padding: '0.9rem'
+              }}
+            >
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.4rem' }}>
+                <Plus size={16} />
+              </div>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: '800', margin: '0 0 0.15rem 0' }}>Create Program</h4>
+              <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)', margin: 0 }}>Add business unit</p>
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

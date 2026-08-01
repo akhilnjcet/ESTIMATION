@@ -1,13 +1,18 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, FileText, Receipt, Truck, ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, LogOut, Shield as ShieldIcon, Download } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
+  ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, 
+  LogOut, Shield as ShieldIcon, Download, FileCode, ChevronLeft, Sparkles
+} from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
 import logo from '../assets/logo.jpg';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
-
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [showInstallBtn, setShowInstallBtn] = React.useState(false);
+  const location = useLocation();
 
   React.useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -17,10 +22,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
@@ -30,151 +32,205 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     setDeferredPrompt(null);
     setShowInstallBtn(false);
   };
-  
-  return (
-    <>
-      {/* Floating Toggle Tab (Visible when sidebar is closed) */}
-      {!isOpen && (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="sidebar-toggle-tab"
-          title="Open Menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      )}
 
-      <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+  const navGroups = [
+    {
+      title: 'CORE MODULES',
+      items: [
+        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/customers', label: 'Customers', icon: Users },
+        { path: '/products', label: 'Products & Inventory', icon: Package },
+      ]
+    },
+    {
+      title: 'BILLING & ESTIMATION',
+      items: [
+        { path: '/quotations', label: 'Quotations', icon: FileText },
+        { path: '/invoices', label: 'Tax Invoices', icon: Receipt },
+        { path: '/labour-bills', label: 'Labour Bills', icon: HardHat },
+        { path: '/transport-bills', label: 'Transport Bills', icon: Truck },
+      ]
+    },
+    {
+      title: 'FINANCE & ACCOUNTS',
+      items: [
+        { path: '/income', label: 'Income Register', icon: ArrowUpRight, color: '#22C55E' },
+        { path: '/expense', label: 'Expense Register', icon: ArrowDownRight, color: '#EF4444' },
+        { path: '/accounts', label: 'Accounts & Balances', icon: Wallet, color: '#8B5CF6' },
+        { path: '/ledger', label: 'Party Ledger', icon: BookOpen },
+        { path: '/bill-upload', label: 'Bill Upload', icon: FileCode },
+        { path: '/notes', label: 'Quick Notes', icon: FileText },
+      ]
+    }
+  ];
+
+  if (localStorage.getItem('role') === 'admin') {
+    navGroups.push({
+      title: 'ADMINISTRATION',
+      items: [
+        { path: '/user-access', label: 'User Access', icon: ShieldIcon },
+        { path: '/settings', label: 'Settings', icon: SettingsIcon }
+      ]
+    });
+  }
+
+  return (
+    <motion.aside 
+      className="sidebar no-print"
+      initial={false}
+      animate={{
+        width: isOpen ? 'var(--sidebar-width)' : '0px',
+        opacity: isOpen ? 1 : 0
+      }}
+      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        background: 'var(--sidebar-glass)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderRight: '1px solid var(--glass-border)',
+        zIndex: 1100,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        transition: 'background 0.3s ease, border-color 0.3s ease'
+      }}
+    >
+      {/* Header */}
+      <div style={{ padding: '1.25rem 1.25rem 1rem 1.25rem', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ position: 'relative' }}>
+              <img 
+                src={logo} 
+                alt="Krishna Logo" 
+                style={{ 
+                  width: '50px', 
+                  height: '50px', 
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 4px 12px rgba(59, 130, 246, 0.45))'
+                }} 
+              />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: 'var(--sidebar-title)', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
+                Krishna Smart
+              </h1>
+              <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Enterprise ERP
+              </span>
+            </div>
+          </div>
+
           <button 
             onClick={() => setIsOpen(false)}
-            className="sidebar-close-btn"
-            title="Close Menu"
+            style={{
+              background: 'var(--sidebar-item-hover)',
+              border: 'none',
+              color: 'var(--text-muted)',
+              borderRadius: '8px',
+              padding: '0.35rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Collapse Sidebar"
           >
-            ✕
+            <ChevronLeft size={18} />
           </button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <img src={logo} alt="Krishna Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
-              <h1 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: '#fff', lineHeight: '1.2' }}>
-                Welcome to <br /> Krishna Smart Solutions
-              </h1>
-            </div>
-          <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Powered by Krishna IT Solutions
-          </p>
-          <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', margin: 0, fontStyle: 'italic' }}>
-            a krishna group concern
-          </p>
         </div>
       </div>
-      
-      <ProgramSelector />
-      
-      <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
-        <NavLink to="/" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <LayoutDashboard />
-          <span>Dashboard</span>
-        </NavLink>
-        <NavLink to="/customers" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Users />
-          <span>Customers</span>
-        </NavLink>
-        <NavLink to="/products" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Package />
-          <span>Products</span>
-        </NavLink>
-        <NavLink to="/quotations" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FileText />
-          <span>Quotations</span>
-        </NavLink>
-        <NavLink to="/invoices" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Receipt />
-          <span>Invoices</span>
-        </NavLink>
-        <NavLink to="/labour-bills" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Truck />
-          <span>Labour Bills</span>
-        </NavLink>
 
-        <div style={{ margin: '1rem 0', borderTop: '1px solid var(--border)' }}></div>
+      {/* Program Selector */}
+      <div style={{ padding: '0.75rem 1rem' }}>
+        <ProgramSelector />
+      </div>
 
-        <NavLink to="/income" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <ArrowUpRight style={{ color: 'var(--secondary)' }} />
-          <span>Income</span>
-        </NavLink>
-        <NavLink to="/expense" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <ArrowDownRight style={{ color: 'var(--danger)' }} />
-          <span>Expense</span>
-        </NavLink>
-        <NavLink to="/accounts" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Wallet />
-          <span>Accounts & Balances</span>
-        </NavLink>
-        <NavLink to="/bill-upload" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <ArrowUpRight />
-          <span>Bill Upload</span>
-        </NavLink>
-        <NavLink to="/ledger" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <BookOpen />
-          <span>Party Ledger</span>
-        </NavLink>
-        <NavLink to="/notes" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-          <FileText />
-          <span>Quick Notes</span>
-        </NavLink>
-        {localStorage.getItem('role') === 'admin' && (
-          <>
-            <NavLink to="/user-access" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              <ShieldIcon />
-              <span>User Access</span>
-            </NavLink>
-            <NavLink to="/settings" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              <SettingsIcon />
-              <span>Settings</span>
-            </NavLink>
-          </>
-        )}
+      {/* Navigation Links */}
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0.85rem' }}>
+        {navGroups.map((group, gIdx) => (
+          <div key={gIdx} style={{ marginBottom: '1.25rem' }}>
+            <div style={{
+              fontSize: '0.65rem',
+              fontWeight: '800',
+              color: 'var(--sidebar-group-title)',
+              letterSpacing: '0.12em',
+              padding: '0.35rem 0.75rem',
+              marginBottom: '0.2rem'
+            }}>
+              {group.title}
+            </div>
+
+            {group.items.map((item, iIdx) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+
+              return (
+                <motion.div key={iIdx} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}>
+                  <NavLink 
+                    to={item.path}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '12px',
+                      fontSize: '0.85rem',
+                      fontWeight: isActive ? '700' : '500',
+                      color: isActive ? '#FFFFFF' : 'var(--sidebar-item-color)',
+                      background: isActive ? 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' : 'transparent',
+                      boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none',
+                      transition: 'var(--transition-fast)',
+                      marginBottom: '0.2rem',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <Icon size={17} style={{ color: isActive ? '#FFF' : (item.color || 'var(--primary)') }} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                </motion.div>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      <div style={{ padding: '1.5rem 1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Version 2.1.0 - Enterprise</p>
-          <p style={{ fontSize: '0.75rem', color: '#fff', margin: '0.25rem 0 0.75rem 0', fontWeight: 'bold' }}>Krishna Smart Solutions</p>
-          <button 
-            onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
-            className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-bold transition-colors"
-          >
-            <LogOut size={16} /> Sign Out
-          </button>
-
-          {showInstallBtn && (
+      {/* Footer Profile & Sign Out */}
+      <div style={{ padding: '0.85rem 1rem', borderTop: '1px solid var(--glass-border)', background: 'var(--sidebar-footer-bg)' }}>
+        <div style={{
+          background: 'var(--sidebar-card-bg)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '14px',
+          padding: '0.75rem'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--sidebar-title)', display: 'block' }}>Krishna ERP</span>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>v2.5.0 Enterprise</span>
+            </div>
             <button 
-              onClick={handleInstallClick}
-              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold transition-colors"
+              onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
               style={{
-                width: '100%',
-                padding: '0.6rem',
-                backgroundColor: 'rgba(79, 70, 229, 0.15)',
-                border: '1px solid rgba(79, 70, 229, 0.3)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#EF4444',
+                padding: '0.35rem',
                 borderRadius: '8px',
-                color: '#a5b4fc',
-                justifyContent: 'center',
                 cursor: 'pointer',
-                marginTop: '0.75rem',
                 display: 'flex',
                 alignItems: 'center'
               }}
+              title="Sign Out"
             >
-              <Download size={16} /> Install App
+              <LogOut size={15} />
             </button>
-          )}
+          </div>
         </div>
       </div>
-      </aside>
-    </>
+    </motion.aside>
   );
 };
 

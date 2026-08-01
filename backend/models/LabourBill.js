@@ -60,8 +60,8 @@ const labourBillSchema = new mongoose.Schema({
   // Extra fields & Print Toggles
   paymentTerms: { type: String },
   remarks: { type: String },
-  theme: { type: String, enum: ['classic', 'modern', 'minimalist'], default: 'classic' },
-  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
+  status: { type: String, default: 'Unpaid' },
+  paymentStatus: { type: String, default: 'Unpaid' },
   
   // Print Toggles
   showTerms: { type: Boolean, default: true },
@@ -73,6 +73,5 @@ const labourBillSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 labourBillSchema.index({ programId: 1 });
-labourBillSchema.index({ billNumber: 1 });
 
 module.exports = mongoose.model('LabourBill', labourBillSchema);

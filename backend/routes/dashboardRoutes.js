@@ -73,6 +73,66 @@ router.get('/combined', protect, async (req, res) => {
     const globalExpense = Object.values(programDataMap).reduce((sum, p) => sum + p.expense, 0);
     const globalBalance = globalCash + globalBank + globalUpi;
 
+    // 3. Fetch Recent Documents (Invoices, Quotations, Labour Bills) & Recent Transactions
+    const Invoice = require('../models/Invoice');
+    const Quotation = require('../models/Quotation');
+    const LabourBill = require('../models/LabourBill');
+
+    const [invoices, quotations, labourBills] = await Promise.all([
+      Invoice.find({ programId: { $in: programIds } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('customer', 'customerName'),
+      Quotation.find({ programId: { $in: programIds } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('customer', 'customerName'),
+      LabourBill.find({ programId: { $in: programIds } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('customer', 'customerName')
+    ]);
+
+    // Normalize and combine documents
+    const combinedDocs = [
+      ...invoices.map(doc => ({
+        _id: doc._id,
+        docType: 'Invoice',
+        docNumber: doc.invoiceNumber,
+        partyName: doc.customer?.customerName || 'Customer',
+        totalAmount: doc.totalAmount,
+        createdAt: doc.createdAt,
+        status: doc.status || 'PAID',
+        path: '/invoices'
+      })),
+      ...quotations.map(doc => ({
+        _id: doc._id,
+        docType: 'Quotation',
+        docNumber: doc.quotationNumber,
+        partyName: doc.customer?.customerName || 'Customer',
+        totalAmount: doc.totalAmount,
+        createdAt: doc.createdAt,
+        status: doc.status || 'ISSUED',
+        path: '/quotations'
+      })),
+      ...labourBills.map(doc => ({
+        _id: doc._id,
+        docType: 'Labour Bill',
+        docNumber: doc.billNumber,
+        partyName: doc.customer?.customerName || doc.clientName || doc.serviceProviderName || 'Client',
+        totalAmount: doc.totalAmount,
+        createdAt: doc.createdAt,
+        status: doc.status || 'ISSUED',
+        path: '/labour-bills'
+      }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+
+    const recentTransactions = await Transaction.find({ programId: { $in: programIds } })
+      .sort({ date: -1, createdAt: -1 })
+      .limit(6)
+      .populate('customer', 'customerName')
+      .populate('account', 'accountName');
+
     res.json({
       combined: {
         income: globalIncome,
@@ -82,7 +142,12 @@ router.get('/combined', protect, async (req, res) => {
         bankBalance: globalBank,
         upiBalance: globalUpi
       },
-      programSummaries
+      programSummaries,
+      recentInvoices: invoices,
+      recentQuotations: quotations,
+      recentLabourBills: labourBills,
+      recentDocuments: combinedDocs,
+      recentTransactions
     });
   } catch (error) {
     console.error('DASHBOARD_ERROR:', error);

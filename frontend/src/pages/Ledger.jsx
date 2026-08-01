@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { FileText, Download, Printer, Filter, Wallet, Receipt, X } from 'lucide-react';
+import { FileText, Printer, Filter, Wallet, Receipt, X, ArrowUpRight, ArrowDownRight, BookOpen, Search } from 'lucide-react';
 
 const Ledger = () => {
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
-  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc
+  const [sortBy, setSortBy] = useState('date_desc');
+  const [searchTerm, setSearchTerm] = useState('');
   const { selectedProgram } = useProgram();
   const [previewData, setPreviewData] = useState(null);
 
@@ -35,11 +36,23 @@ const Ledger = () => {
     finally { setLoading(false); }
   };
 
+  const filteredTransactions = transactions.filter(t => 
+    t.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.account?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
+  const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
+  const totalOpeningBalance = accounts.reduce((acc, curr) => acc + (curr.openingBalance || 0), 0);
+  const totalCredit = filteredTransactions.filter(t => t.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalDebit = filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
+  const netBalance = totalCredit - totalDebit;
+
   const handlePrint = () => {
-    const includeBalances = window.confirm('Include Cash on Hand and Bank Balance in this report?');
-    
+    const includeBalances = window.confirm('Include Cash on Hand and Bank Balance in this statement report?');
     setPreviewData({
-      transactions,
+      transactions: filteredTransactions,
       totalOpeningBalance,
       totalCredit,
       totalDebit,
@@ -62,278 +75,203 @@ const Ledger = () => {
         });
       })
     );
-    setTimeout(() => {
-      window.print();
-    }, 500);
+    setTimeout(() => { window.print(); }, 500);
   };
 
   const renderStatementPreview = (data) => {
     return (
-      <div className="invoice-container no-shadow" style={{ background: 'white', padding: '40px' }}>
-        <div className="invoice-header" style={{ marginBottom: '30px' }}>
-          <div className="company-section">
+      <div className="invoice-container no-shadow" style={{ background: '#FFF', padding: '2.5rem', color: '#0f172a' }}>
+        <div className="invoice-header" style={{ marginBottom: '1.5rem' }}>
+          <div className="company-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             {selectedProgram?.showLogo && selectedProgram?.logo && (
-              <img src={selectedProgram.logo} alt="Logo" className="company-logo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+              <img src={selectedProgram.logo} alt="Logo" className="company-logo" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
             )}
             <div className="company-details">
-              <h1 className="company-name">{selectedProgram?.name}</h1>
-              <p className="company-address">{selectedProgram?.address}</p>
+              <h1 className="company-name" style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>{selectedProgram?.name}</h1>
+              <p className="company-address" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>{selectedProgram?.address}</p>
             </div>
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', borderTop: '2px solid #eee', paddingTop: '15px' }}>
-            <h2 style={{ margin: 0, color: '#111', fontSize: '24px', fontWeight: '900' }}>STATEMENT</h2>
-            <p style={{ margin: 0, fontSize: '14px', color: '#111' }}><b>Date:</b> {data.date}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem', borderTop: '2px solid #e2e8f0', paddingTop: '1rem' }}>
+            <h2 style={{ margin: 0, color: '#2563eb', fontSize: '22px', fontWeight: '900' }}>ACCOUNT STATEMENT</h2>
+            <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}><b>Date:</b> {data.date}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-0 mb-8 border rounded-lg overflow-hidden">
-          <div className="p-4 border-r bg-gray-50/50">
-            <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">Opening</div>
-            <div className="font-bold">₹{data.totalOpeningBalance.toLocaleString()}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+          <div style={{ padding: '0.85rem', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>Opening</span>
+            <div style={{ fontWeight: '800', fontSize: '1rem' }}>&#8377; {data.totalOpeningBalance.toLocaleString()}</div>
           </div>
-          <div className="p-4 border-r bg-emerald-50/30 text-emerald-600">
-            <div className="text-[10px] font-bold uppercase mb-1">Credit (+)</div>
-            <div className="font-bold">₹{data.totalCredit.toLocaleString()}</div>
+          <div style={{ padding: '0.85rem', background: '#f0fdf4', borderRight: '1px solid #e2e8f0', color: '#16a34a' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' }}>Credit (+)</span>
+            <div style={{ fontWeight: '800', fontSize: '1rem' }}>&#8377; {data.totalCredit.toLocaleString()}</div>
           </div>
-          <div className="p-4 border-r bg-rose-50/30 text-rose-600">
-            <div className="text-[10px] font-bold uppercase mb-1">Debit (-)</div>
-            <div className="font-bold">₹{data.totalDebit.toLocaleString()}</div>
+          <div style={{ padding: '0.85rem', background: '#fef2f2', borderRight: '1px solid #e2e8f0', color: '#dc2626' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' }}>Debit (-)</span>
+            <div style={{ fontWeight: '800', fontSize: '1rem' }}>&#8377; {data.totalDebit.toLocaleString()}</div>
           </div>
-          <div className="p-4 bg-primary/5 text-primary">
-            <div className="text-[10px] font-bold uppercase mb-1">Net Balance</div>
-            <div className="font-bold">₹{data.netBalance.toLocaleString()}</div>
+          <div style={{ padding: '0.85rem', background: '#eff6ff', color: '#2563eb' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' }}>Net Total</span>
+            <div style={{ fontWeight: '800', fontSize: '1rem' }}>&#8377; {data.netBalance.toLocaleString()}</div>
           </div>
         </div>
 
-        {data.includeBalances && (
-          <div className="flex gap-4 mb-8">
-            <div className="flex-1 p-3 bg-gray-50 rounded-lg border flex justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase">Cash on Hand</span>
-              <span className="font-bold text-sm">₹{data.cashBalance.toLocaleString()}</span>
-            </div>
-            <div className="flex-1 p-3 bg-gray-50 rounded-lg border flex justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase">Bank Balance</span>
-              <span className="font-bold text-sm">₹{data.bankBalance.toLocaleString()}</span>
-            </div>
-          </div>
-        )}
-
-        <table className="invoice-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
           <thead>
-            <tr>
-              <th style={{ textAlign: 'left', padding: '10px', borderBottom: '2px solid #eee' }}>Date</th>
-              <th style={{ textAlign: 'left', padding: '10px', borderBottom: '2px solid #eee' }}>Details</th>
-              <th style={{ textAlign: 'right', padding: '10px', borderBottom: '2px solid #eee' }}>Debit</th>
-              <th style={{ textAlign: 'right', padding: '10px', borderBottom: '2px solid #eee' }}>Credit</th>
+            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Date</th>
+              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Details</th>
+              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Account</th>
+              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Debit (Out)</th>
+              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Credit (In)</th>
             </tr>
           </thead>
           <tbody>
             {data.transactions.map((t, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                <td style={{ padding: '10px', fontSize: '12px' }}>{new Date(t.date).toLocaleDateString('en-GB')}</td>
-                <td style={{ padding: '10px' }}>
-                  <div style={{ fontWeight: '600', fontSize: '13px' }}>{t.category}</div>
-                  <div style={{ fontSize: '10px', color: '#666' }}>{t.description}</div>
+              <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
+                  {new Date(t.date).toLocaleDateString('en-GB')}
                 </td>
-                <td style={{ padding: '10px', textAlign: 'right', color: '#e11d48' }}>{t.type === 'Expense' ? `₹${t.amount.toLocaleString()}` : '-'}</td>
-                <td style={{ padding: '10px', textAlign: 'right', color: '#059669' }}>{t.type === 'Income' ? `₹${t.amount.toLocaleString()}` : '-'}</td>
+                <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
+                  <div style={{ fontWeight: '600', color: '#0f172a' }}>{t.category}</div>
+                  {t.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{t.description}</div>}
+                </td>
+                <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#475569' }}>{t.account?.name}</td>
+                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#dc2626', fontSize: '0.85rem' }}>
+                  {t.type === 'Expense' ? `₹${t.amount.toLocaleString()}` : '-'}
+                </td>
+                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#16a34a', fontSize: '0.85rem' }}>
+                  {t.type === 'Income' ? `₹${t.amount.toLocaleString()}` : '-'}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        <div className="invoice-footer" style={{ marginTop: '60px' }}>
-          <div style={{ fontSize: '10px', color: '#999' }}>
-            This is a computer generated statement.<br/>Generated via Krishna ERP.
-          </div>
-          {selectedProgram?.showTreasurerSignature && (selectedProgram?.treasurerSignatureUrl || selectedProgram?.treasurerSignatureTitle) && (
-            <div className="signature-section" style={{ marginTop: '20px', textAlign: 'right' }}>
-              {selectedProgram?.treasurerSignatureUrl && (
-                <img src={selectedProgram.treasurerSignatureUrl} alt="Signature" className="signature-image" style={{ width: '120px' }} />
-              )}
-              <p className="signature-label" style={{ fontWeight: 'bold', margin: '5px 0' }}>{selectedProgram?.treasurerSignatureTitle || 'Treasurer'}</p>
-              <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {selectedProgram?.name}</p>
-            </div>
-          )}
-        </div>
       </div>
     );
   };
 
-  const totalOpeningBalance = accounts.reduce((sum, acc) => sum + (acc.openingBalance || 0), 0);
-  const totalDebit = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
-  const totalCredit = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-  const netBalance = totalOpeningBalance + totalCredit - totalDebit;
-
-  const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
-  const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((sum, a) => sum + (a.balance || 0), 0);
-
-  if (previewData) {
-    return (
-      <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-4 sticky top-0 z-10 p-2 no-print">
-            <button className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" onClick={() => setPreviewData(null)}>
-              <X size={18} /> <span>Close</span>
-            </button>
-            <button className="btn btn-primary flex items-center gap-2 shadow-lg" onClick={triggerPrint}>
-              <Printer size={18} /> <span>Print</span>
-            </button>
-          </div>
-          <div className="animate-in fade-in zoom-in-95 duration-300">
-            {renderStatementPreview(previewData)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-end mb-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Party Ledger & Statement</h1>
-          <p className="text-gray-500 mt-1 flex items-center gap-2">
-            <FileText size={16} />
-            Financial history for <span className="font-bold text-primary">{selectedProgram?.name}</span>
-          </p>
+          <h1 className="page-title">
+            <BookOpen size={28} style={{ color: 'var(--primary)' }} />
+            Party & General Ledger
+          </h1>
+          <p className="page-subtitle">Unified transaction history and statement reports</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handlePrint} className="btn btn-primary flex items-center gap-2 shadow-lg">
-            <Printer size={18} />
-            Export Statement PDF
-          </button>
+
+        <button className="btn-gradient" onClick={handlePrint}>
+          <Printer size={18} /> Print Statement PDF
+        </button>
+      </div>
+
+      {/* Overview Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+        <div className="glass-card">
+          <span className="form-label">Total Credit (+)</span>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.25rem' }}>
+            &#8377; {totalCredit.toLocaleString()}
+          </h3>
+        </div>
+        <div className="glass-card">
+          <span className="form-label">Total Debit (-)</span>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--danger)', marginTop: '0.25rem' }}>
+            &#8377; {totalDebit.toLocaleString()}
+          </h3>
+        </div>
+        <div className="glass-card">
+          <span className="form-label">Net Balance Flow</span>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: netBalance >= 0 ? 'var(--primary)' : 'var(--danger)', marginTop: '0.25rem' }}>
+            &#8377; {netBalance.toLocaleString()}
+          </h3>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 summary-cards">
-        <div className="card border-l-4 border-gray-400 shadow-sm">
-          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Opening Balance</div>
-          <div className="text-lg font-bold text-gray-900">&#8377; {totalOpeningBalance.toLocaleString()}</div>
-        </div>
-        <div className="card border-l-4 border-emerald-500 shadow-sm">
-          <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Credit (+)</div>
-          <div className="text-lg font-bold text-emerald-600">&#8377; {totalCredit.toLocaleString()}</div>
-        </div>
-        <div className="card border-l-4 border-rose-500 shadow-sm">
-          <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Debit (-)</div>
-          <div className="text-lg font-bold text-rose-600">&#8377; {totalDebit.toLocaleString()}</div>
-        </div>
-        <div className={`card border-l-4 shadow-sm ${netBalance >= 0 ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-500 bg-rose-50/30'}`}>
-          <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${netBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Net Balance</div>
-          <div className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-            {netBalance < 0 ? '-' : '+'} &#8377; {Math.abs(netBalance).toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      {/* Breakdown Bar */}
-      <div className="flex gap-4 mb-8">
-        <div className="flex-1 card py-4 flex justify-between items-center bg-emerald-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase opacity-80">Cash on Hand</span>
-            <span className="text-xl font-bold">&#8377; {cashBalance.toLocaleString()}</span>
-          </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Wallet size={20} />
-          </div>
-        </div>
-        <div className="flex-1 card py-4 flex justify-between items-center bg-rose-600 text-white border-none shadow-lg transform hover:scale-[1.01] transition-transform">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase opacity-80">Bank Balance</span>
-            <span className="text-xl font-bold">&#8377; {bankBalance.toLocaleString()}</span>
-          </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Receipt size={20} />
-          </div>
-        </div>
-      </div>
-
-      <div className="card border-none shadow-xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 px-2 transaction-header">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <FileText size={20} className="text-gray-400" />
-            Transaction History
+      {/* Transaction History Glass Card */}
+      <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FileText size={20} style={{ color: 'var(--primary)' }} />
+            Transaction History Logs
           </h2>
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto filter-row">
-            <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
-              <Filter size={16} className="text-gray-400" />
-              <select 
-                className="outline-none text-sm font-bold bg-transparent w-full"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="date_desc">Newest First</option>
-                <option value="date_asc">Oldest First</option>
-                <option value="amount_desc">Highest Amount</option>
-                <option value="amount_asc">Lowest Amount</option>
-              </select>
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', width: '220px' }}>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Search transactions..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ paddingLeft: '2.5rem', padding: '0.5rem 0.75rem 0.5rem 2.5rem', fontSize: '0.85rem' }}
+              />
+              <Search size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
-            <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
-              <Filter size={16} className="text-gray-400" />
-              <select 
-                className="outline-none text-sm font-bold bg-transparent w-full"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="All">All Transactions</option>
-                <option value="Income">Income Only</option>
-                <option value="Expense">Expense Only</option>
-              </select>
-            </div>
+
+            <select 
+              className="form-select"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+            >
+              <option value="All">All Types</option>
+              <option value="Income">Income Only</option>
+              <option value="Expense">Expense Only</option>
+            </select>
+
+            <select 
+              className="form-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+            >
+              <option value="date_desc">Newest First</option>
+              <option value="date_asc">Oldest First</option>
+              <option value="amount_desc">Highest Amount</option>
+              <option value="amount_asc">Lowest Amount</option>
+            </select>
           </div>
         </div>
-        
-        <div className="table-container border-none shadow-none transaction-container">
-          <table className="data-table transaction-table">
-            <thead className="bg-gray-50">
+
+        <div className="table-container">
+          <table className="table-glass">
+            <thead>
               <tr>
-                <th className="py-4">Date</th>
-                <th className="py-4">Transaction Details</th>
-                <th className="py-4">Mode</th>
-                <th className="py-4 text-right">Debit (Out)</th>
-                <th className="py-4 text-right">Credit (In)</th>
+                <th>Date</th>
+                <th>Transaction Details</th>
+                <th>Payment Account</th>
+                <th style={{ textAlign: 'right' }}>Debit (-)</th>
+                <th style={{ textAlign: 'right' }}>Credit (+)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {transactions.map(txn => (
-                <tr key={txn._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 font-medium text-gray-600">
+            <tbody>
+              {filteredTransactions.map(txn => (
+                <tr key={txn._id}>
+                  <td style={{ color: 'var(--text-muted)' }}>
                     {new Date(txn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </td>
-                  <td className="py-4">
-                    <div className="font-bold text-gray-900">{txn.category}</div>
-                    <div className="text-xs text-gray-500 italic max-w-xs truncate">{txn.description}</div>
+                  <td>
+                    <div style={{ fontWeight: '700' }}>{txn.category}</div>
+                    {txn.description && <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>{txn.description}</div>}
                   </td>
-                  <td className="py-4">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase tracking-wider">
-                      {txn.account?.name}
-                    </span>
+                  <td>
+                    <span className="badge badge-primary">{txn.account?.name || 'Account'}</span>
                   </td>
-                  <td className="py-4 text-right">
-                    {txn.type === 'Expense' ? (
-                      <span className="font-bold text-rose-600">&#8377; {txn.amount.toLocaleString()}</span>
-                    ) : (
-                      <span className="text-gray-300">-</span>
-                    )}
+                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)' }}>
+                    {txn.type === 'Expense' ? `- ₹${txn.amount.toLocaleString()}` : '-'}
                   </td>
-                  <td className="py-4 text-right">
-                    {txn.type === 'Income' ? (
-                      <span className="font-bold text-emerald-600">&#8377; {txn.amount.toLocaleString()}</span>
-                    ) : (
-                      <span className="text-gray-300">-</span>
-                    )}
+                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)' }}>
+                    {txn.type === 'Income' ? `+ ₹${txn.amount.toLocaleString()}` : '-'}
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && !loading && (
+              {filteredTransactions.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="5" className="py-20 text-center text-gray-400">
-                    <div className="flex flex-col items-center gap-2">
-                      <FileText size={40} className="opacity-20" />
-                      <p>No transactions found for the selected criteria.</p>
-                    </div>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    No matching ledger transactions found.
                   </td>
                 </tr>
               )}
@@ -341,6 +279,39 @@ const Ledger = () => {
           </table>
         </div>
       </div>
+
+      {/* Statement Print Modal Overlay */}
+      {previewData && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(16px)',
+            padding: '2rem',
+            overflowY: 'auto',
+            display: 'flex',
+            justify: 'center'
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: '900px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
+                <X size={18} /> Close Statement
+              </button>
+              
+              <button className="btn-gradient" onClick={triggerPrint}>
+                <Printer size={18} /> Print Statement PDF
+              </button>
+            </div>
+
+            <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              {renderStatementPreview(previewData)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Building2, Plus, Edit2, Trash2, Phone, Mail, MapPin, Hash, Palette } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, Phone, Mail, MapPin, Hash, Palette, Settings as SettingsIcon, X } from 'lucide-react';
 
 const Settings = () => {
   const { programs, setPrograms } = useProgram();
   const [editingProgram, setEditingProgram] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '', signatureUrl: '', signatureTitle: 'Authorized Signature', logo: '', showLogo: true, treasurerSignatureUrl: '', treasurerSignatureTitle: 'Treasurer', showTreasurerSignature: true, defaultTerms: '', showTermsByDefault: true
+    name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#2563eb', footerText: '', signatureUrl: '', signatureTitle: 'Authorized Signature', logo: '', showLogo: true, treasurerSignatureUrl: '', treasurerSignatureTitle: 'Treasurer', showTreasurerSignature: true, defaultTerms: '', showTermsByDefault: true
   });
   const [showForm, setShowForm] = useState(false);
 
@@ -26,7 +26,7 @@ const Settings = () => {
       } else {
         await api.post('/programs', formData);
       }
-      setFormData({ name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#4f46e5', footerText: '' });
+      setFormData({ name: '', address: '', phone: '', email: '', gstNumber: '', themeColor: '#2563eb', footerText: '' });
       setEditingProgram(null);
       setShowForm(false);
       fetchPrograms();
@@ -41,7 +41,7 @@ const Settings = () => {
       phone: prog.phone || '',
       email: prog.email || '',
       gstNumber: prog.gstNumber || '',
-      themeColor: prog.themeColor || '#4f46e5',
+      themeColor: prog.themeColor || '#2563eb',
       footerText: prog.footerText || '',
       signatureUrl: prog.signatureUrl || '',
       signatureTitle: prog.signatureTitle || 'Authorized Signature',
@@ -59,10 +59,9 @@ const Settings = () => {
 
   const handleDelete = async (prog) => {
     const password = window.prompt(`To delete "${prog.name}", please enter your login password:`);
-    if (password === null) return; // User cancelled
+    if (password === null) return;
 
     try {
-      // Send password in request body for verification
       await api.delete(`/programs/${prog._id}`, { data: { password } });
       alert('Program deleted successfully!');
       fetchPrograms();
@@ -107,7 +106,6 @@ const Settings = () => {
       setFormData({ ...formData, [field]: compressedBase64 });
     } catch (err) {
       console.error('Image compression failed:', err);
-      // Fallback to original reader if compression fails
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData({ ...formData, [field]: reader.result });
@@ -117,167 +115,115 @@ const Settings = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold">Program Management</h1>
-          <p className="text-gray-500">Add or edit independent clubs, organizations, and business units</p>
+          <h1 className="page-title">
+            <SettingsIcon size={28} style={{ color: 'var(--primary)' }} />
+            Enterprise Program & Unit Settings
+          </h1>
+          <p className="page-subtitle">Configure multi-organization units, branding logos, signatures, and terms</p>
         </div>
-        <button className="btn btn-primary flex items-center gap-2" onClick={() => { setShowForm(!showForm); setEditingProgram(null); }}>
-          <Plus size={18} />
-          {showForm ? 'Cancel' : 'Create New Program'}
+
+        <button className="btn-gradient" onClick={() => { setShowForm(!showForm); setEditingProgram(null); }}>
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? 'Cancel' : 'Create New Program Unit'}
         </button>
       </div>
 
+      {/* Editor Glass Panel */}
       {showForm && (
-        <div className="card mb-8 max-w-4xl animate-in fade-in slide-in-from-top-4">
-          <h2 className="text-xl font-bold mb-6">{editingProgram ? `Edit ${editingProgram.name}` : 'Setup New Program'}</h2>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.5rem' }}>
+            {editingProgram ? `Edit ${editingProgram.name}` : 'Setup New Business Unit / Program'}
+          </h2>
+
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
               <div className="form-group">
-                <label className="form-label">Program Name (e.g. Football Club)</label>
-                <div className="flex items-center gap-2">
-                  <Building2 size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                </div>
+                <label className="form-label">Program Name</label>
+                <input type="text" className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Krishna Tech Solutions" />
               </div>
               <div className="form-group">
-                <label className="form-label">Theme Color</label>
-                <div className="flex items-center gap-2">
-                  <Palette size={18} className="text-gray-400" />
-                  <input type="color" className="form-control h-10 p-1" value={formData.themeColor} onChange={e => setFormData({...formData, themeColor: e.target.value})} />
-                </div>
+                <label className="form-label">Theme Color Accent</label>
+                <input type="color" className="form-input" style={{ height: '42px', padding: '0.2rem' }} value={formData.themeColor} onChange={e => setFormData({...formData, themeColor: e.target.value})} />
               </div>
               <div className="form-group">
                 <label className="form-label">Phone Number</label>
-                <div className="flex items-center gap-2">
-                  <Phone size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                </div>
+                <input type="text" className="form-input" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
               </div>
               <div className="form-group">
                 <label className="form-label">Email Address</label>
-                <div className="flex items-center gap-2">
-                  <Mail size={18} className="text-gray-400" />
-                  <input type="email" className="form-control" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                </div>
+                <input type="email" className="form-input" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="support@company.com" />
               </div>
               <div className="form-group">
-                <label className="form-label">GST Number (Optional)</label>
-                <div className="flex items-center gap-2">
-                  <Hash size={18} className="text-gray-400" />
-                  <input type="text" className="form-control" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} />
-                </div>
+                <label className="form-label">GST Number</label>
+                <input type="text" className="form-input" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} placeholder="33AAAAA0000A1Z5" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
               <div className="form-group">
                 <label className="form-label">Company Logo</label>
-                <div className="flex items-center gap-3">
-                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'logo')} />
-                  {formData.logo && <img src={formData.logo} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
-                </div>
+                <input type="file" accept="image/*" className="form-input" onChange={e => handleFileUpload(e, 'logo')} />
               </div>
-              <div className="form-group flex items-center mt-8">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input type="checkbox" className="w-5 h-5 accent-primary rounded" checked={formData.showLogo} onChange={e => setFormData({...formData, showLogo: e.target.checked})} />
-                  <span className="font-bold text-sm text-gray-700">Show Logo in Print</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
               <div className="form-group">
                 <label className="form-label">Authorized Signature</label>
-                <div className="flex items-center gap-3">
-                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'signatureUrl')} />
-                  {formData.signatureUrl && <img src={formData.signatureUrl} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
-                </div>
+                <input type="file" accept="image/*" className="form-input" onChange={e => handleFileUpload(e, 'signatureUrl')} />
               </div>
               <div className="form-group">
                 <label className="form-label">Signature Title</label>
-                <input type="text" className="form-control" value={formData.signatureTitle} onChange={e => setFormData({...formData, signatureTitle: e.target.value})} placeholder="Authorized Signatory" />
+                <input type="text" className="form-input" value={formData.signatureTitle} onChange={e => setFormData({...formData, signatureTitle: e.target.value})} placeholder="Authorized Signatory" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
-              <div className="form-group">
-                <label className="form-label">Treasurer Signature</label>
-                <div className="flex items-center gap-3">
-                  <input type="file" accept="image/*" className="form-control" onChange={e => handleFileUpload(e, 'treasurerSignatureUrl')} />
-                  {formData.treasurerSignatureUrl && <img src={formData.treasurerSignatureUrl} className="w-10 h-10 object-contain border rounded" alt="Preview" />}
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Treasurer Title</label>
-                <input type="text" className="form-control" value={formData.treasurerSignatureTitle} onChange={e => setFormData({...formData, treasurerSignatureTitle: e.target.value})} placeholder="Treasurer" />
-              </div>
+            <div className="form-group" style={{ marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
+              <label className="form-label">Default Terms & Conditions</label>
+              <textarea className="form-textarea" rows="3" value={formData.defaultTerms} onChange={e => setFormData({...formData, defaultTerms: e.target.value})} placeholder="1. Payment due upon receipt..." />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
-              <div className="form-group">
-                <label className="form-label">Default Terms & Conditions</label>
-                <textarea className="form-control" rows="4" value={formData.defaultTerms} onChange={e => setFormData({...formData, defaultTerms: e.target.value})} placeholder="1. Goods once sold..." />
-              </div>
-              <div className="form-group flex items-center mt-8">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input type="checkbox" className="w-5 h-5 accent-primary rounded" checked={formData.showTermsByDefault} onChange={e => setFormData({...formData, showTermsByDefault: e.target.checked})} />
-                  <span className="font-bold text-sm text-gray-700">Show Terms by Default</span>
-                </label>
-              </div>
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Full Organization Address</label>
+              <textarea className="form-textarea" rows="2" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full address details for print headers..."></textarea>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border-t pt-6">
-              <div className="form-group">
-                <label className="form-label">Default Footer Note</label>
-                <textarea className="form-control" rows="4" value={formData.footerText} onChange={e => setFormData({...formData, footerText: e.target.value})} placeholder="Generated electronically. Subject to jurisdiction terms..." />
-              </div>
-            </div>
-
-            <div className="form-group mb-6 border-t pt-6">
-              <label className="form-label">Full Address (for Print Header)</label>
-              <textarea className="form-control" rows="3" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
-            </div>
-
-            <button type="submit" className="btn btn-primary px-8">
-              {editingProgram ? 'Update Program' : 'Create Program'}
+            <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>
+              {editingProgram ? 'Update Program Unit' : 'Save & Register Unit'}
             </button>
           </form>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Program Units Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {programs.map(prog => (
-          <div key={prog._id} className="card relative group">
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-              <button onClick={() => handleEdit(prog)} className="p-2 bg-white shadow-sm border rounded-lg text-gray-400 hover:text-primary">
-                <Edit2 size={14} />
-              </button>
-              <button onClick={() => handleDelete(prog)} className="p-2 bg-white shadow-sm border rounded-lg text-gray-400 hover:text-danger">
-                <Trash2 size={14} />
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: prog.themeColor || 'var(--primary)' }}>
-                {prog.name[0]}
+          <div key={prog._id} className="glass-card glass-card-interactive">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: prog.themeColor || 'var(--primary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '1.2rem' }}>
+                  {prog.name[0]}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>{prog.name}</h3>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ID: {prog._id.slice(-6).toUpperCase()}</span>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg">{prog.name}</h3>
-                <p className="text-xs text-gray-400 font-medium">Program ID: {prog._id.slice(-6).toUpperCase()}</p>
+
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button className="btn-icon" onClick={() => handleEdit(prog)} title="Edit Program"><Edit2 size={14} /></button>
+                <button className="btn-icon" onClick={() => handleDelete(prog)} title="Delete Program" style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
               </div>
             </div>
 
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <div className="flex items-center gap-2"><Phone size={14} /> {prog.phone}</div>
-              <div className="flex items-center gap-2"><Mail size={14} /> {prog.email}</div>
-              <div className="flex items-center gap-2 line-clamp-1"><MapPin size={14} /> {prog.address}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              <div><Phone size={14} style={{ color: 'var(--primary)', display: 'inline', marginRight: '6px' }} />{prog.phone}</div>
+              <div><Mail size={14} style={{ color: 'var(--secondary)', display: 'inline', marginRight: '6px' }} />{prog.email}</div>
             </div>
 
-            <div className="pt-4 border-t flex justify-between items-center">
-              <span className="text-[10px] font-bold uppercase text-gray-400">Branding Color</span>
-              <div className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: prog.themeColor }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--glass-border)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Theme Accent</span>
+              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: prog.themeColor, border: '2px solid #FFF' }} />
             </div>
           </div>
         ))}

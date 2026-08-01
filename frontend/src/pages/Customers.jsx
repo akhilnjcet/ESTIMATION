@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { Users, Plus, Search, Edit2, Trash2, X, Phone, Mail, FileText, CheckCircle2 } from 'lucide-react';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     customerName: '', phone: '', email: '', address: '', gstNumber: ''
   });
@@ -67,79 +69,164 @@ const Customers = () => {
     }
   };
 
+  const filteredCustomers = customers.filter(c => 
+    c.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.phone?.includes(searchTerm) ||
+    c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Customers</h1>
-        <button className="btn btn-primary" onClick={() => { if (showForm && editingId) { setEditingId(null); setFormData({ customerName: '', phone: '', email: '', address: '', gstNumber: '' }); } else { setShowForm(!showForm); } }}>
-          {showForm ? 'Cancel' : 'Add Customer'}
-        </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Page Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">
+            <Users size={28} style={{ color: 'var(--primary)' }} />
+            Customer & Client Directory
+          </h1>
+          <p className="page-subtitle">Manage business partners, contacts, and tax registrations</p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '280px' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search by party name or phone..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.5rem' }}
+            />
+            <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          </div>
+
+          <button 
+            className="btn-gradient"
+            onClick={() => {
+              if (showForm && editingId) {
+                setEditingId(null);
+                setFormData({ customerName: '', phone: '', email: '', address: '', gstNumber: '' });
+              } else {
+                setShowForm(!showForm);
+              }
+            }}
+          >
+            {showForm ? <X size={18} /> : <Plus size={18} />}
+            {showForm ? 'Cancel Editor' : 'Add New Customer'}
+          </button>
+        </div>
       </div>
-      
+
+      {/* Add / Edit Form Card */}
       {showForm && (
-        <div className="card mb-4" style={{ backgroundColor: '#f8fafc' }}>
-          <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit Customer' : 'Add New Customer'}</h2>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
+            {editingId ? 'Edit Customer Details' : 'Register New Client'}
+          </h2>
+
           <form onSubmit={handleSubmit}>
-            <div className="dashboard-grid">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label">Customer Name</label>
-                <input type="text" className="form-control" required value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} />
+                <input type="text" className="form-input" required value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} placeholder="Acme Corp / John Doe" />
               </div>
               <div className="form-group">
-                <label className="form-label">Phone</label>
-                <input type="text" className="form-control" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                <label className="form-label">Phone Number</label>
+                <input type="text" className="form-input" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
               </div>
               <div className="form-group">
-                <label className="form-label">Email</label>
-                <input type="email" className="form-control" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <label className="form-label">Email Address</label>
+                <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="contact@domain.com" />
               </div>
               <div className="form-group">
                 <label className="form-label">GST Number</label>
-                <input type="text" className="form-control" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} />
+                <input type="text" className="form-input" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} placeholder="22AAAAA0000A1Z5" />
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Address</label>
-              <textarea className="form-control" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Billing Address</label>
+              <textarea className="form-textarea" rows="3" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Street address, city, state, pincode..."></textarea>
             </div>
-            <button type="submit" className="btn btn-primary">{editingId ? 'Update Customer' : 'Save Customer'}</button>
+
+            <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>
+              {editingId ? 'Update Customer Profile' : 'Save & Add Customer'}
+            </button>
           </form>
         </div>
       )}
 
-      <div className="card">
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Customer Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>GST Number</th>
-                <th>Actions</th>
+      {/* Customer Directory Glass Table */}
+      <div className="table-container">
+        <table className="table-glass">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>GST Number</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredCustomers.map(customer => (
+              <tr key={customer._id}>
+                <td style={{ fontWeight: '800' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem' }}>
+                      {customer.customerName.charAt(0).toUpperCase()}
+                    </div>
+                    <span>{customer.customerName}</span>
+                  </div>
+                </td>
+                <td style={{ color: 'var(--text-secondary)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Phone size={14} style={{ color: 'var(--primary)' }} /> {customer.phone}
+                  </span>
+                </td>
+                <td style={{ color: 'var(--text-secondary)' }}>
+                  {customer.email ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Mail size={14} style={{ color: 'var(--secondary)' }} /> {customer.email}
+                    </span>
+                  ) : '-'}
+                </td>
+                <td>
+                  {customer.gstNumber ? (
+                    <span className="badge badge-info">{customer.gstNumber}</span>
+                  ) : <span style={{ color: 'var(--text-muted)' }}>Unregistered</span>}
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                    <button 
+                      className="btn-icon" 
+                      onClick={() => handleEdit(customer)} 
+                      title="Edit Customer"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      className="btn-icon" 
+                      onClick={() => handleDelete(customer._id)} 
+                      title="Delete Customer" 
+                      style={{ color: 'var(--danger)' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {customers.map(customer => (
-                <tr key={customer._id}>
-                  <td>{customer.customerName}</td>
-                  <td>{customer.phone}</td>
-                  <td>{customer.email || '-'}</td>
-                  <td>{customer.gstNumber || '-'}</td>
-                  <td>
-                    <button className="btn btn-secondary" onClick={() => handleEdit(customer)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Edit</button>
-                    <button className="btn btn-secondary" onClick={() => handleDelete(customer._id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-              {customers.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No customers found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {filteredCustomers.length === 0 && (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  No customer records found matching your query.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

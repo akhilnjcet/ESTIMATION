@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { UserPlus, Shield, CheckCircle, XCircle, Key, Trash2, Edit2, Save, X } from 'lucide-react';
+import { UserPlus, Shield, CheckCircle, XCircle, Key, Trash2, Edit2, Save, X, Users } from 'lucide-react';
 
 const UserAccess = () => {
   const [users, setUsers] = useState([]);
@@ -42,7 +42,7 @@ const UserAccess = () => {
     setFormData({
       name: user.name,
       email: user.email,
-      password: '', // Keep empty unless changing
+      password: '',
       programAccess: user.programAccess.map(p => p._id || p)
     });
     setShowForm(true);
@@ -54,7 +54,7 @@ const UserAccess = () => {
     try {
       if (editingUser) {
         const payload = { ...formData };
-        if (!payload.password) delete payload.password; // Don't send empty password
+        if (!payload.password) delete payload.password;
         await api.put(`/users/${editingUser._id}`, payload);
         alert('User updated successfully');
       } else {
@@ -89,197 +89,159 @@ const UserAccess = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Access Management</h1>
-          <p className="text-gray-500 mt-1">Control staff logins and organizational permissions</p>
+          <h1 className="page-title">
+            <Shield size={28} style={{ color: 'var(--primary)' }} />
+            User Access & Permissions Control
+          </h1>
+          <p className="page-subtitle">Manage staff logins, viewer roles, and program assignments</p>
         </div>
-        <button 
-          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} flex items-center gap-2`} 
-          onClick={() => showForm ? resetForm() : setShowForm(true)}
-        >
+
+        <button className="btn-gradient" onClick={() => showForm ? resetForm() : setShowForm(true)}>
           {showForm ? <X size={18} /> : <UserPlus size={18} />}
-          {showForm ? 'Cancel' : 'Create Staff Login'}
+          {showForm ? 'Cancel' : 'Create Staff Member'}
         </button>
       </div>
 
+      {/* Editor Form Panel */}
       {showForm && (
-        <div className="card mb-10 border-primary/20 shadow-xl overflow-hidden">
-          <div className="bg-primary/5 p-4 border-b border-primary/10 flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              {editingUser ? <Edit2 size={20} className="text-primary" /> : <UserPlus size={20} className="text-primary" />}
-              {editingUser ? `Editing: ${editingUser.name}` : 'New Staff Account'}
-            </h2>
-            {editingUser && <span className="text-xs bg-primary/20 text-primary px-3 py-1 rounded-full font-bold uppercase">Staff ID: {editingUser._id.slice(-6)}</span>}
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-4">
-                <div className="form-group">
-                  <label className="form-label">Full Name</label>
-                  <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. John Doe" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input type="email" className="form-control" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="staff@krishna.com" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">
-                    {editingUser ? 'Change Password (leave blank to keep current)' : 'Set Password'}
-                  </label>
-                  <div className="relative">
-                    <input type="password" placeholder="••••••••" className="form-control" required={!editingUser} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                    <Key size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  </div>
-                </div>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {editingUser ? <Edit2 size={20} /> : <UserPlus size={20} />}
+            {editingUser ? `Edit ${editingUser.name}` : 'Setup Staff Account'}
+          </h2>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">Staff Full Name</label>
+                <input type="text" className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Alex Smith" />
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="form-label">System Role</label>
-                  <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-                      <Shield size={24} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-blue-900">Viewer / Staff</div>
-                      <div className="text-xs text-blue-600">Restricted to View-Only access for assigned programs.</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    <strong>Viewer Security Policy:</strong><br />
-                    • Cannot Add/Edit/Delete records<br />
-                    • Cannot access Admin Panel<br />
-                    • Data is isolated based on program assignment.
-                  </p>
-                </div>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <input type="email" className="form-input" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="staff@company.com" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">
+                  {editingUser ? 'New Password (Optional)' : 'Account Password'}
+                </label>
+                <input type="password" className="form-input" required={!editingUser} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
               </div>
             </div>
 
-            <div className="mb-8">
-              <label className="form-label mb-4 block font-bold text-lg border-b pb-2">Assigned Program Access</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {programs.map(prog => (
-                  <div 
-                    key={prog._id} 
-                    onClick={() => handleProgramToggle(prog._id)}
-                    className={`group p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 relative overflow-hidden ${formData.programAccess.includes(prog._id) ? 'border-primary bg-primary/5 shadow-md' : 'border-gray-100 bg-white hover:border-gray-300'}`}
-                  >
-                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${formData.programAccess.includes(prog._id) ? 'bg-primary border-primary text-white' : 'border-gray-200 text-transparent'}`}>
-                      <CheckCircle size={14} />
+            {/* Program Assignment Selectors */}
+            <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
+              <span className="form-label" style={{ marginBottom: '0.75rem', display: 'block' }}>Assigned Program Access</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                {programs.map(prog => {
+                  const isChecked = formData.programAccess.includes(prog._id);
+                  return (
+                    <div 
+                      key={prog._id} 
+                      onClick={() => handleProgramToggle(prog._id)}
+                      className="glass-card glass-card-interactive"
+                      style={{
+                        padding: '0.85rem 1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        borderColor: isChecked ? 'var(--primary)' : 'var(--glass-border)',
+                        background: isChecked ? 'var(--primary-light)' : 'var(--card-bg)'
+                      }}
+                    >
+                      <div style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '6px',
+                        border: '2px solid var(--primary)',
+                        background: isChecked ? 'var(--primary)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FFF'
+                      }}>
+                        {isChecked && <CheckCircle size={14} />}
+                      </div>
+                      <span style={{ fontWeight: '700', fontSize: '0.875rem' }}>{prog.name}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold truncate">{prog.name}</div>
-                      <div className="text-[10px] text-gray-400 uppercase tracking-wider">{prog.gstNumber ? `GST: ${prog.gstNumber}` : 'Standard Account'}</div>
-                    </div>
-                    {formData.programAccess.includes(prog._id) && <div className="absolute right-0 top-0 w-8 h-8 bg-primary/10 rounded-bl-full flex items-start justify-end p-1 text-primary"><CheckCircle size={10} /></div>}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {programs.length === 0 && (
-                <div className="p-6 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                   <p className="text-gray-500 font-medium">No programs found in your account.</p>
-                   <p className="text-xs text-gray-400">Create a program in Settings before assigning staff access.</p>
-                </div>
-              )}
             </div>
 
-            <div className="flex gap-4">
-              <button type="submit" className="btn btn-primary px-10 py-3 shadow-lg flex items-center gap-2">
-                {editingUser ? <Save size={18} /> : <UserPlus size={18} />}
-                {editingUser ? 'Update Staff Member' : 'Create Staff Member'}
-              </button>
-              {editingUser && (
-                <button type="button" onClick={resetForm} className="btn btn-secondary px-6">
-                  Cancel
-                </button>
-              )}
-            </div>
+            <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>
+              {editingUser ? 'Update Staff Member' : 'Save Staff Account'}
+            </button>
           </form>
         </div>
       )}
 
-      <div className="card shadow-lg border-none bg-white">
-        <div className="table-container border-none shadow-none">
-          <table className="data-table">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-4">Staff Member</th>
-                <th className="py-4">Email</th>
-                <th className="py-4">Program Access</th>
-                <th className="py-4">Status</th>
-                <th className="py-4 text-right">Management</th>
+      {/* Staff Members Table */}
+      <div className="table-container">
+        <table className="table-glass">
+          <thead>
+            <tr>
+              <th>Staff Member</th>
+              <th>Email</th>
+              <th>Assigned Programs</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user._id}>
+                <td style={{ fontWeight: '800' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div>{user.name}</div>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>REF: {user._id.slice(-6)}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ color: 'var(--text-secondary)' }}>{user.email}</td>
+                <td>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {user.programAccess.map(p => (
+                      <span key={p._id} className="badge badge-primary">
+                        {p.name}
+                      </span>
+                    ))}
+                    {user.programAccess.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>No Access</span>}
+                  </div>
+                </td>
+                <td>
+                  <button 
+                    onClick={() => toggleUserStatus(user)}
+                    className={`badge ${user.isActive ? 'badge-success' : 'badge-danger'}`}
+                    style={{ border: 'none', cursor: 'pointer' }}
+                  >
+                    {user.isActive ? 'Active' : 'Suspended'}
+                  </button>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                    <button className="btn-icon" onClick={() => handleEdit(user)} title="Edit Staff"><Edit2 size={16} /></button>
+                    <button className="btn-icon" onClick={() => handleDelete(user._id)} title="Delete Staff" style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {users.map(user => (
-                <tr key={user._id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold border">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900">{user.name}</div>
-                        <div className="text-[10px] text-gray-400 font-mono uppercase">REF: {user._id.slice(-8)}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 text-gray-600 font-medium">{user.email}</td>
-                  <td className="py-4">
-                    <div className="flex flex-wrap gap-1.5 max-w-xs">
-                      {user.programAccess.map(p => (
-                        <span key={p._id} className="px-2.5 py-1 bg-white text-gray-700 rounded-lg text-[10px] font-bold border border-gray-200 shadow-sm">
-                          {p.name}
-                        </span>
-                      ))}
-                      {user.programAccess.length === 0 && <span className="text-gray-400 italic text-[10px] bg-gray-50 px-2 py-1 rounded">No Access Assigned</span>}
-                    </div>
-                  </td>
-                  <td className="py-4">
-                    <button 
-                      onClick={() => toggleUserStatus(user)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${user.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100 hover:bg-rose-100'}`}
-                    >
-                      {user.isActive ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                      {user.isActive ? 'Active' : 'Suspended'}
-                    </button>
-                  </td>
-                  <td className="py-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button title="Edit Staff" onClick={() => handleEdit(user)} className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
-                        <Edit2 size={18} />
-                      </button>
-                      <button title="Suspend / Delete" onClick={() => handleDelete(user._id)} className="p-2.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center py-20 text-gray-500">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                        <Shield size={40} className="text-gray-300" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-800 text-lg">Your Staff List is Empty</p>
-                        <p className="text-sm text-gray-400">Click the 'Create Staff Login' button to add viewer accounts.</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  No staff accounts configured.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

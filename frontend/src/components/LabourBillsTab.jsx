@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import html2pdf from 'html2pdf.js';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Edit2, Printer, Trash2, Plus, X, Eye, Truck, User, DollarSign, FileText } from 'lucide-react';
+import { 
+  Edit2, Printer, Trash2, Plus, X, Eye, Truck, Users, DollarSign, 
+  FileText, Search, CheckCircle2, ChevronRight, Calculator, HardHat, Navigation, Settings, Download
+} from 'lucide-react';
 
 // Indian Number to Words Converter
 const toIndianRupeesWords = (num) => {
@@ -32,27 +37,22 @@ const toIndianRupeesWords = (num) => {
   };
 
   let rupeesStr = '';
-  // Crores
   if (n >= 10000000) {
     rupeesStr += convertLessThanThousand(Math.floor(n / 10000000)) + ' Crore ';
     n %= 10000000;
   }
-  // Lakhs
   if (n >= 100000) {
     rupeesStr += convertLessThanThousand(Math.floor(n / 100000)) + ' Lakh ';
     n %= 100000;
   }
-  // Thousands
   if (n >= 1000) {
     rupeesStr += convertLessThanThousand(Math.floor(n / 1000)) + ' Thousand ';
     n %= 1000;
   }
-  // Hundreds/Tens/Units
   if (n > 0) {
     rupeesStr += convertLessThanThousand(n);
   }
 
-  // Handle paise
   let paiseStr = '';
   let paise = Math.round((num - Math.floor(num)) * 100);
   if (paise > 0) {
@@ -62,7 +62,13 @@ const toIndianRupeesWords = (num) => {
   return `Rupees ${rupeesStr.trim().replace(/\s+/g, ' ')}${paiseStr} Only`;
 };
 
-const LabourBillsTab = () => {
+const LabourBillsTab = ({ initialCategory = 'Labour' }) => {
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    setActiveCategory(initialCategory);
+  }, [initialCategory]);
+
   const [bills, setBills] = useState([]);
   const [customers, setCustomers] = useState([]);
   const { selectedProgram } = useProgram();
@@ -74,105 +80,105 @@ const LabourBillsTab = () => {
 
   // Initial Form State
   const initialFormState = {
+    billType: 'Labour', // 'Labour' or 'Transport'
     billNumber: '',
     billDate: new Date().toISOString().split('T')[0],
     
-    // Service Provider Details (Pre-filled from program context)
     serviceProviderName: selectedProgram?.name || '',
     serviceProviderAddress: selectedProgram?.address || '',
     serviceProviderPhone: selectedProgram?.phone || '',
     serviceProviderGstin: selectedProgram?.gstNumber || '',
 
-    // Customer Selection & Client details
     customer: '',
     clientName: '',
     clientAddress: '',
     clientPhone: '',
     clientGstin: '',
 
-    // Logistics & Dispatch Details
+    // Transport specific
     vehicleNumber: '',
     lrGrNumber: '',
     origin: '',
     destination: '',
-    goodsDescription: '',
-    loadingDate: '',
-    unloadingDate: '',
-    numberOfLabourers: '',
+    driverName: '',
+    driverPhone: '',
 
-    // Dynamic Labour Work Items Table
-    workItems: [{ workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }],
+    // Labour specific
+    supervisorName: '',
+    workLocation: '',
 
-    // Extra Charges (Optional)
+    items: [
+      {
+        description: 'General Labour Work',
+        category: 'Labour',
+        unit: 'Days',
+        quantity: 1,
+        rate: 500,
+        amount: 500
+      }
+    ],
+
     loadingCharges: 0,
     unloadingCharges: 0,
     handlingCharges: 0,
-    packingCharges: 0,
     overtimeCharges: 0,
     additionalCharges: 0,
 
-    // Tax settings
     taxPercentage: 0,
-    taxDetails: 'GST',
+    discountAmount: 0,
+    advancePaid: 0,
 
-    paymentTerms: selectedProgram?.defaultTerms || '',
-    remarks: '',
+    paymentStatus: 'Unpaid',
+    paymentMode: 'Bank Transfer',
+
     theme: 'classic',
-    status: 'Unpaid',
-
-    // Print config toggles
-    showTerms: true,
+    showGst: true,
     showTax: true,
-    showSignature: true,
     showPaymentTerms: true,
-    showFooter: true,
-    footerText: selectedProgram?.footerText || 'Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP'
+    showSignature: true,
+    showFooterNote: true,
+    showTerms: true,
+    termsAndConditions: '1. Payment due within 15 days.\n2. Interest @ 18% p.a. for delayed payments.',
+    footerText: 'Thank you for your business.',
+    internalNotes: ''
   };
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const [prevProgramId, setPrevProgramId] = useState(selectedProgram?._id);
-  if (selectedProgram?._id !== prevProgramId) {
-    setPrevProgramId(selectedProgram?._id);
-    if (!editingId) {
-      setFormData(prev => ({
-        ...prev,
-        serviceProviderName: selectedProgram?.name || '',
-        serviceProviderAddress: selectedProgram?.address || '',
-        serviceProviderPhone: selectedProgram?.phone || '',
-        serviceProviderGstin: selectedProgram?.gstNumber || '',
-        paymentTerms: selectedProgram?.defaultTerms || ''
-      }));
-    }
-  }
+  useEffect(() => {
+    fetchBills();
+    fetchCustomers();
+  }, []);
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      billType: activeCategory,
+      items: activeCategory === 'Labour' 
+        ? [{ description: 'Daily Wage Skilled Labour', category: 'Labour', unit: 'Days', quantity: 1, rate: 600, amount: 600 }]
+        : [{ description: 'Material Transport Freight', category: 'Transport', unit: 'Trips', quantity: 1, rate: 2500, amount: 2500 }]
+    }));
+  }, [activeCategory]);
 
   const fetchBills = async () => {
     try {
       const { data } = await api.get('/labour-bills');
-      setBills(data);
+      setBills(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Failed to fetch labour bills:', err);
+      console.error(err);
     }
   };
 
   const fetchCustomers = async () => {
     try {
       const { data } = await api.get('/customers');
-      setCustomers(data);
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Failed to fetch customers:', err);
+      console.error(err);
     }
   };
 
-  // Load Bills and Customers
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchBills();
-    fetchCustomers();
-  }, [selectedProgram]);
-
-  // Handle customer select change
-  const handleCustomerChange = (customerId) => {
+  const handleCustomerSelect = (customerId) => {
     if (!customerId) {
       setFormData(prev => ({
         ...prev,
@@ -184,1359 +190,1117 @@ const LabourBillsTab = () => {
       }));
       return;
     }
-
-    const selectedCust = customers.find(c => c._id === customerId);
-    if (selectedCust) {
+    const cust = customers.find(c => c._id === customerId);
+    if (cust) {
       setFormData(prev => ({
         ...prev,
-        customer: customerId,
-        clientName: selectedCust.customerName || '',
-        clientAddress: selectedCust.address || '',
-        clientPhone: selectedCust.phone || '',
-        clientGstin: selectedCust.gstNumber || ''
+        customer: cust._id,
+        clientName: cust.customerName || '',
+        clientAddress: cust.address || '',
+        clientPhone: cust.phone || '',
+        clientGstin: cust.gstin || ''
       }));
     }
   };
 
-  // Dynamic Work Items list helpers
-  const addWorkItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      workItems: [...(prev.workItems || []), { workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }]
-    }));
-  };
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...formData.items];
+    updatedItems[index][field] = value;
 
-  const updateWorkItem = (index, field, value) => {
-    const updatedItems = [...(formData.workItems || [])];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
-    // Auto-calculate row total
-    if (field === 'labourCount' || field === 'workingDays' || field === 'rate') {
-      const count = Number(updatedItems[index].labourCount || 0);
-      const days = Number(updatedItems[index].workingDays !== undefined ? updatedItems[index].workingDays : 1);
-      const rate = Number(updatedItems[index].rate || 0);
-      updatedItems[index].total = count * days * rate;
+    if (field === 'quantity' || field === 'rate') {
+      const qty = parseFloat(updatedItems[index].quantity) || 0;
+      const rate = parseFloat(updatedItems[index].rate) || 0;
+      updatedItems[index].amount = Math.round(qty * rate * 100) / 100;
     }
-    
+
+    setFormData(prev => ({ ...prev, items: updatedItems }));
+  };
+
+  const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      workItems: updatedItems
+      items: [
+        ...prev.items,
+        { 
+          description: activeCategory === 'Labour' ? 'Helpers / Labourers' : 'Additional Vehicle Freight', 
+          category: activeCategory, 
+          unit: activeCategory === 'Labour' ? 'Days' : 'Trips', 
+          quantity: 1, 
+          rate: 0, 
+          amount: 0 
+        }
+      ]
     }));
   };
 
-  const removeWorkItem = (index) => {
+  const removeItem = (index) => {
+    if (formData.items.length === 1) return;
     setFormData(prev => ({
       ...prev,
-      workItems: (prev.workItems || []).filter((_, i) => i !== index)
+      items: prev.items.filter((_, i) => i !== index)
     }));
   };
 
-  // Auto-calculated fields
-  const calculateTotals = (data) => {
-    const workTotal = (data.workItems || []).reduce((sum, item) => sum + Number(item.total || 0), 0);
-    const subTotal = 
-      workTotal +
-      Number(data.loadingCharges || 0) +
-      Number(data.unloadingCharges || 0) +
-      Number(data.handlingCharges || 0) +
-      Number(data.packingCharges || 0) +
-      Number(data.overtimeCharges || 0) +
-      Number(data.additionalCharges || 0);
+  const calculateTotals = (doc = formData) => {
+    if (!doc) return { subtotal: 0, extraCharges: 0, taxableAmount: 0, taxAmount: 0, totalAmount: 0, balanceDue: 0 };
+    const itemsList = Array.isArray(doc.items) ? doc.items : [];
+    const subtotal = itemsList.reduce((sum, item) => sum + (parseFloat(item?.amount) || 0), 0);
+    const extraCharges = (parseFloat(doc.loadingCharges) || 0) +
+                         (parseFloat(doc.unloadingCharges) || 0) +
+                         (parseFloat(doc.handlingCharges) || 0) +
+                         (parseFloat(doc.overtimeCharges) || 0) +
+                         (parseFloat(doc.additionalCharges) || 0);
 
-    const taxAmount = subTotal * (Number(data.taxPercentage || 0) / 100);
-    const totalAmount = subTotal + taxAmount;
-    const amountInWords = toIndianRupeesWords(totalAmount);
+    const taxableAmount = subtotal + extraCharges - (parseFloat(doc.discountAmount) || 0);
+    const taxAmount = doc.showGst && doc.showTax !== false ? (taxableAmount * (parseFloat(doc.taxPercentage) || 0)) / 100 : 0;
+    const totalAmount = Math.round((taxableAmount + taxAmount) * 100) / 100;
+    const balanceDue = Math.max(0, totalAmount - (parseFloat(doc.advancePaid) || 0));
 
-    return { subTotal, taxAmount, totalAmount, amountInWords };
+    return { subtotal, extraCharges, taxableAmount, taxAmount, totalAmount, balanceDue };
+  };
+
+  const resetForm = () => {
+    setFormData({ ...initialFormState, billType: activeCategory });
+    setEditingId(null);
+    setShowForm(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.workItems || formData.workItems.length === 0) {
-      alert('Please add at least one labour work item');
+    if (formData.items.length === 0) {
+      alert('Please add at least one line item.');
       return;
     }
 
-    const calculated = calculateTotals(formData);
+    const currentStatus = formData.status || formData.paymentStatus || 'Unpaid';
+    const customerId = typeof formData.customer === 'object' ? formData.customer?._id : formData.customer;
+
     const payload = {
       ...formData,
-      ...calculated
+      customer: customerId || null,
+      status: currentStatus,
+      paymentStatus: currentStatus
     };
 
     try {
       if (editingId) {
         await api.put(`/labour-bills/${editingId}`, payload);
-        alert('Labour Bill updated successfully!');
       } else {
         await api.post('/labour-bills', payload);
-        alert('Labour Bill generated successfully!');
       }
       resetForm();
       fetchBills();
     } catch (err) {
-      alert('Failed to save Labour Bill: ' + (err.response?.data?.message || err.message));
+      alert('Failed to save bill: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleEdit = (bill) => {
-    setEditingId(bill._id);
+    const billStatus = bill.status || bill.paymentStatus || 'Unpaid';
+    const customerId = typeof bill.customer === 'object' ? bill.customer?._id : bill.customer;
     setFormData({
-      billNumber: bill.billNumber || '',
-      billDate: bill.billDate ? new Date(bill.billDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      serviceProviderName: bill.serviceProviderName || '',
-      serviceProviderAddress: bill.serviceProviderAddress || '',
-      serviceProviderPhone: bill.serviceProviderPhone || '',
-      serviceProviderGstin: bill.serviceProviderGstin || '',
-      customer: bill.customer?._id || bill.customer || '',
-      clientName: bill.clientName || '',
-      clientAddress: bill.clientAddress || '',
-      clientPhone: bill.clientPhone || '',
-      clientGstin: bill.clientGstin || '',
-      vehicleNumber: bill.vehicleNumber || '',
-      lrGrNumber: bill.lrGrNumber || '',
-      origin: bill.origin || '',
-      destination: bill.destination || '',
-      goodsDescription: bill.goodsDescription || '',
-      loadingDate: bill.loadingDate ? new Date(bill.loadingDate).toISOString().split('T')[0] : '',
-      unloadingDate: bill.unloadingDate ? new Date(bill.unloadingDate).toISOString().split('T')[0] : '',
-      numberOfLabourers: bill.numberOfLabourers || '',
-      workItems: bill.workItems && bill.workItems.length > 0 
-        ? bill.workItems.map(item => ({
-            workDescription: item.workDescription || '',
-            labourCount: item.labourCount !== undefined ? item.labourCount : 1,
-            workingDays: item.workingDays !== undefined ? item.workingDays : 1,
-            rate: item.rate !== undefined ? item.rate : 0,
-            total: item.total !== undefined ? item.total : 0
-          }))
-        : [{ workDescription: '', labourCount: 1, workingDays: 1, rate: 0, total: 0 }],
-      loadingCharges: bill.loadingCharges || 0,
-      unloadingCharges: bill.unloadingCharges || 0,
-      handlingCharges: bill.handlingCharges || 0,
-      packingCharges: bill.packingCharges || 0,
-      overtimeCharges: bill.overtimeCharges || 0,
-      additionalCharges: bill.additionalCharges || 0,
-      taxPercentage: bill.taxPercentage || 0,
-      taxDetails: bill.taxDetails || 'GST',
-      paymentTerms: bill.paymentTerms || '',
-      remarks: bill.remarks || '',
-      theme: bill.theme || 'classic',
-      status: bill.status || 'Unpaid',
-      showTerms: bill.showTerms !== undefined ? bill.showTerms : true,
-      showTax: bill.showTax !== undefined ? bill.showTax : true,
-      showSignature: bill.showSignature !== undefined ? bill.showSignature : true,
-      showPaymentTerms: bill.showPaymentTerms !== undefined ? bill.showPaymentTerms : true,
-      showFooter: bill.showFooter !== undefined ? bill.showFooter : true,
-      footerText: bill.footerText !== undefined ? bill.footerText : (selectedProgram?.footerText || 'Generated electronically. Subject to jurisdiction terms.\nThank you for your business! | Powered by Krishna ERP')
+      ...initialFormState,
+      ...bill,
+      customer: customerId || '',
+      status: billStatus,
+      paymentStatus: billStatus
     });
+    setActiveCategory(bill.billType || 'Labour');
+    setEditingId(bill._id);
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this Labour Bill?')) return;
+    if (!window.confirm('Are you sure you want to delete this bill?')) return;
     try {
       await api.delete(`/labour-bills/${id}`);
       fetchBills();
-      alert('Labour Bill deleted successfully!');
     } catch (err) {
-      console.error('Failed to delete Labour Bill:', err);
-      alert('Failed to delete Labour Bill: ' + (err.response?.data?.message || err.message));
+      alert('Failed to delete: ' + (err.response?.data?.message || err.message));
     }
   };
 
-  const resetForm = () => {
-    setFormData(initialFormState);
-    setEditingId(null);
-    setShowForm(false);
+  const triggerPrint = async () => {
+    const images = document.querySelectorAll('.labour-preview-overlay img');
+    await Promise.all(
+      [...images].map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+    setTimeout(() => { window.print(); }, 500);
   };
 
-  const filteredBills = bills.filter(bill => 
-    bill.billNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.vehicleNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.lrGrNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleDownloadPdf = (docData) => {
+    const element = document.querySelector('.labour-preview-overlay .invoice-container') || document.querySelector('.invoice-container');
+    if (!element) return;
+    const isTransport = (docData?.billType || activeCategory) === 'Transport';
+    const fileName = `${isTransport ? 'Transport' : 'Labour'}-Bill-${docData?.billNumber || 'DRAFT'}.pdf`;
+    
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: fileName,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+  };
+
+  const handleTogglePaymentStatus = async (bill) => {
+    const currentVal = bill.status || bill.paymentStatus || 'Unpaid';
+    const newStatus = currentVal === 'Paid' ? 'Unpaid' : 'Paid';
+    const customerId = typeof bill.customer === 'object' ? bill.customer?._id : bill.customer;
+
+    // Optimistic UI state update
+    setBills(prev => prev.map(b => b._id === bill._id ? { ...b, status: newStatus, paymentStatus: newStatus } : b));
+
+    try {
+      await api.put(`/labour-bills/${bill._id}`, {
+        ...bill,
+        customer: customerId || null,
+        status: newStatus,
+        paymentStatus: newStatus
+      });
+      fetchBills();
+    } catch (err) {
+      alert('Failed to update payment status: ' + (err.response?.data?.message || err.message));
+      fetchBills();
+    }
+  };
+
+  const totals = calculateTotals(formData);
+  
+  const categoryFilteredBills = bills.filter(b => {
+    const bType = b.billType || (b.vehicleNumber ? 'Transport' : 'Labour');
+    return bType === activeCategory;
+  });
+
+  const filteredBills = categoryFilteredBills.filter(b => 
+    (b.billNumber || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+    (b.clientName || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+    (b.vehicleNumber || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+    (b.supervisorName || '').toLowerCase().includes((searchTerm || '').toLowerCase())
   );
 
-  // Print Logic with Custom Templates
-  const handlePrint = (billData) => {
-    const theme = billData.theme || 'classic';
-    const computed = calculateTotals(billData);
-    const themeColor = selectedProgram?.themeColor || '#4f46e5';
-    const printWindow = window.open('', '_blank');
+  const renderPreviewDocument = (docData, activeTheme = null) => {
+    if (!docData) return null;
+    const isTransport = (docData.billType || activeCategory) === 'Transport';
+    const docTotals = calculateTotals(docData);
+    const itemsList = Array.isArray(docData.items) ? docData.items : [];
+    const currentTheme = activeTheme || docData.theme || 'classic';
 
-    const otherChargesList = [
-      { label: 'Loading Charges', val: billData.loadingCharges },
-      { label: 'Unloading Charges', val: billData.unloadingCharges },
-      { label: 'Handling Charges', val: billData.handlingCharges },
-      { label: 'Packing Charges', val: billData.packingCharges },
-      { label: 'Overtime Charges', val: billData.overtimeCharges },
-      { label: 'Additional Charges', val: billData.additionalCharges }
-    ].filter(item => Number(item.val) > 0);
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Labour Bill - ${billData.billNumber}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .doc-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #cbd5e1; font-size: 14px; line-height: 24px; color: #334155; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 25px; align-items: flex-end; }
-            .business-info h1 { margin: 0; color: ${themeColor}; font-size: 28px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
-            .business-info p { margin: 3px 0 0 0; font-size: 12px; color: #475569; font-weight: 500; }
-            .doc-title { text-align: right; }
-            .doc-title h2 { color: ${themeColor}; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
-            .doc-title p { font-weight: bold; color: #1e293b; margin: 5px 0 0 0; font-size: 16px; }
-            .details { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; }
-            .details div { width: 48%; }
-            .details h3 { font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; font-weight: bold; letter-spacing: 0.5px; }
-            .details p { margin: 0; font-weight: bold; font-size: 14px; color: #1e293b; }
-            table { width: 100%; border-collapse: collapse; margin-top: 25px; margin-bottom: 25px; }
-            table th { padding: 12px 10px; border-top: 1.5px solid #1e293b; border-bottom: 1.5px solid #1e293b; font-size: 11px; text-transform: uppercase; color: #475569; font-weight: bold; letter-spacing: 0.5px; }
-            table td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b; }
-            .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
-            .grand-total { font-size: 18px; font-weight: bold; color: ${themeColor}; border-top: 1.5px solid #1e293b; margin-top: 5px; padding-top: 10px; }
-            .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; text-align: center; color: #94a3b8; }
-          </style>
-        </head>
-        <body>
-          <div class="doc-box">
-            
-            <!-- Header Section -->
-            <div class="header">
-              <div class="business-info">
-                <h1>${billData.serviceProviderName || selectedProgram?.name || 'CONTRACTOR'}</h1>
-                <p>${billData.serviceProviderAddress || selectedProgram?.address || ''}</p>
-                <p>Phone: ${billData.serviceProviderPhone || selectedProgram?.phone || ''} ${billData.serviceProviderGstin ? `| GSTIN: ${billData.serviceProviderGstin}` : ''}</p>
-              </div>
-              <div class="doc-title">
-                <h2>LABOUR BILL</h2>
-                <p>No: ${billData.billNumber}</p>
-                <p style="margin: 2px 0 0 0; font-size: 13px; font-weight: normal; color: #64748b;">Date: <strong>${new Date(billData.billDate).toLocaleDateString('en-GB')}</strong></p>
-              </div>
-            </div>
-
-            <!-- Details Section -->
-            <div class="details">
-              <div>
-                <h3>Consignee / Client:</h3>
-                <p style="font-size: 16px;">${billData.clientName || 'Walk-in Client'}</p>
-                <p style="font-weight: normal; color: #475569; font-size: 12px; margin-top: 4px; line-height: 1.5;">${billData.clientAddress || ''}</p>
-                <p style="font-weight: normal; color: #475569; font-size: 12px; margin-top: 2px;">Phone: ${billData.clientPhone || ''}</p>
-                ${billData.clientGstin ? `<p style="font-weight: normal; color: #1e293b; font-size: 12px; margin-top: 2px;">GSTIN: ${billData.clientGstin}</p>` : ''}
-              </div>
-              <div style="text-align: right">
-                <h3>Document Details:</h3>
-                <p style="font-weight: normal; margin: 0; font-size: 13px; color: #475569;">Payment Status: <strong style="color: ${billData.status === 'Paid' ? '#16a34a' : '#d97706'}">${billData.status}</strong></p>
-                ${billData.showPaymentTerms && billData.paymentTerms ? `<p style="font-weight: normal; margin: 4px 0 0 0; font-size: 13px; color: #475569;">Payment Terms: <strong>${billData.paymentTerms}</strong></p>` : ''}
-              </div>
-            </div>
-
-            <!-- Logistics / Dispatch Info Grid -->
-            ${(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) ? `
-              <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; line-height: 1.6;">
-                <h4 style="margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: ${themeColor}; font-weight: bold;">Logistics & Transport Information</h4>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-                  ${billData.vehicleNumber ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Vehicle No.</span><strong style="color: #1e293b;">${billData.vehicleNumber}</strong></div>` : ''}
-                  ${billData.lrGrNumber ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">LR / GR No.</span><strong style="color: #1e293b;">${billData.lrGrNumber}</strong></div>` : ''}
-                  ${billData.numberOfLabourers ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Labourers</span><strong style="color: #1e293b;">${billData.numberOfLabourers} Persons</strong></div>` : ''}
-                  ${billData.goodsDescription ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Goods</span><strong style="color: #1e293b;">${billData.goodsDescription}</strong></div>` : ''}
-                  ${billData.origin ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Origin</span><strong style="color: #1e293b;">${billData.origin}</strong></div>` : ''}
-                  ${billData.destination ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Destination</span><strong style="color: #1e293b;">${billData.destination}</strong></div>` : ''}
-                  ${billData.loadingDate ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Loading Date</span><strong style="color: #1e293b;">${new Date(billData.loadingDate).toLocaleDateString('en-GB')}</strong></div>` : ''}
-                  ${billData.unloadingDate ? `<div><span style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block; font-weight: bold;">Unloading Date</span><strong style="color: #1e293b;">${new Date(billData.unloadingDate).toLocaleDateString('en-GB')}</strong></div>` : ''}
-                </div>
-              </div>
-            ` : ''}
-
-            <!-- Charges Table -->
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">Sr.</th>
-                  <th style="text-align: left;">Work Description / Extra Charge</th>
-                  <th style="width: 100px; text-align: center;">Labourers</th>
-                  <th style="width: 80px; text-align: center;">Days</th>
-                  <th style="width: 120px; text-align: right;">Rate</th>
-                  <th style="width: 140px; text-align: right;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(billData.workItems || []).map((item, idx) => `
-                  <tr>
-                    <td style="text-align: center; color: #64748b;">${String(idx + 1).padStart(2, '0')}</td>
-                    <td style="text-align: left; font-weight: bold; color: #1e293b;">${item.workDescription || 'Labour Work'}</td>
-                    <td style="text-align: center;">${item.labourCount}</td>
-                    <td style="text-align: center;">${item.workingDays || 1}</td>
-                    <td style="text-align: right;">₹${Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td style="text-align: right; font-weight: bold; color: #1e293b;">₹${Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('')}
-                ${otherChargesList.map((item, idx) => `
-                  <tr>
-                    <td style="text-align: center; color: #64748b;">${String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
-                    <td style="text-align: left; font-weight: bold; color: #1e293b;">${item.label}</td>
-                    <td style="text-align: center; color: #94a3b8;">-</td>
-                    <td style="text-align: center; color: #94a3b8;">-</td>
-                    <td style="text-align: right; color: #94a3b8;">-</td>
-                    <td style="text-align: right; font-weight: bold; color: #1e293b;">₹${Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <!-- Summary / Totals block -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 30px;">
-              <div style="max-width: 450px; flex: 1;">
-                <div style="padding: 10px 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; color: #334155; font-weight: 600;">
-                  <span style="display: block; font-size: 9px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; font-weight: bold;">Amount in Words</span>
-                  ${computed.amountInWords}
-                </div>
-                ${billData.remarks ? `
-                  <div style="margin-top: 15px;">
-                    <div style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">Remarks / Instructions</div>
-                    <p style="margin: 0; font-size: 11px; font-style: italic; color: #555;">${billData.remarks}</p>
-                  </div>
-                ` : ''}
-                ${billData.showTerms && billData.paymentTerms ? `
-                  <div style="margin-top: 15px;">
-                    <div style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">Terms & Conditions</div>
-                    <p style="margin: 0; font-size: 10px; color: #555; white-space: pre-wrap; line-height: 1.5;">${billData.paymentTerms}</p>
-                  </div>
-                ` : ''}
-              </div>
-
-              <div style="width: 250px; flex-shrink: 0; margin-left: auto;">
-                ${billData.showTax ? `
-                  <div class="total-row" style="font-size: 13px; color: #555;">
-                    <span>Sub Total:</span>
-                    <span>₹${computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  ${Number(billData.taxPercentage) > 0 ? `
-                    <div class="total-row" style="font-size: 13px; color: #555;">
-                      <span>${billData.taxDetails || 'Tax'} (${billData.taxPercentage}%):</span>
-                      <span>₹${computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  ` : ''}
-                ` : ''}
-                <div class="total-row grand-total">
-                  <span>Grand Total:</span>
-                  <span>₹${computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Footer section -->
-            ${billData.showFooter ? `
-              <div class="footer" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; width: 100%;">
-                <div style="text-align: left;">
-                  ${(billData.footerText || '').split('\n').map((line, idx) => `
-                    <p style="${idx > 0 ? 'margin: 2px 0 0 0;' : 'margin: 0;'}">${line}</p>
-                  `).join('')}
-                </div>
-                ${billData.showSignature ? `
-                  <div style="text-align: center; min-width: 180px;">
-                    ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
-                    <div style="border-top: 1.5px solid #334155; margin-top: 40px; font-size: 11px; font-weight: bold; color: #1e293b; padding-top: 4px;">Authorized Signature</div>
-                    <p style="margin: 2px 0 0 0; font-size: 10px; color: #94a3b8;">For ${billData.serviceProviderName || selectedProgram?.name}</p>
-                  </div>
-                ` : ''}
-              </div>
-            ` : billData.showSignature ? `
-              <div class="footer" style="display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; width: 100%;">
-                <div style="text-align: center; min-width: 180px;">
-                  ${selectedProgram?.signatureUrl ? `<img src="${selectedProgram.signatureUrl}" alt="Signature" style="max-height: 50px; margin-bottom: 5px; max-width: 150px; object-fit: contain;">` : ''}
-                  <div style="border-top: 1.5px solid #334155; margin-top: 40px; font-size: 11px; font-weight: bold; color: #1e293b; padding-top: 4px;">Authorized Signature</div>
-                  <p style="margin: 2px 0 0 0; font-size: 10px; color: #94a3b8;">For ${billData.serviceProviderName || selectedProgram?.name}</p>
-                </div>
-              </div>
-            ` : ''}
-
-          </div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  // Live Preview layout for form
-  const renderPreview = (billData) => {
-    const computed = calculateTotals(billData);
-    const themeColor = selectedProgram?.themeColor || '#4f46e5';
-
-    const otherChargesList = [
-      { label: 'Loading Charges', val: billData.loadingCharges },
-      { label: 'Unloading Charges', val: billData.unloadingCharges },
-      { label: 'Handling Charges', val: billData.handlingCharges },
-      { label: 'Packing Charges', val: billData.packingCharges },
-      { label: 'Overtime Charges', val: billData.overtimeCharges },
-      { label: 'Additional Charges', val: billData.additionalCharges }
-    ].filter(item => Number(item.val) > 0);
-
-    const customer = customers.find(c => c._id === (billData.customer?._id || billData.customer));
-    const theme = billData.theme || 'classic';
-
-    return (
-      <div className={`invoice-container theme-${theme}`} style={{ '--theme-color': themeColor, background: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
-        
-        <div className="invoice-header">
-          <div className="company-section">
-            {selectedProgram?.showLogo && selectedProgram?.logo && (
-              <img src={selectedProgram.logo} alt="Logo" className="company-logo" />
-            )}
-            <div className="company-details">
-              <h1 className="company-name">{selectedProgram?.name}</h1>
-              <p className="company-address">{selectedProgram?.address}</p>
-            </div>
-          </div>
-          
-          <div style={{ 
-            width: '100%', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-end',
-            marginTop: '10px'
-          }}>
+    // MODERN THEME STRUCTURAL LAYOUT
+    if (currentTheme === 'modern') {
+      return (
+        <div className="invoice-container theme-modern" style={{ padding: '2rem', background: '#F8FAFC', color: '#0F172A', borderRadius: '14px' }}>
+          {/* Modern Full-Width Gradient Header */}
+          <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%)', padding: '1.5rem', borderRadius: '12px', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ margin: 0, color: 'inherit', fontSize: '28px', fontWeight: '900', letterSpacing: '2px' }}>LABOUR BILL</h2>
+              {selectedProgram?.showLogo && selectedProgram?.logo && (
+                <img src={selectedProgram.logo} alt="Logo" style={{ maxHeight: '65px', objectFit: 'contain', marginBottom: '0.4rem', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }} />
+              )}
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0, color: '#FFFFFF' }}>
+                {docData.serviceProviderName || selectedProgram?.name}
+              </h2>
+              <p style={{ fontSize: '0.775rem', opacity: 0.9, margin: '0.2rem 0 0 0', maxWidth: '320px' }}>
+                {docData.serviceProviderAddress || selectedProgram?.address}
+              </p>
+              {docData.showTax !== false && docData.serviceProviderGstin && (
+                <p style={{ fontSize: '0.725rem', fontWeight: '700', margin: '0.2rem 0 0 0', opacity: 0.95 }}>
+                  GSTIN: {docData.serviceProviderGstin}
+                </p>
+              )}
             </div>
+
             <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: '14px', color: 'inherit' }}>
-                <b>No:</b> {billData.billNumber || 'DRAFT'} | <b>Date:</b> {new Date(billData.billDate).toLocaleDateString('en-GB')}
+              <span style={{ display: 'inline-block', background: 'rgba(255, 255, 255, 0.2)', padding: '0.3rem 0.85rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
+                Modern Document Template
+              </span>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                {isTransport ? 'TRANSPORT BILL' : 'LABOUR BILL'}
+              </h1>
+              <p style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0.3rem 0 0 0', opacity: 0.95 }}>
+                #{docData.billNumber || 'DRAFT'}
+              </p>
+              <p style={{ fontSize: '0.75rem', margin: '0.15rem 0 0 0', opacity: 0.85 }}>
+                Date: {new Date(docData.billDate || Date.now()).toLocaleDateString('en-GB')}
               </p>
             </div>
           </div>
-        </div>
 
-        <div style={{ padding: theme === 'modern' ? '0 40px 40px 40px' : '24px' }}>
-          
-          <div className="invoice-info">
-            <div>
-              <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Consignee / Client:</h3>
-              <p style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>{billData.clientName || 'Walk-in Client'}</p>
-              {billData.clientAddress && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666', maxWidth: '250px' }}>{billData.clientAddress}</p>}
-              {billData.clientPhone && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#666' }}>Phone: {billData.clientPhone}</p>}
-              {billData.clientGstin && <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#111' }}><b>GSTIN:</b> {billData.clientGstin}</p>}
+          {/* Modern Floating Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+            <div style={{ background: '#FFFFFF', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #3B82F6', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Billed To (Client / Consignee)</span>
+              <p style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0F172A', margin: '0.2rem 0 0 0' }}>
+                {docData.clientName || 'Client Name'}
+              </p>
+              <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>{docData.clientAddress}</p>
+              {docData.showTax !== false && docData.clientGstin && (
+                <p style={{ fontSize: '0.75rem', color: '#334155', fontWeight: '700', margin: '0.15rem 0 0 0' }}>GSTIN: {docData.clientGstin}</p>
+              )}
             </div>
-            {billData.showPaymentTerms && billData.paymentTerms && (
-              <div style={{ textAlign: 'right' }}>
-                <h3 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#999', marginBottom: '10px' }}>Payment Info:</h3>
-                <p style={{ margin: 0, fontSize: '13px', color: '#666', maxWidth: '250px', whiteSpace: 'pre-wrap' }}>{billData.paymentTerms}</p>
+
+            {isTransport ? (
+              <div style={{ background: '#FFFFFF', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #F59E0B', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Logistics Route & Vehicle</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
+                  <div><b>Vehicle:</b> {docData.vehicleNumber || 'N/A'}</div>
+                  <div><b>LR/GR:</b> {docData.lrGrNumber || 'N/A'}</div>
+                  <div><b>Origin:</b> {docData.origin || 'N/A'}</div>
+                  <div><b>Dest:</b> {docData.destination || 'N/A'}</div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: '#FFFFFF', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #10B981', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#059669', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Site Supervisor Details</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
+                  <div><b>Supervisor:</b> {docData.supervisorName || 'N/A'}</div>
+                  <div><b>Site:</b> {docData.workLocation || 'Worksite'}</div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Logistics Details */}
-          {(billData.vehicleNumber || billData.lrGrNumber || billData.origin || billData.destination || billData.goodsDescription || billData.loadingDate || billData.unloadingDate || billData.numberOfLabourers) && (
-            <div style={{ 
-              marginBottom: '30px', 
-              padding: '15px 20px', 
-              background: '#f8fafc', 
-              border: '1px solid #e2e8f0', 
-              borderRadius: '8px',
-              fontSize: '13px'
-            }}>
-              <h4 style={{ 
-                margin: '0 0 12px 0', 
-                fontSize: '11px', 
-                textTransform: 'uppercase', 
-                letterSpacing: '1px', 
-                color: 'var(--theme-color, #4f46e5)', 
-                fontWeight: '700' 
-              }}>Logistics & Transport Information</h4>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
-                gap: '15px' 
-              }}>
-                {billData.vehicleNumber && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Vehicle No.</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.vehicleNumber}</span>
-                  </div>
-                )}
-                {billData.lrGrNumber && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>LR / GR No.</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.lrGrNumber}</span>
-                  </div>
-                )}
-                {billData.numberOfLabourers && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Labour Count</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.numberOfLabourers} Persons</span>
-                  </div>
-                )}
-                {billData.goodsDescription && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Goods Description</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.goodsDescription}</span>
-                  </div>
-                )}
-                {billData.origin && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Origin</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.origin}</span>
-                  </div>
-                )}
-                {billData.destination && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Destination</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{billData.destination}</span>
-                  </div>
-                )}
-                {billData.loadingDate && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Loading Date</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{new Date(billData.loadingDate).toLocaleDateString('en-GB')}</span>
-                  </div>
-                )}
-                {billData.unloadingDate && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>Unloading Date</span>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{new Date(billData.unloadingDate).toLocaleDateString('en-GB')}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Charges Grid */}
-          <div className="mb-6">
-            <h4 style={{ color: themeColor, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px' }}>Charges & Costing</h4>
-            <table className="invoice-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-              <thead>
-                <tr style={{ borderTop: '1.5px solid #1e293b', borderBottom: '1.5px solid #1e293b' }}>
-                  <th style={{ width: '50px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Sr.</th>
-                  <th style={{ padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'left' }}>Description</th>
-                  <th style={{ width: '100px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Labourers</th>
-                  <th style={{ width: '80px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'center' }}>Days</th>
-                  <th style={{ width: '120px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'right' }}>Rate</th>
-                  <th style={{ width: '140px', padding: '12px 10px', fontSize: '11px', textTransform: 'uppercase', color: '#475569', fontWeight: 'bold', letterSpacing: '0.5px', textAlign: 'right' }}>Total</th>
+          {/* Modern Table */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1.25rem' }}>
+            <thead>
+              <tr style={{ background: '#1E293B', color: '#FFFFFF' }}>
+                <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem', borderRadius: '6px 0 0 6px' }}>#</th>
+                <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem' }}>Description</th>
+                <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty/Unit</th>
+                <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem' }}>Rate</th>
+                <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem', borderRadius: '0 6px 6px 0' }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itemsList.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
+                  <td style={{ padding: '0.65rem', fontSize: '0.775rem', color: '#64748B' }}>{String(idx + 1).padStart(2, '0')}</td>
+                  <td style={{ padding: '0.65rem', fontSize: '0.825rem', fontWeight: '700', color: '#0F172A' }}>{item.description}</td>
+                  <td style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit}</td>
+                  <td style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.rate) || 0).toLocaleString()}</td>
+                  <td style={{ padding: '0.65rem', textAlign: 'right', fontWeight: '800', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.amount) || 0).toLocaleString()}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {(billData.workItems || []).map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ color: '#64748b', padding: '14px 10px', textAlign: 'center', fontSize: '13px' }}>{String(idx + 1).padStart(2, '0')}</td>
-                    <td style={{ fontWeight: '600', color: '#1e293b', padding: '14px 10px', textAlign: 'left', fontSize: '13px' }}>{item.workDescription || 'Labour Work'}</td>
-                    <td style={{ textAlign: 'center', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>{item.labourCount}</td>
-                    <td style={{ textAlign: 'center', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>{item.workingDays || 1}</td>
-                    <td style={{ textAlign: 'right', padding: '14px 10px', color: '#1e293b', fontSize: '13px' }}>₹{Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td style={{ textAlign: 'right', fontWeight: '700', color: '#1e293b', padding: '14px 10px', fontSize: '13px' }}>₹{Number(item.total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-                {otherChargesList.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ color: '#64748b', padding: '14px 10px', textAlign: 'center', fontSize: '13px' }}>{String((billData.workItems || []).length + idx + 1).padStart(2, '0')}</td>
-                    <td style={{ fontWeight: '600', color: '#1e293b', padding: '14px 10px', textAlign: 'left', fontSize: '13px' }}>{item.label}</td>
-                    <td style={{ textAlign: 'center', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
-                    <td style={{ textAlign: 'center', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
-                    <td style={{ textAlign: 'right', color: '#94a3b8', padding: '14px 10px', fontSize: '13px' }}>-</td>
-                    <td style={{ textAlign: 'right', fontWeight: '700', color: '#1e293b', padding: '14px 10px', fontSize: '13px' }}>₹{Number(item.val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-                {(!billData.workItems || billData.workItems.length === 0) && otherChargesList.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '24px', textAlign: 'center', fontStyle: 'italic', color: '#999' }}>No charges entered yet</td>
-                  </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Modern Totals Callout */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '1.25rem', paddingTop: '1rem' }}>
+            <div style={{ maxWidth: '340px' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>Amount in Words</span>
+              <p style={{ fontSize: '0.775rem', fontWeight: '700', color: '#0F172A', margin: '0.2rem 0 0 0' }}>{toIndianRupeesWords(docTotals.totalAmount)}</p>
+              {docData.showTerms !== false && docData.termsAndConditions && (
+                <div style={{ marginTop: '1rem' }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>Terms</span>
+                  <p style={{ fontSize: '0.725rem', color: '#64748B', margin: '0.2rem 0 0 0', whiteSpace: 'pre-line' }}>{docData.termsAndConditions}</p>
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: '#FFFFFF', padding: '1rem 1.25rem', borderRadius: '12px', minWidth: '240px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748B' }}>
+                <span>Subtotal</span><span>&#8377;{docTotals.subtotal.toLocaleString()}</span>
+              </div>
+              {docTotals.taxAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748B', marginTop: '0.25rem' }}>
+                  <span>GST ({docData.taxPercentage}%)</span><span>+ &#8377;{docTotals.taxAmount.toLocaleString()}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: '900', color: '#3B82F6', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '2px solid #3B82F6' }}>
+                <span>Total Due</span><span>&#8377;{docTotals.totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // BOLD / EXECUTIVE THEME STRUCTURAL LAYOUT
+    if (currentTheme === 'executive') {
+      return (
+        <div className="invoice-container theme-executive" style={{ padding: '2rem', background: '#FFFFFF', color: '#0F172A', borderRadius: '14px', borderTop: '8px solid #0F172A' }}>
+          {/* Executive Charcoal & Gold Header */}
+          <div style={{ textAlign: 'center', borderBottom: '3px double #0F172A', paddingBottom: '1.25rem' }}>
+            {selectedProgram?.showLogo && selectedProgram?.logo && (
+              <img src={selectedProgram.logo} alt="Logo" style={{ maxHeight: '80px', objectFit: 'contain', margin: '0 auto 0.5rem auto', display: 'block' }} />
+            )}
+            <h2 style={{ fontSize: '1.35rem', fontWeight: '900', color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, fontFamily: 'Georgia, serif' }}>
+              {docData.serviceProviderName || selectedProgram?.name}
+            </h2>
+            <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.2rem 0 0 0' }}>{docData.serviceProviderAddress || selectedProgram?.address}</p>
+            {docData.showTax !== false && docData.serviceProviderGstin && (
+              <span style={{ display: 'inline-block', background: '#0F172A', color: '#D97706', padding: '0.15rem 0.65rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', marginTop: '0.3rem' }}>
+                GSTIN: {docData.serviceProviderGstin}
+              </span>
+            )}
+          </div>
+
+          {/* Executive Document Title Band */}
+          <div style={{ background: '#0F172A', color: '#FFFFFF', padding: '0.75rem 1.25rem', marginTop: '1.25rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 style={{ fontSize: '1.3rem', fontWeight: '900', color: '#F59E0B', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Georgia, serif' }}>
+              OFFICIAL {isTransport ? 'TRANSPORT BILL' : 'LABOUR BILL'}
+            </h1>
+            <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
+              <span style={{ fontWeight: '800', color: '#FFFFFF' }}>BILL NO: #{docData.billNumber || 'DRAFT'}</span> | <span style={{ color: '#CBD5E1' }}>DATE: {new Date(docData.billDate || Date.now()).toLocaleDateString('en-GB')}</span>
+            </div>
+          </div>
+
+          {/* Executive Client & Logistics */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+            <div style={{ border: '1px solid #0F172A', padding: '0.85rem', borderRadius: '6px', background: '#FAFAFA' }}>
+              <div style={{ background: '#0F172A', color: '#D97706', padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem', borderRadius: '3px' }}>
+                CONSIGNEE / CLIENT DETAILS
+              </div>
+              <p style={{ fontSize: '0.95rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>{docData.clientName || 'Client Name'}</p>
+              <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.2rem 0 0 0' }}>{docData.clientAddress}</p>
+            </div>
+
+            <div style={{ border: '1px solid #0F172A', padding: '0.85rem', borderRadius: '6px', background: '#FAFAFA' }}>
+              <div style={{ background: '#0F172A', color: '#D97706', padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem', borderRadius: '3px' }}>
+                {isTransport ? 'VEHICLE & ROUTE FREIGHT' : 'SUPERVISOR & WORKSITE'}
+              </div>
+              <div style={{ fontSize: '0.775rem', color: '#0F172A', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
+                {isTransport ? (
+                  <>
+                    <div><b>Vehicle:</b> {docData.vehicleNumber || 'N/A'}</div>
+                    <div><b>LR/GR:</b> {docData.lrGrNumber || 'N/A'}</div>
+                    <div><b>Origin:</b> {docData.origin || 'N/A'}</div>
+                    <div><b>Dest:</b> {docData.destination || 'N/A'}</div>
+                  </>
+                ) : (
+                  <>
+                    <div><b>Supervisor:</b> {docData.supervisorName || 'N/A'}</div>
+                    <div><b>Site:</b> {docData.workLocation || 'Site'}</div>
+                  </>
                 )}
-              </tbody>
-            </table>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '30px', marginTop: '30px' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ 
-                padding: '10px 15px', 
-                background: '#f8fafc', 
-                border: '1px solid #cbd5e1', 
-                borderRadius: '6px', 
-                fontSize: '12px', 
-                color: '#1e293b', 
-                fontWeight: '600' 
-              }}>
-                <span style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>Amount in Words</span>
-                {computed.amountInWords}
-              </div>
-              {billData.remarks && (
-                <div style={{ marginTop: '15px' }}>
-                  <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Remarks / Internal Notes</span>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#475569', fontStyle: 'italic' }}>{billData.remarks}</p>
-                </div>
-              )}
-              {billData.showTerms && billData.paymentTerms && (
-                <div style={{ marginTop: '15px' }}>
-                  <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Terms & Conditions</span>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{billData.paymentTerms}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="total-section" style={{ marginTop: 0 }}>
-              {billData.showTax ? (
-                <>
-                  <div className="total-row">
-                    <span style={{ color: '#666' }}>Sub Total</span>
-                    <span style={{ fontWeight: '600' }}>₹{computed.subTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  {Number(billData.taxPercentage) > 0 && (
-                    <div className="total-row">
-                      <span style={{ color: '#666' }}>{billData.taxDetails || 'Tax'} ({billData.taxPercentage}%)</span>
-                      <span style={{ fontWeight: '600' }}>₹{computed.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  )}
-                </>
-              ) : null}
-              <div className="total-row grand-total" style={{ color: themeColor, borderTop: '1.5px solid #1e293b', paddingTop: '10px', marginTop: '5px' }}>
-                <span>Grand Total</span>
-                <span>₹{computed.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
 
-          {(billData.showFooter || billData.showSignature) && (
-            <div className="invoice-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #e2e8f0', marginTop: '40px', paddingTop: '20px' }}>
-              <div>
-                {billData.showFooter && (billData.footerText || '').split('\n').map((line, idx) => (
-                  <p key={idx} style={{ fontSize: '10px', color: '#999', margin: idx > 0 ? '2px 0 0 0' : 0 }}>
-                    {line}
-                  </p>
-                ))}
+          {/* Executive Table */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1.25rem', border: '1px solid #0F172A' }}>
+            <thead>
+              <tr style={{ background: '#0F172A', color: '#F59E0B' }}>
+                <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>SR</th>
+                <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>DESCRIPTION</th>
+                <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
+                <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>RATE</th>
+                <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itemsList.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #CBD5E1' }}>
+                  <td style={{ padding: '0.6rem', fontSize: '0.775rem', fontWeight: '700' }}>{idx + 1}</td>
+                  <td style={{ padding: '0.6rem', fontSize: '0.825rem', fontWeight: '800', color: '#0F172A' }}>{item.description}</td>
+                  <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit}</td>
+                  <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.rate) || 0).toLocaleString()}</td>
+                  <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.amount) || 0).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Executive Seal & Summary */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '2px solid #0F172A' }}>
+            <div style={{ maxWidth: '320px' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '900', color: '#0F172A', textTransform: 'uppercase' }}>AMOUNT IN WORDS</span>
+              <p style={{ fontSize: '0.775rem', fontWeight: '800', color: '#D97706', margin: '0.2rem 0 0 0' }}>{toIndianRupeesWords(docTotals.totalAmount)}</p>
+            </div>
+
+            <div style={{ textAlign: 'right', minWidth: '220px' }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#0F172A', borderBottom: '2px solid #D97706', paddingBottom: '0.3rem' }}>
+                TOTAL: &#8377;{docTotals.totalAmount.toLocaleString()}
               </div>
-              {billData.showSignature && (
-                <div className="signature-section" style={{ textAlign: 'center', minWidth: '180px' }}>
-                  {selectedProgram?.signatureUrl && (
-                    <img src={selectedProgram.signatureUrl} alt="Signature" className="signature-image" style={{ maxHeight: '50px', width: 'auto', marginBottom: '5px' }} />
-                  )}
-                  <div className="signature-label" style={{ borderTop: '1.5px solid #334155', padding: '4px 0 0 0', fontSize: '11px', fontWeight: 'bold', color: '#1e293b' }}>Authorized Signature</div>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#999' }}>For {billData.serviceProviderName || selectedProgram?.name}</p>
+
+              {docData.showSignature !== false && (
+                <div style={{ marginTop: '2rem', display: 'inline-block', textAlign: 'center', border: '2px dashed #D97706', padding: '0.75rem 1.5rem', borderRadius: '8px', background: '#FFFBEB' }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '900', color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em' }}>EXECUTIVE AUTHORIZED SEAL</span>
+                  <div style={{ fontSize: '0.725rem', fontWeight: '800', color: '#0F172A', marginTop: '0.5rem' }}>{docData.serviceProviderName || selectedProgram?.name}</div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // CLASSIC STANDARD THEME STRUCTURAL LAYOUT (DEFAULT)
+    return (
+      <div className="invoice-container theme-classic" style={{ padding: '2rem', background: '#FFFFFF', color: '#0F172A', borderRadius: '14px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #E2E8F0', paddingBottom: '1.25rem' }}>
+          <div>
+            {selectedProgram?.showLogo && selectedProgram?.logo && (
+              <img src={selectedProgram.logo} alt="Logo" style={{ maxHeight: '75px', objectFit: 'contain', marginBottom: '0.5rem' }} />
+            )}
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#0F172A' }}>
+              {docData.serviceProviderName || selectedProgram?.name}
+            </h2>
+            <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.2rem 0 0 0', maxWidth: '300px' }}>
+              {docData.serviceProviderAddress || selectedProgram?.address}
+            </p>
+            {docData.showTax !== false && docData.serviceProviderGstin && (
+              <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#334155', margin: '0.2rem 0 0 0' }}>
+                GSTIN: {docData.serviceProviderGstin}
+              </p>
+            )}
+          </div>
+
+          <div style={{ textAlign: 'right' }}>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: '900', color: isTransport ? '#F59E0B' : 'var(--primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+              {isTransport ? 'TRANSPORT BILL' : 'LABOUR BILL'}
+            </h1>
+            <p style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0F172A', margin: '0.4rem 0 0 0' }}>
+              Bill No: #{docData.billNumber || 'DRAFT'}
+            </p>
+            <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
+              Date: {new Date(docData.billDate || Date.now()).toLocaleDateString('en-GB')}
+            </p>
+          </div>
+        </div>
+
+        {/* Client & Specific Details */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid #E2E8F0' }}>
+          <div>
+            <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Billed To (Client / Consignee)</span>
+            <p style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0F172A', margin: '0.2rem 0 0 0' }}>
+              {docData.clientName || 'Client Name'}
+            </p>
+            <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
+              {docData.clientAddress}
+            </p>
+            {docData.showTax !== false && docData.clientGstin && (
+              <p style={{ fontSize: '0.75rem', color: '#334155', fontWeight: '700', margin: '0.15rem 0 0 0' }}>GSTIN: {docData.clientGstin}</p>
+            )}
+          </div>
+
+          {isTransport ? (
+            <div style={{ background: '#FFFBEB', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #FCD34D' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Transport & Route Info</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#78350F' }}>
+                <div><b>Vehicle No:</b> {docData.vehicleNumber || 'N/A'}</div>
+                <div><b>LR/GR No:</b> {docData.lrGrNumber || 'N/A'}</div>
+                <div><b>Origin:</b> {docData.origin || 'N/A'}</div>
+                <div><b>Destination:</b> {docData.destination || 'N/A'}</div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: '#EFF6FF', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #93C5FD' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Labour & Site Supervisor Info</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.75rem', color: '#1E3A8A' }}>
+                <div><b>Supervisor:</b> {docData.supervisorName || 'N/A'}</div>
+                <div><b>Work Site:</b> {docData.workLocation || 'Site'}</div>
+              </div>
             </div>
           )}
-
         </div>
+
+        {/* Items Table */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1.25rem' }}>
+          <thead>
+            <tr style={{ background: '#F1F5F9', borderBottom: '2px solid #E2E8F0' }}>
+              <th style={{ padding: '0.55rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800', color: '#475569' }}>#</th>
+              <th style={{ padding: '0.55rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800', color: '#475569' }}>
+                {isTransport ? 'Freight Description' : 'Labour & Work Description'}
+              </th>
+              <th style={{ padding: '0.55rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800', color: '#475569' }}>
+                {isTransport ? 'Trips / Weight' : 'Workers / Days'}
+              </th>
+              <th style={{ padding: '0.55rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800', color: '#475569' }}>Rate</th>
+              <th style={{ padding: '0.55rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800', color: '#475569' }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {itemsList.map((item, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                <td style={{ padding: '0.55rem', fontSize: '0.775rem', color: '#94A3B8' }}>{String(idx + 1).padStart(2, '0')}</td>
+                <td style={{ padding: '0.55rem', fontSize: '0.825rem', fontWeight: '600', color: '#0F172A' }}>{item.description}</td>
+                <td style={{ padding: '0.55rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit}</td>
+                <td style={{ padding: '0.55rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.rate) || 0).toLocaleString()}</td>
+                <td style={{ padding: '0.55rem', textAlign: 'right', fontWeight: '700', fontSize: '0.825rem' }}>&#8377;{(parseFloat(item.amount) || 0).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Totals Breakdown */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0' }}>
+          <div style={{ maxWidth: '340px' }}>
+            <span style={{ fontSize: '0.675rem', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>Amount in Words</span>
+            <p style={{ fontSize: '0.775rem', fontWeight: '700', color: '#0F172A', margin: '0.2rem 0 0 0' }}>
+              {toIndianRupeesWords(docTotals.totalAmount)}
+            </p>
+
+            {docData.showTerms !== false && docData.termsAndConditions && (
+              <div style={{ marginTop: '1rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>Terms & Conditions</span>
+                <p style={{ fontSize: '0.725rem', color: '#64748B', margin: '0.2rem 0 0 0', whiteSpace: 'pre-line' }}>
+                  {docData.termsAndConditions}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div style={{ minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#64748B' }}>Subtotal</span>
+              <span style={{ fontWeight: '700' }}>&#8377;{docTotals.subtotal.toLocaleString()}</span>
+            </div>
+            {docTotals.extraCharges > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748B' }}>Extra Charges</span>
+                <span style={{ fontWeight: '700' }}>+ &#8377;{docTotals.extraCharges.toLocaleString()}</span>
+              </div>
+            )}
+            {docData.showTax !== false && docTotals.taxAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748B' }}>GST ({docData.taxPercentage}%)</span>
+                <span style={{ fontWeight: '700' }}>+ &#8377;{docTotals.taxAmount.toLocaleString()}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', fontWeight: '900', color: isTransport ? '#F59E0B' : 'var(--primary)', paddingTop: '0.4rem', borderTop: '2px solid var(--primary)' }}>
+              <span>Total Amount</span>
+              <span>&#8377;{docTotals.totalAmount.toLocaleString()}</span>
+            </div>
+
+            {docData.showSignature !== false && (
+              <div style={{ marginTop: '1.5rem', textAlign: 'center', paddingTop: '0.5rem', borderTop: '1px dashed #CBD5E1' }}>
+                <span style={{ fontSize: '0.675rem', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase' }}>Authorized Signatory</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {docData.showFooterNote !== false && docData.footerText && (
+          <div style={{ textAlign: 'center', marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', fontSize: '0.75rem', color: '#64748B' }}>
+            {docData.footerText}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="animate-in fade-in duration-300">
-      {/* Search Header */}
-      {!showForm && (
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="relative flex-1 w-full md:w-80">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Page Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">
+            {activeCategory === 'Transport' ? (
+              <>
+                <Truck size={26} style={{ color: 'var(--warning)' }} />
+                Transport Bills
+              </>
+            ) : (
+              <>
+                <HardHat size={26} style={{ color: 'var(--primary)' }} />
+                Labour Bills
+              </>
+            )}
+          </h1>
+          <p className="page-subtitle">
+            {activeCategory === 'Transport'
+              ? 'Track vehicle transport, LR/GR numbers, route freight & trip bills'
+              : 'Track manpower, wage rates, daily work logs & supervisor bills'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '260px' }}>
             <input 
               type="text" 
-              className="form-control pl-10" 
-              placeholder="Search by Bill No, Client, Vehicle, or LR No..." 
+              className="form-input" 
+              placeholder={`Search ${activeCategory.toLowerCase()} bills...`} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.5rem' }}
             />
-            <div className="absolute left-3 top-2.5 text-gray-400">
-              <Plus size={18} style={{ transform: 'rotate(45deg)' }} />
-            </div>
+            <Search size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           </div>
+
           <button 
-            className="btn btn-primary flex items-center gap-2 w-full md:w-auto justify-center"
-            onClick={() => { resetForm(); setShowForm(true); }}
+            className="btn-gradient"
+            onClick={() => {
+              if (showForm) resetForm();
+              else setShowForm(true);
+            }}
+            style={{
+              background: activeCategory === 'Transport' ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' : undefined
+            }}
           >
-            <Plus size={18} />
-            <span>Create New Labour Bill</span>
+            {showForm ? <X size={18} /> : <Plus size={18} />}
+            {showForm ? 'Cancel Editor' : `Create New ${activeCategory} Bill`}
           </button>
         </div>
-      )}
+      </div>
 
+      {/* Split Screen Form & Live Preview */}
       {showForm && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 animate-in slide-in-from-top-4 duration-300">
-          
-          {/* Editor Form Card */}
-          <div className="card shadow-2xl border-t-4 border-primary bg-white">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                {editingId ? <Edit2 size={20} className="text-primary" /> : <Plus size={20} className="text-primary" />}
-                <span>{editingId ? 'Update Labour Bill' : 'New Labour Bill Details'}</span>
-              </h2>
-              <button className="text-gray-400 hover:text-rose-500" onClick={resetForm}>
-                <X size={20} />
-              </button>
-            </div>
+        <div className="grid-12">
+          {/* Left Form Builder */}
+          <div className="glass-panel col-span-6" style={{ padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {editingId ? <Edit2 size={18} /> : <Plus size={18} />}
+              {editingId ? `Edit ${activeCategory} Bill` : `New ${activeCategory} Bill Builder`}
+            </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              {/* Row 1: General Info */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <FileText size={14} className="text-primary" />
-                  <span>General Bill Information</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Bill No. (Optional)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="Auto-generated if blank"
-                      value={formData.billNumber} 
-                      onChange={e => setFormData({...formData, billNumber: e.target.value})} 
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Bill Date</label>
-                    <input 
-                      type="date" 
-                      className="form-control" 
-                      required 
-                      value={formData.billDate} 
-                      onChange={e => setFormData({...formData, billDate: e.target.value})} 
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Payment Status</label>
-                    <select 
-                      className="form-control" 
-                      value={formData.status} 
-                      onChange={e => setFormData({...formData, status: e.target.value})}
-                    >
-                      <option value="Unpaid">Unpaid</option>
-                      <option value="Paid">Paid</option>
-                      <option value="Overdue">Overdue</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: Contractor Details */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <User size={14} className="text-primary" />
-                  <span>Contractor / Service Provider Details</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Contractor Name</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.serviceProviderName} 
-                      onChange={e => setFormData({...formData, serviceProviderName: e.target.value})} 
-                      placeholder="Enter provider business name"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">GSTIN (Optional)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.serviceProviderGstin} 
-                      onChange={e => setFormData({...formData, serviceProviderGstin: e.target.value})} 
-                      placeholder="GSTIN of service provider"
-                    />
-                  </div>
-                  <div className="form-group mb-0 md:col-span-2">
-                    <label className="form-label text-xs">Address</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.serviceProviderAddress} 
-                      onChange={e => setFormData({...formData, serviceProviderAddress: e.target.value})} 
-                      placeholder="Provider address details"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Contact Number</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.serviceProviderPhone} 
-                      onChange={e => setFormData({...formData, serviceProviderPhone: e.target.value})} 
-                      placeholder="Provider contact phone"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 3: Client Details */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <User size={14} className="text-emerald-500" />
-                  <span>Client / Consignee Details</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="form-group mb-0 md:col-span-2">
-                    <label className="form-label text-xs">Select Saved Customer</label>
-                    <select 
-                      className="form-control" 
-                      value={formData.customer} 
-                      onChange={e => handleCustomerChange(e.target.value)}
-                    >
-                      <option value="">-- Quick Select Customer (Optional) --</option>
-                      {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Client Name</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      required
-                      value={formData.clientName} 
-                      onChange={e => setFormData({...formData, clientName: e.target.value})} 
-                      placeholder="Enter client/consignee name"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Client GSTIN (Optional)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.clientGstin} 
-                      onChange={e => setFormData({...formData, clientGstin: e.target.value})} 
-                      placeholder="Client GSTIN"
-                    />
-                  </div>
-                  <div className="form-group mb-0 md:col-span-2">
-                    <label className="form-label text-xs">Client Address</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.clientAddress} 
-                      onChange={e => setFormData({...formData, clientAddress: e.target.value})} 
-                      placeholder="Client address"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Client Phone</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.clientPhone} 
-                      onChange={e => setFormData({...formData, clientPhone: e.target.value})} 
-                      placeholder="Client contact number"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 4: Logistics & Dispatch Details */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Truck size={14} className="text-indigo-500" />
-                  <span>Logistics & Transport details (All Optional)</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Vehicle Number</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.vehicleNumber} 
-                      onChange={e => setFormData({...formData, vehicleNumber: e.target.value})} 
-                      placeholder="e.g. MH-12-AB-1234"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">LR / GR Number</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.lrGrNumber} 
-                      onChange={e => setFormData({...formData, lrGrNumber: e.target.value})} 
-                      placeholder="e.g. LR-4091"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Origin (From)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.origin} 
-                      onChange={e => setFormData({...formData, origin: e.target.value})} 
-                      placeholder="Loading Point"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Destination (To)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.destination} 
-                      onChange={e => setFormData({...formData, destination: e.target.value})} 
-                      placeholder="Delivery Point"
-                    />
-                  </div>
-                  <div className="form-group mb-0 md:col-span-2">
-                    <label className="form-label text-xs">Goods Description</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={formData.goodsDescription} 
-                      onChange={e => setFormData({...formData, goodsDescription: e.target.value})} 
-                      placeholder="e.g. Industrial pipes, Machinery, Cotton bales"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Loading Date</label>
-                    <input 
-                      type="date" 
-                      className="form-control" 
-                      value={formData.loadingDate} 
-                      onChange={e => setFormData({...formData, loadingDate: e.target.value})} 
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Unloading Date</label>
-                    <input 
-                      type="date" 
-                      className="form-control" 
-                      value={formData.unloadingDate} 
-                      onChange={e => setFormData({...formData, unloadingDate: e.target.value})} 
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Number of Labourers</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.numberOfLabourers} 
-                      onChange={e => setFormData({...formData, numberOfLabourers: e.target.value})} 
-                      placeholder="Number of workers deployed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Dynamic Labour Work Items Editor Table */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                    <User size={14} className="text-amber-500" />
-                    <span>Labour Work Breakdown (Work Count Rate Total)</span>
-                  </h4>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary btn-sm flex items-center gap-1 border-dashed py-1.5"
-                    onClick={addWorkItem}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Client & Payment Status Selection */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Client / Party</label>
+                  <select 
+                    className="form-select"
+                    value={formData.customer}
+                    onChange={(e) => handleCustomerSelect(e.target.value)}
                   >
-                    <Plus size={14} /> Add Work Row
+                    <option value="">Select customer...</option>
+                    {customers.map(c => (
+                      <option key={c._id} value={c._id}>{c.customerName}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Bill Number</label>
+                  <input 
+                    type="text" 
+                    className="form-input"
+                    placeholder="Auto-generated"
+                    value={formData.billNumber}
+                    onChange={(e) => setFormData({ ...formData, billNumber: e.target.value })}
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Payment Status</label>
+                  <select 
+                    className="form-select"
+                    value={formData.paymentStatus || 'Unpaid'}
+                    onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value })}
+                    style={{
+                      fontWeight: '700',
+                      color: formData.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)'
+                    }}
+                  >
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Partially Paid">Partially Paid</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Category Specific Form Controls */}
+              {activeCategory === 'Transport' ? (
+                <div style={{ background: 'rgba(245, 158, 11, 0.04)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <span className="form-label" style={{ color: 'var(--warning)', marginBottom: '0.5rem', display: 'block' }}>Transport & Logistics Info</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Vehicle Number (e.g. MH 12 AB 1234)" 
+                      value={formData.vehicleNumber}
+                      onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="LR / GR Number" 
+                      value={formData.lrGrNumber}
+                      onChange={(e) => setFormData({ ...formData, lrGrNumber: e.target.value })}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Origin Location" 
+                      value={formData.origin}
+                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Destination Location" 
+                      value={formData.destination}
+                      onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(59, 130, 246, 0.04)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <span className="form-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem', display: 'block' }}>Labour & Worksite Info</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Supervisor Name" 
+                      value={formData.supervisorName}
+                      onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Site / Work Location" 
+                      value={formData.workLocation}
+                      onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Items Table */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span className="form-label">{activeCategory === 'Labour' ? 'Labour Line Items' : 'Freight Line Items'}</span>
+                  <button type="button" onClick={addItem} style={{ background: 'none', border: 'none', color: activeCategory === 'Transport' ? 'var(--warning)' : 'var(--primary)', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Plus size={14} /> Add Item
                   </button>
                 </div>
-                
-                <div className="space-y-3">
-                  {(formData.workItems || []).map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-white rounded-lg border border-slate-200 relative group animate-in slide-in-from-top-1">
-                      <div className="col-span-12 md:col-span-4">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Work Description</label>
-                        <input 
-                          type="text" 
-                          className="form-control py-1.5" 
-                          required
-                          placeholder="e.g. Loading pipes" 
-                          value={item.workDescription} 
-                          onChange={e => updateWorkItem(index, 'workDescription', e.target.value)} 
-                        />
-                      </div>
-                      <div className="col-span-3 md:col-span-2">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Labourers</label>
-                        <input 
-                          type="number" 
-                          className="form-control py-1.5" 
-                          required 
-                          min="1"
-                          value={item.labourCount} 
-                          onChange={e => updateWorkItem(index, 'labourCount', parseInt(e.target.value) || 0)} 
-                        />
-                      </div>
-                      <div className="col-span-3 md:col-span-2">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Days</label>
-                        <input 
-                          type="number" 
-                          className="form-control py-1.5" 
-                          required 
-                          min="1"
-                          value={item.workingDays !== undefined ? item.workingDays : 1} 
-                          onChange={e => updateWorkItem(index, 'workingDays', parseInt(e.target.value) || 0)} 
-                        />
-                      </div>
-                      <div className="col-span-3 md:col-span-2">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Rate (₹)</label>
-                        <input 
-                          type="number" 
-                          className="form-control py-1.5" 
-                          required 
-                          value={item.rate || ''} 
-                          placeholder="0.00"
-                          onChange={e => updateWorkItem(index, 'rate', parseFloat(e.target.value) || 0)} 
-                        />
-                      </div>
-                      <div className="col-span-2 md:col-span-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block">Total</label>
-                        <div className="font-bold text-primary text-sm pt-2">₹{(item.total || 0).toLocaleString('en-IN')}</div>
-                      </div>
-                      <div className="col-span-1 flex items-end justify-center pb-2">
-                        {formData.workItems.length > 1 && (
-                          <button 
-                            type="button" 
-                            className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-1.5 rounded"
-                            onClick={() => removeWorkItem(index)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Row 5: Static Extra Charges */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <DollarSign size={14} className="text-amber-500" />
-                  <span>Other Transport Charges (Optional, in ₹)</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Loading Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.loadingCharges || ''} 
-                      onChange={e => setFormData({...formData, loadingCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Unloading Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.unloadingCharges || ''} 
-                      onChange={e => setFormData({...formData, unloadingCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Handling Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.handlingCharges || ''} 
-                      onChange={e => setFormData({...formData, handlingCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Packing Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.packingCharges || ''} 
-                      onChange={e => setFormData({...formData, packingCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Overtime Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.overtimeCharges || ''} 
-                      onChange={e => setFormData({...formData, overtimeCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Additional Charges</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={formData.additionalCharges || ''} 
-                      onChange={e => setFormData({...formData, additionalCharges: parseFloat(e.target.value) || 0})} 
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 6: Taxation settings & Print Checkboxes */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <DollarSign size={14} className="text-rose-500" />
-                  <span>Tax, Print & Theme Configuration</span>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Tax label</label>
+                {formData.items.map((item, index) => (
+                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 30px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
                     <input 
                       type="text" 
-                      className="form-control" 
-                      value={formData.taxDetails} 
-                      onChange={e => setFormData({...formData, taxDetails: e.target.value})} 
-                      placeholder="e.g. GST, CGST+SGST"
+                      className="form-input" 
+                      placeholder="Item Description" 
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                     />
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Tax Percentage (%)</label>
                     <input 
                       type="number" 
-                      className="form-control" 
-                      value={formData.taxPercentage || ''} 
-                      onChange={e => setFormData({...formData, taxPercentage: parseFloat(e.target.value) || 0})} 
-                      placeholder="e.g. 18"
+                      className="form-input" 
+                      placeholder="Qty" 
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                     />
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      placeholder="Rate" 
+                      value={item.rate}
+                      onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                    />
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      readOnly 
+                      value={item.amount}
+                      style={{ fontWeight: '700', color: activeCategory === 'Transport' ? 'var(--warning)' : 'var(--primary)' }}
+                    />
+                    <button type="button" onClick={() => removeItem(index)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
+                      <X size={16} />
+                    </button>
                   </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label text-xs">Bill Theme</label>
+                ))}
+              </div>
+
+              {/* Design & Tax Settings */}
+              <div style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
+                  <Settings size={16} style={{ color: 'var(--primary)' }} /> Design & Tax Settings
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Document Theme</label>
                     <select 
-                      className="form-control" 
-                      value={formData.theme} 
-                      onChange={e => setFormData({...formData, theme: e.target.value})}
+                      className="form-select"
+                      value={formData.theme || 'classic'}
+                      onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
                     >
                       <option value="classic">Classic / Professional</option>
-                      <option value="modern">Modern Banner</option>
-                      <option value="minimalist">Clean Minimalist</option>
+                      <option value="modern">Modern / Minimal</option>
+                      <option value="executive">Bold / Executive</option>
                     </select>
                   </div>
-                  
-                  {/* Print Checkboxes */}
-                  <div className="md:col-span-3 flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-slate-200 mt-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showTax} 
-                        onChange={e => setFormData({...formData, showTax: e.target.checked})} 
+                        checked={formData.showTax !== false}
+                        onChange={(e) => setFormData({ ...formData, showTax: e.target.checked })}
                       />
-                      <span className="text-sm font-bold text-gray-600">Include Tax Breakdown in Print</span>
+                      Include Tax Info in Print
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showTerms} 
-                        onChange={e => setFormData({...formData, showTerms: e.target.checked})} 
+                        checked={formData.showPaymentTerms !== false}
+                        onChange={(e) => setFormData({ ...formData, showPaymentTerms: e.target.checked })}
                       />
-                      <span className="text-sm font-bold text-gray-600">Include Terms & Conditions</span>
+                      Include Payment Terms
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showPaymentTerms} 
-                        onChange={e => setFormData({...formData, showPaymentTerms: e.target.checked})} 
+                        checked={formData.showSignature !== false}
+                        onChange={(e) => setFormData({ ...formData, showSignature: e.target.checked })}
                       />
-                      <span className="text-sm font-bold text-gray-600">Include Payment Info</span>
+                      Include Authorized Signature
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showSignature} 
-                        onChange={e => setFormData({...formData, showSignature: e.target.checked})} 
+                        checked={formData.showFooterNote !== false}
+                        onChange={(e) => setFormData({ ...formData, showFooterNote: e.target.checked })}
                       />
-                      <span className="text-sm font-bold text-gray-600">Include Authorized Signature</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 accent-primary rounded" 
-                        checked={formData.showFooter} 
-                        onChange={e => setFormData({...formData, showFooter: e.target.checked})} 
-                      />
-                      <span className="text-sm font-bold text-gray-600">Include Footer Note</span>
+                      Include Footer Note
                     </label>
                   </div>
                 </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ margin: 0 }}>Terms & Conditions</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.showTerms !== false}
+                          onChange={(e) => setFormData({ ...formData, showTerms: e.target.checked })}
+                          style={{ marginRight: '0.2rem' }}
+                        />
+                        Show in Print
+                      </label>
+                    </div>
+                    <textarea 
+                      className="form-textarea"
+                      rows={2}
+                      placeholder="Enter specific terms..."
+                      value={formData.termsAndConditions || ''}
+                      onChange={(e) => setFormData({ ...formData, termsAndConditions: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ margin: 0 }}>Footer Note (Print bottom)</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.showFooterNote !== false}
+                          onChange={(e) => setFormData({ ...formData, showFooterNote: e.target.checked })}
+                          style={{ marginRight: '0.2rem' }}
+                        />
+                        Show in Print
+                      </label>
+                    </div>
+                    <textarea 
+                      className="form-textarea"
+                      rows={2}
+                      placeholder="Enter custom footer note..."
+                      value={formData.footerText || ''}
+                      onChange={(e) => setFormData({ ...formData, footerText: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Notes (Internal only)</label>
+                  <input 
+                    type="text" 
+                    className="form-input"
+                    placeholder="Internal notes..."
+                    value={formData.internalNotes || ''}
+                    onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
+                  />
+                </div>
               </div>
 
-              {/* Terms, Remarks and Footer */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="form-group">
-                  <label className="form-label text-xs">Payment Terms</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
-                    value={formData.paymentTerms} 
-                    onChange={e => setFormData({...formData, paymentTerms: e.target.value})} 
-                    placeholder="Enter bill terms..."
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label text-xs">Remarks (Internal or Bill notes)</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
-                    value={formData.remarks} 
-                    onChange={e => setFormData({...formData, remarks: e.target.value})} 
-                    placeholder="Any special remarks..."
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label text-xs">Footer Note (Print bottom)</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
-                    value={formData.footerText} 
-                    disabled={!formData.showFooter}
-                    onChange={e => setFormData({...formData, footerText: e.target.value})} 
-                    placeholder="Enter custom footer note..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button type="button" className="btn btn-secondary w-1/3 py-3" onClick={resetForm}>
+              {/* Submit Buttons */}
+              <div style={{ display: 'flex', gap: '0.85rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn-gradient" 
+                  style={{ 
+                    flex: 1,
+                    background: activeCategory === 'Transport' ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' : undefined
+                  }}
+                >
+                  <CheckCircle2 size={16} /> {editingId ? `Update ${activeCategory} Bill` : `Save & Generate ${activeCategory} Bill`}
+                </button>
+                <button type="button" onClick={resetForm} className="btn-secondary-glass">
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary w-2/3 py-3 shadow-lg hover:scale-[1.01] transition-transform">
-                  {editingId ? 'Update Labour Bill' : 'Generate Labour Bill'}
-                </button>
               </div>
-
             </form>
           </div>
 
-          {/* Interactive Document Preview Column */}
-          <div className="hidden lg:block sticky top-8">
-            <h3 className="text-xl font-bold mb-6 text-gray-400">Live Document Preview</h3>
-            <div className="shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
-              {renderPreview(formData)}
+          {/* Right Live Document Preview */}
+          <div className="glass-panel col-span-6" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="form-label" style={{ margin: 0 }}>Live Document Preview</span>
+              <span className={`badge ${activeCategory === 'Transport' ? 'badge-warning' : 'badge-primary'}`}>
+                {activeCategory} Template
+              </span>
+            </div>
+
+            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-card)', border: '1px solid var(--glass-border)' }}>
+              {renderPreviewDocument(formData)}
             </div>
           </div>
-
         </div>
       )}
 
-      {/* Preview Overlay for existing bills */}
+      {/* Modal Print Preview Overlay */}
       {previewData && (
-        <div className="preview-overlay bg-gray-900/60 backdrop-blur-sm min-h-screen p-2 md:p-8 fixed inset-0 z-[2000] overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-4 sticky top-0 z-10 p-2 no-print">
-              <button 
-                className="btn btn-secondary flex items-center gap-2 bg-white/90 backdrop-blur-md" 
-                onClick={() => setPreviewData(null)}
-              >
-                <X size={18} />
-                <span>Close</span>
+        <div 
+          className="labour-preview-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            background: 'rgba(11, 18, 32, 0.88)',
+            backdropFilter: 'blur(16px)',
+            padding: '2rem 1rem',
+            overflowY: 'auto',
+            display: 'flex',
+            justify: 'center',
+            alignItems: 'flex-start'
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: '850px', margin: '0 auto' }}>
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
+                <X size={18} /> Close Preview
               </button>
               
-              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-lg border shadow-sm">
-                <span className="text-xs font-bold text-gray-500 uppercase px-1">Theme</span>
-                <select 
-                  className="form-control py-1 px-3 border border-gray-300 rounded-lg text-sm bg-white"
-                  style={{ width: '180px' }}
-                  value={previewTheme}
-                  onChange={(e) => {
-                    setPreviewTheme(e.target.value);
-                    setPreviewData({ ...previewData, theme: e.target.value });
-                  }}
-                >
-                  <option value="classic">Classic / Professional</option>
-                  <option value="modern">Modern Banner</option>
-                  <option value="minimalist">Clean Minimalist</option>
-                </select>
+              <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.06)', padding: '0.35rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                {['classic', 'modern', 'executive'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setPreviewTheme(t)}
+                    style={{
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      fontWeight: '800',
+                      border: 'none',
+                      background: previewTheme === t ? (activeCategory === 'Transport' ? 'var(--warning)' : 'var(--primary)') : 'transparent',
+                      color: previewTheme === t ? '#FFFFFF' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                      transition: 'var(--transition-fast)'
+                    }}
+                  >
+                    {t} Theme
+                  </button>
+                ))}
               </div>
 
-              <button 
-                className="btn btn-primary flex items-center gap-2 shadow-lg" 
-                onClick={() => handlePrint(previewData)}
-              >
-                <Printer size={18} />
-                <span>Print Bill</span>
-              </button>
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button 
+                  className="btn-gradient" 
+                  onClick={() => handleDownloadPdf(previewData)}
+                  style={{
+                    background: activeCategory === 'Transport' ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' : undefined
+                  }}
+                >
+                  <Download size={18} /> Download {previewData.billType || activeCategory} PDF File
+                </button>
+
+                <button className="btn-secondary-glass" onClick={triggerPrint} title="Print via Browser">
+                  <Printer size={18} /> Print
+                </button>
+              </div>
             </div>
-            
-            <div className="animate-in fade-in zoom-in-95 duration-300">
-              {renderPreview(previewData)}
+
+            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+              {renderPreviewDocument(previewData, previewTheme)}
             </div>
           </div>
         </div>
       )}
 
-      {/* Labour Bills List Table */}
-      {!showForm && (
-        <div className="card shadow-xl border-none bg-white">
-          <div className="table-container border-none shadow-none">
-            <table className="data-table">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="py-4">Bill No</th>
-                  <th className="py-4">Client / Consignee</th>
-                  <th className="py-4">Date</th>
-                  <th className="py-4">Route</th>
-                  <th className="py-4">Total Amount</th>
-                  <th className="py-4 text-center">Status</th>
-                  <th className="py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredBills.map(bill => (
-                  <tr key={bill._id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 font-bold text-primary">{bill.billNumber}</td>
-                    <td className="py-4 font-bold text-slate-800">{bill.clientName}</td>
-                    <td className="py-4 text-slate-500">{new Date(bill.billDate).toLocaleDateString('en-IN')}</td>
-                    <td className="py-4 text-xs text-slate-600">
-                      {bill.origin && bill.destination ? (
-                        <span>{bill.origin} &rarr; {bill.destination}</span>
-                      ) : bill.origin || bill.destination || 'N/A'}
-                    </td>
-                    <td className="py-4 font-bold text-slate-900">
-                      ₹{bill.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                        bill.status === 'Paid' 
-                          ? 'bg-emerald-50 text-emerald-600' 
-                          : bill.status === 'Overdue' 
-                            ? 'bg-rose-50 text-rose-600' 
-                            : 'bg-amber-50 text-amber-600'
-                      }`}>
-                        {bill.status}
-                      </span>
-                    </td>
-                    <td className="py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button 
-                          className="p-2 text-gray-400 hover:text-primary transition-colors bg-white border rounded-lg shadow-sm"
-                          onClick={() => { setPreviewData(bill); setPreviewTheme(bill.theme || 'classic'); }}
-                          title="View / Print"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-emerald-600 transition-colors bg-white border rounded-lg shadow-sm"
-                          onClick={() => handleEdit(bill)}
-                          title="Edit Bill"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-rose-600 transition-colors bg-white border rounded-lg shadow-sm"
-                          onClick={() => handleDelete(bill._id)}
-                          title="Delete Bill"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+      {/* Master Data Table Listing */}
+      <div className="table-container">
+        <table className="table-glass">
+          <thead>
+            <tr>
+              <th>Bill No</th>
+              <th>Client / Consignee</th>
+              <th>Date</th>
+              <th>{activeCategory === 'Transport' ? 'Vehicle & Route' : 'Site / Supervisor'}</th>
+              <th style={{ textAlign: 'right' }}>Total Amount</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredBills.map((bill) => (
+              <tr key={bill._id}>
+                <td style={{ fontWeight: '800', color: activeCategory === 'Transport' ? 'var(--warning)' : 'var(--primary)' }}>
+                  {bill.billNumber || `#${bill._id.slice(-4)}`}
+                </td>
+                <td>
+                  <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{bill.clientName || 'General Client'}</div>
+                  <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>{bill.clientPhone || 'No Phone'}</div>
+                </td>
+                <td>{new Date(bill.billDate || bill.createdAt).toLocaleDateString('en-GB')}</td>
+                <td>
+                  {activeCategory === 'Transport' ? (
+                    <>
+                      <div style={{ fontSize: '0.8rem', fontWeight: '600' }}>{bill.vehicleNumber || 'No Vehicle'}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {bill.origin && bill.destination ? `${bill.origin} ➔ ${bill.destination}` : 'Local Transport'}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredBills.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="py-20 text-center text-gray-400 italic">No Labour Bills found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '0.8rem', fontWeight: '600' }}>{bill.supervisorName || 'Supervisor N/A'}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{bill.workLocation || 'Site Work'}</div>
+                    </>
+                  )}
+                </td>
+                <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--text-primary)' }}>
+                  &#8377;{(bill.totalAmount || 0).toLocaleString()}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePaymentStatus(bill)}
+                    className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning'}`}
+                    style={{ cursor: 'pointer', border: 'none', transition: 'transform 0.15s ease' }}
+                    title="Click to toggle Paid / Unpaid"
+                  >
+                    <CheckCircle2 size={11} /> {bill.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid'}
+                  </button>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                    <button className="btn-icon" onClick={() => setPreviewData(bill)} title="Print Preview">
+                      <Eye size={15} />
+                    </button>
+                    <button className="btn-icon" onClick={() => handleEdit(bill)} title="Edit Bill">
+                      <Edit2 size={15} />
+                    </button>
+                    <button className="btn-icon" onClick={() => handleDelete(bill._id)} title="Delete Bill" style={{ color: 'var(--danger)' }}>
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
 
+            {filteredBills.length === 0 && (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  No {activeCategory.toLowerCase()} bills recorded yet. Click <b>"Create New {activeCategory} Bill"</b> to start.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

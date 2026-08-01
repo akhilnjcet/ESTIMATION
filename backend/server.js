@@ -80,13 +80,25 @@ app.use((err, req, res, next) => {
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
-  mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 })
-    .then(async () => {
-      console.log('Connected to MongoDB');
-      // ... seeding logic (optional for local)
-      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    })
-    .catch((err) => console.error('MongoDB connection error:', err));
+  const startServer = async () => {
+    try {
+      await mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
+      console.log('Connected to Primary MongoDB Atlas');
+      await seedDefaultData();
+    } catch (err) {
+      console.warn('Primary MongoDB Atlas connection failed:', err.message);
+      try {
+        const localUri = 'mongodb://127.0.0.1:27017/estimation_app';
+        await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
+        console.log('Connected to Local MongoDB fallback');
+        await seedDefaultData();
+      } catch (localErr) {
+        console.error('Local MongoDB fallback also failed. Running server without active DB connection:', localErr.message);
+      }
+    }
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  };
+  startServer();
 }
 
 // For production (Vercel)
@@ -107,40 +119,44 @@ const connectDB = async () => {
   }
 
   await mongoose.connect(MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5000 });
-  
-  // Seed Admin & Program if they don't exist
-  const User = require('./models/User');
-  const Program = require('./models/Program');
-  const bcrypt = require('bcryptjs');
-
-  const adminEmail = 'admin@krishna.com';
-  let admin = await User.findOne({ email: adminEmail });
-  if (!admin) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    admin = await User.create({
-      name: 'System Admin', email: adminEmail, password: hashedPassword, role: 'admin'
-    });
-    console.log('Admin account created');
-  }
-
-  const programExists = await Program.findOne({ owner: admin._id });
-  if (!programExists) {
-    await Program.create({
-      name: 'Krishna Smart Solutions', owner: admin._id,
-      address: '123 Stadium Road', phone: '9999999999', email: 'admin@krishna.com'
-    });
-    console.log('Default program created');
-  }
+  await seedDefaultData();
 };
 
+const seedDefaultData = async () => {
+  try {
+    const User = require('./models/User');
+    const Program = require('./models/Program');
+    const bcrypt = require('bcryptjs');
 
+    const adminEmail = 'admin@krishna.com';
+    let admin = await User.findOne({ email: adminEmail });
+    if (!admin) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      admin = await User.create({
+        name: 'System Admin', email: adminEmail, password: hashedPassword, role: 'admin'
+      });
+      console.log('Admin account created: admin@krishna.com');
+    }
+
+    const programExists = await Program.findOne({ owner: admin._id });
+    if (!programExists) {
+      await Program.create({
+        name: 'Krishna Smart Solutions', owner: admin._id,
+        address: '123 Stadium Road', phone: '9999999999', email: 'admin@krishna.com'
+      });
+      console.log('Default program created');
+    }
+  } catch (err) {
+    console.error('Seeding error:', err.message);
+  }
+};
 
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('SERVER_ERROR:', err);
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
-    error: err
+    error: err.message
   });
 });
 

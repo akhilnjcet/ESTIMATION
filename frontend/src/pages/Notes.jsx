@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Download, Printer, FileText, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Download, Printer, FileText, TrendingUp, TrendingDown, Wallet, Plus, Edit2, Trash2, X } from 'lucide-react';
 
 const Notes = () => {
   const [notes, setNotes] = useState([]);
@@ -29,34 +29,34 @@ const Notes = () => {
       <tr>
         <td>${new Date(n.date).toLocaleString()}</td>
         <td>${n.description}</td>
-        <td style="text-align: right; color: #10b981">${n.incomeAmount ? '₹ ' + n.incomeAmount.toLocaleString() : '-'}</td>
-        <td style="text-align: right; color: #ef4444">${n.expenseAmount ? '₹ ' + n.expenseAmount.toLocaleString() : '-'}</td>
+        <td style="text-align: right; color: #16a34a; font-weight: bold">${n.incomeAmount ? '₹ ' + n.incomeAmount.toLocaleString() : '-'}</td>
+        <td style="text-align: right; color: #dc2626; font-weight: bold">${n.expenseAmount ? '₹ ' + n.expenseAmount.toLocaleString() : '-'}</td>
       </tr>
     `).join('');
 
     const html = `
       <html>
         <head>
-          <title>Notes Statement</title>
+          <title>Quick Notes Statement</title>
           <style>
-            body { font-family: sans-serif; padding: 20px; color: #333; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
-            .summary { display: flex; gap: 10px; margin: 20px 0; }
-            .card { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+            body { font-family: system-ui, sans-serif; padding: 30px; color: #0f172a; }
+            .header { display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 15px; }
+            .summary { display: flex; gap: 15px; margin: 25px 0; }
+            .card { flex: 1; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: bold; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f8fafc; border-bottom: 2px solid #4f46e5; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
-            td { border-bottom: 1px solid #eee; padding: 10px; font-size: 12px; }
+            th { background: #f8fafc; border-bottom: 2px solid #2563eb; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+            td { border-bottom: 1px solid #f1f5f9; padding: 12px; font-size: 13px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div><h1>Quick Notes Statement</h1></div>
-            <div style="text-align:right"><h2>Statement</h2><p>Generated on: ${new Date().toLocaleDateString()}</p></div>
+            <div><h1 style="margin:0; color:#2563eb">Quick Notes Statement</h1><p style="margin:5px 0 0 0; color:#64748b">Krishna ERP Note Register</p></div>
+            <div style="text-align:right"><h2 style="margin:0">STATEMENT</h2><p style="margin:5px 0 0 0; color:#64748b">Generated: ${new Date().toLocaleDateString()}</p></div>
           </div>
           <div class="summary">
-            <div class="card">Income: ₹${totalIncome.toLocaleString()}</div>
-            <div class="card">Expense: ₹${totalExpense.toLocaleString()}</div>
-            <div class="card" style="background:#eef2ff"><b>Net Balance: ₹${balance.toLocaleString()}</b></div>
+            <div class="card" style="color:#16a34a">Income: ₹${totalIncome.toLocaleString()}</div>
+            <div class="card" style="color:#dc2626">Expense: ₹${totalExpense.toLocaleString()}</div>
+            <div class="card" style="background:#eff6ff; color:#2563eb">Net Balance: ₹${balance.toLocaleString()}</div>
           </div>
           <table>
             <thead><tr><th>Date/Time</th><th>Description</th><th style="text-align:right">Income</th><th style="text-align:right">Expense</th></tr></thead>
@@ -68,9 +68,7 @@ const Notes = () => {
 
     printWindow.document.write(html);
     printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+    setTimeout(() => { printWindow.print(); }, 500);
   };
 
   const handleSubmit = async (e) => {
@@ -97,7 +95,6 @@ const Notes = () => {
       }
       setFormData({ incomeAmount: '', expenseAmount: '', description: '' });
       fetchNotes();
-      // Optional: alert('Entry saved successfully!');
     } catch (err) { 
       console.error(err); 
       alert('Failed to save entry');
@@ -128,158 +125,156 @@ const Notes = () => {
   const balance = totalIncome - totalExpense;
 
   return (
-    <div className="p-2 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <FileText className="text-primary" /> Quick Notes
-        </h1>
-        <button onClick={handleDownload} className="btn btn-primary flex items-center gap-2 w-full md:w-auto">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">
+            <FileText size={28} style={{ color: 'var(--primary)' }} />
+            Quick Notes & Petty Cash Log
+          </h1>
+          <p className="page-subtitle">Instant memorandum notes and daily cash entries</p>
+        </div>
+
+        <button className="btn-gradient" onClick={handleDownload}>
           <Printer size={18} /> Export Notes PDF
         </button>
       </div>
 
-      <div className="dashboard-grid mb-6">
-        <div className="card" style={{ borderLeft: '4px solid var(--secondary)', background: 'linear-gradient(135deg, #ecfdf5 0%, #fff 100%)' }}>
-          <div className="flex items-center gap-2 text-secondary font-bold uppercase text-[10px] tracking-wider mb-1">
-            <TrendingUp size={14} /> Total Income
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--secondary)' }}>&#8377; {totalIncome.toLocaleString()}</div>
+      {/* Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--success)' }}>
+          <span className="form-label">Total Note Income</span>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.25rem' }}>
+            &#8377; {totalIncome.toLocaleString()}
+          </h3>
         </div>
-        <div className="card" style={{ borderLeft: '4px solid var(--danger)', background: 'linear-gradient(135deg, #fef2f2 0%, #fff 100%)' }}>
-          <div className="flex items-center gap-2 text-danger font-bold uppercase text-[10px] tracking-wider mb-1">
-            <TrendingDown size={14} /> Total Expense
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--danger)' }}>&#8377; {totalExpense.toLocaleString()}</div>
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--danger)' }}>
+          <span className="form-label">Total Note Expense</span>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--danger)', marginTop: '0.25rem' }}>
+            &#8377; {totalExpense.toLocaleString()}
+          </h3>
         </div>
-        <div className="card" style={{ borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, #eef2ff 0%, #fff 100%)' }}>
-          <div className="flex items-center gap-2 text-primary font-bold uppercase text-[10px] tracking-wider mb-1">
-            <Wallet size={14} /> Net Balance
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--primary)' }}>&#8377; {balance.toLocaleString()}</div>
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--primary)' }}>
+          <span className="form-label">Net Balance Difference</span>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: balance >= 0 ? 'var(--primary)' : 'var(--danger)', marginTop: '0.25rem' }}>
+            &#8377; {balance.toLocaleString()}
+          </h3>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <div className="card w-full lg:w-[400px] lg:sticky lg:top-[100px]" style={{ boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
-          <h2 className="text-xl font-bold mb-6">{editingNote ? 'Edit Note' : 'Add New Entry'}</h2>
+      {/* Split Form & Records Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+        {/* Form Card */}
+        <div className="glass-panel" style={{ padding: '1.75rem', height: 'fit-content' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>
+            {editingNote ? 'Edit Note Entry' : 'Add Quick Memorandum Entry'}
+          </h2>
+
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="form-group mb-0">
-                <label className="form-label text-secondary">Income (&#8377;)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ color: 'var(--success)' }}>Income (&#8377;)</label>
                 <input 
                   type="number" 
-                  className="form-control border-secondary/20 focus:border-secondary" 
+                  className="form-input" 
                   value={formData.incomeAmount} 
                   onChange={e => setFormData({...formData, incomeAmount: e.target.value})} 
                   placeholder="0" 
                 />
               </div>
-              <div className="form-group mb-0">
-                <label className="form-label text-danger">Expense (&#8377;)</label>
+              <div className="form-group">
+                <label className="form-label" style={{ color: 'var(--danger)' }}>Expense (&#8377;)</label>
                 <input 
                   type="number" 
-                  className="form-control border-danger/20 focus:border-danger" 
+                  className="form-input" 
                   value={formData.expenseAmount} 
                   onChange={e => setFormData({...formData, expenseAmount: e.target.value})} 
                   placeholder="0" 
                 />
               </div>
             </div>
-            
-            <div className="form-group">
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label className="form-label">Description / Remarks</label>
               <textarea 
-                className="form-control" 
+                className="form-textarea" 
                 rows="4" 
                 required 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})} 
-                placeholder="Details of this entry..."
+                placeholder="Details of cash transaction or note..."
               ></textarea>
             </div>
-            
-            <div className="flex gap-2">
-              <button type="submit" className="btn btn-primary w-full py-4 text-lg">
-                {editingNote ? 'Update Entry' : 'Save Entry'}
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button type="submit" className="btn-gradient" style={{ flex: 1, padding: '0.8rem' }}>
+                {editingNote ? 'Update Note' : 'Save Quick Note'}
               </button>
               {editingNote && (
                 <button 
                   type="button" 
                   onClick={() => { setEditingNote(null); setFormData({ incomeAmount: '', expenseAmount: '', description: '' }); }} 
-                  className="btn btn-secondary px-6"
+                  className="btn-secondary-glass"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               )}
             </div>
           </form>
         </div>
 
-        <div className="card flex-1 shadow-lg w-full">
-          <h2 className="text-xl font-bold mb-6">Recent Records</h2>
-          <div className="table-container border-none shadow-none">
-            <table className="data-table">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-4">Date/Time</th>
-                  <th className="py-4">Description</th>
-                  <th className="py-4 text-right">Income</th>
-                  <th className="py-4 text-right">Expense</th>
-                  <th className="py-4 text-right">Net</th>
-                  <th className="py-4 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {notes.map(note => {
-                  const net = (note.incomeAmount || 0) - (note.expenseAmount || 0);
-                  return (
-                    <tr key={note._id} className="hover:bg-gray-50/50 transition-all">
-                      <td className="py-4 text-xs text-gray-500">
-                        {new Date(note.date).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
-                      </td>
-                      <td className="py-4">
-                        <div className="font-bold text-gray-900 leading-tight">{note.description}</div>
-                        {note.editCount > 0 && (
-                          <span className="inline-block mt-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-bold rounded border border-amber-100 uppercase tracking-tighter">
-                            Edited {note.editCount}x
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 text-right font-bold text-secondary">
-                        {note.incomeAmount > 0 ? <>&#8377; {note.incomeAmount.toLocaleString()}</> : <span className="text-gray-300">&#8377; 0</span>}
-                      </td>
-                      <td className="py-4 text-right font-bold text-danger">
-                        {note.expenseAmount > 0 ? <>&#8377; {note.expenseAmount.toLocaleString()}</> : <span className="text-gray-300">&#8377; 0</span>}
-                      </td>
-                      <td className={`py-4 text-right font-bold ${net >= 0 ? 'text-primary' : 'text-danger'}`}>
-                        &#8377; {net.toLocaleString()}
-                      </td>
-                      <td className="py-4">
-                        <div className="flex justify-center gap-3">
-                          <button onClick={() => handleEdit(note)} className="text-primary hover:text-primary-hover font-bold text-xs uppercase">Edit</button>
-                          <button onClick={() => handleDelete(note._id)} className="text-danger hover:text-red-700 font-bold text-xs uppercase">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {notes.length === 0 && <tr><td colSpan="6" className="py-20 text-center text-gray-400 font-medium">No records found.</td></tr>}
-              </tbody>
-              {notes.length > 0 && (
-                <tfoot className="bg-gray-100 border-t-2 border-gray-200">
-                  <tr className="font-black">
-                    <td colSpan="2" className="py-4 text-gray-900 text-right uppercase tracking-wider text-xs">Total Summary</td>
-                    <td className="py-4 text-right text-secondary">&#8377; {totalIncome.toLocaleString()}</td>
-                    <td className="py-4 text-right text-danger">&#8377; {totalExpense.toLocaleString()}</td>
-                    <td className={`py-4 text-right ${balance >= 0 ? 'text-primary' : 'text-danger'}`}>
-                      &#8377; {balance.toLocaleString()}
+        {/* Table Card */}
+        <div className="table-container">
+          <table className="table-glass">
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>Description</th>
+                <th style={{ textAlign: 'right' }}>Income</th>
+                <th style={{ textAlign: 'right' }}>Expense</th>
+                <th style={{ textAlign: 'right' }}>Net</th>
+                <th style={{ textAlign: 'center' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notes.map(note => {
+                const net = (note.incomeAmount || 0) - (note.expenseAmount || 0);
+                return (
+                  <tr key={note._id}>
+                    <td style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+                      {new Date(note.date).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
                     </td>
-                    <td></td>
+                    <td>
+                      <div style={{ fontWeight: '700' }}>{note.description}</div>
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)' }}>
+                      {note.incomeAmount > 0 ? `₹${note.incomeAmount.toLocaleString()}` : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)' }}>
+                      {note.expenseAmount > 0 ? `₹${note.expenseAmount.toLocaleString()}` : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '800', color: net >= 0 ? 'var(--primary)' : 'var(--danger)' }}>
+                      &#8377; {net.toLocaleString()}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(note)} title="Edit Note"><Edit2 size={14} /></button>
+                        <button className="btn-icon" onClick={() => handleDelete(note._id)} title="Delete Note" style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
+                      </div>
+                    </td>
                   </tr>
-                </tfoot>
+                );
+              })}
+              {notes.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    No quick notes recorded yet.
+                  </td>
+                </tr>
               )}
-            </table>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

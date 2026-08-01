@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { FileText, Upload, Trash2, Eye, Calendar, DollarSign, Link as LinkIcon, X, Download } from 'lucide-react';
+import { FileText, Upload, Trash2, Eye, Calendar, Link as LinkIcon, X, Download, Plus, Search } from 'lucide-react';
 
-const Invoices = () => {
+const Documents = () => {
   const [documents, setDocuments] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [uploadType, setUploadType] = useState('file'); // 'file' or 'link'
+  const [uploadType, setUploadType] = useState('file');
   const [viewingDoc, setViewingDoc] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     title: '', description: '', amount: '', date: new Date().toISOString().split('T')[0],
     fileName: '', fileUrl: '', fileType: 'Image', externalLink: ''
@@ -62,7 +63,7 @@ const Invoices = () => {
       });
       setShowForm(false);
       fetchDocuments();
-      alert('Invoice saved successfully!');
+      alert('Document saved successfully!');
     } catch (err) {
       console.error(err);
       alert('Save failed');
@@ -72,7 +73,7 @@ const Invoices = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this invoice?')) return;
+    if (!window.confirm('Delete this bill document?')) return;
     try {
       await api.delete(`/documents/${id}`);
       fetchDocuments();
@@ -100,135 +101,213 @@ const Invoices = () => {
     }
   };
 
+  const filteredDocs = documents.filter(doc => 
+    doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold">External Invoices & Bills</h1>
-          <p className="text-gray-500">Upload photos, PDFs or save Google Drive links for your bills.</p>
+          <h1 className="page-title">
+            <Upload size={28} style={{ color: 'var(--primary)' }} />
+            Bill & Document Vault
+          </h1>
+          <p className="page-subtitle">Upload receipts, vendor bills, tax documents, & external drive links</p>
         </div>
-        <button className="btn btn-primary flex items-center gap-2" onClick={() => setShowForm(!showForm)}>
-          <Upload size={18} />
-          {showForm ? 'Cancel' : 'Add New Bill'}
-        </button>
+
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search documents..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.5rem' }}
+            />
+            <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          </div>
+
+          <button className="btn-gradient" onClick={() => setShowForm(!showForm)}>
+            {showForm ? <X size={18} /> : <Plus size={18} />}
+            {showForm ? 'Cancel Editor' : 'Upload New Document'}
+          </button>
+        </div>
       </div>
 
+      {/* Upload Editor Glass Panel */}
       {showForm && (
-        <div className="card mb-8 max-w-2xl animate-in fade-in slide-in-from-top-4">
-          <h2 className="text-xl font-bold mb-6">Record Bill Details</h2>
-          
-          <div className="flex gap-4 mb-6 p-1 bg-gray-100 rounded-lg">
-            <button 
-              className={`flex-1 py-2 rounded-md text-sm font-bold transition-all ${uploadType === 'file' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}
-              onClick={() => setUploadType('file')}
-            >
-              Upload File (Photo/PDF)
-            </button>
-            <button 
-              className={`flex-1 py-2 rounded-md text-sm font-bold transition-all ${uploadType === 'link' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}
-              onClick={() => setUploadType('link')}
-            >
-              Paste Drive Link
-            </button>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Document Upload Station</h2>
+            <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem', borderRadius: '12px' }}>
+              <button 
+                type="button" 
+                onClick={() => setUploadType('file')}
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  background: uploadType === 'file' ? 'var(--primary)' : 'transparent',
+                  color: uploadType === 'file' ? '#FFF' : 'var(--text-muted)'
+                }}
+              >
+                File Upload
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setUploadType('link')}
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  background: uploadType === 'link' ? 'var(--primary)' : 'transparent',
+                  color: uploadType === 'link' ? '#FFF' : 'var(--text-muted)'
+                }}
+              >
+                External URL
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">Bill Description / Title</label>
-              <input type="text" className="form-control" required placeholder="e.g. Office Stationery, Fuel Receipt" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
               <div className="form-group">
-                <label className="form-label">Amount (&#8377;)</label>
-                <input type="number" className="form-control" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
+                <label className="form-label">Document Title</label>
+                <input type="text" className="form-input" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="June Vendor Receipt" />
               </div>
               <div className="form-group">
-                <label className="form-label">Bill Date</label>
-                <input type="date" className="form-control" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                <label className="form-label">Amount (&#8377; Optional)</label>
+                <input type="number" className="form-input" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="12500" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Document Date</label>
+                <input type="date" className="form-input" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
               </div>
             </div>
 
             {uploadType === 'file' ? (
-              <div className="form-group p-4 border-2 border-dashed border-gray-200 rounded-xl text-center">
-                <input type="file" id="file-upload" className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-                  <p className="text-sm font-medium text-gray-700">Click to upload photo or PDF</p>
-                  <p className="text-xs text-gray-400 mt-1">{formData.fileName || 'Max size 5MB recommended'}</p>
-                </label>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Upload PDF or Image File</label>
+                <div style={{
+                  border: '2px dashed var(--glass-border-hover)',
+                  borderRadius: '16px',
+                  padding: '2rem',
+                  textAlign: 'center',
+                  background: 'rgba(37,99,235,0.04)',
+                  cursor: 'pointer'
+                }}>
+                  <Upload size={32} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
+                  <p style={{ fontSize: '0.9rem', fontWeight: '700', margin: '0 0 0.25rem 0' }}>
+                    {formData.fileName ? formData.fileName : 'Click or drop file here to attach'}
+                  </p>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Supports JPG, PNG, PDF formats</span>
+                  <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} style={{ display: 'none' }} id="file-uploader" />
+                  <label htmlFor="file-uploader" style={{ display: 'block', position: 'absolute', inset: 0, cursor: 'pointer' }} />
+                </div>
               </div>
             ) : (
-              <div className="form-group">
-                <label className="form-label">Google Drive / Web Link</label>
-                <div className="flex items-center gap-2">
-                  <LinkIcon size={18} className="text-gray-400" />
-                  <input type="url" className="form-control" placeholder="https://drive.google.com/..." value={formData.externalLink} onChange={e => setFormData({...formData, externalLink: e.target.value})} />
-                </div>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">External File Link (Google Drive / Dropbox URL)</label>
+                <input type="url" className="form-input" required value={formData.externalLink} onChange={e => setFormData({...formData, externalLink: e.target.value})} placeholder="https://drive.google.com/..." />
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary w-full mt-4 py-3" disabled={loading}>
-              {loading ? 'Processing...' : 'Save Record'}
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Notes & Description</label>
+              <input type="text" className="form-input" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Additional details..." />
+            </div>
+
+            <button type="submit" className="btn-gradient" disabled={loading} style={{ width: '100%', padding: '0.85rem' }}>
+              {loading ? 'Processing...' : 'Save Document to Vault'}
             </button>
           </form>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {documents.map(doc => (
-          <div key={doc._id} className="card group relative overflow-hidden">
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
-              <button onClick={() => handleView(doc)} className="p-2 bg-white shadow-md border rounded-lg text-primary hover:bg-primary hover:text-white transition-colors" title="View">
-                <Eye size={16} />
-              </button>
-              <button onClick={() => handleDownload(doc)} className="p-2 bg-white shadow-md border rounded-lg text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors" title="Download">
-                <Download size={16} />
-              </button>
-              <button onClick={() => handleDelete(doc._id)} className="p-2 bg-white shadow-md border rounded-lg text-danger hover:bg-danger hover:text-white transition-colors" title="Delete">
-                <Trash2 size={16} />
-              </button>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 border border-gray-100">
-                {doc.fileType === 'Link' ? <LinkIcon size={24} /> : <FileText size={24} />}
+      {/* Documents Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+        {filteredDocs.map(doc => (
+          <div key={doc._id} className="glass-card glass-card-interactive">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div>
+                <span className="badge badge-primary">{doc.fileType || 'Document'}</span>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginTop: '0.5rem', color: 'var(--text-primary)' }}>
+                  {doc.title}
+                </h3>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <h3 className="font-bold text-lg truncate mb-1" title={doc.title}>{doc.title}</h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                  <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(doc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                  {doc.amount && <div className="font-bold text-gray-900">&#8377; {doc.amount.toLocaleString()}</div>}
-                </div>
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FileText size={20} />
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              <span className={doc.fileType === 'Link' ? 'text-blue-500' : 'text-gray-400'}>{doc.fileType}</span>
-              <span className="truncate max-w-[150px]">{doc.fileName}</span>
+            {doc.description && <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>{doc.description}</p>}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+              <span>{new Date(doc.date).toLocaleDateString('en-GB')}</span>
+              {doc.amount && <span style={{ fontWeight: '800', color: 'var(--primary)' }}>&#8377; {Number(doc.amount).toLocaleString()}</span>}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--glass-border)' }}>
+              <button className="btn-secondary-glass" onClick={() => handleView(doc)} style={{ flex: 1, padding: '0.45rem', fontSize: '0.8rem' }}>
+                <Eye size={14} /> View
+              </button>
+              <button className="btn-secondary-glass" onClick={() => handleDownload(doc)} style={{ flex: 1, padding: '0.45rem', fontSize: '0.8rem' }}>
+                <Download size={14} /> Save
+              </button>
+              <button className="btn-secondary-glass" onClick={() => handleDelete(doc._id)} style={{ padding: '0.45rem', fontSize: '0.8rem', color: 'var(--danger)' }}>
+                <Trash2 size={14} />
+              </button>
             </div>
           </div>
         ))}
-        {documents.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 bg-white rounded-2xl border border-dashed">No records found. Click "Add New Bill" to start.</div>}
+        {filteredDocs.length === 0 && (
+          <div className="glass-card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+            No bill documents uploaded yet.
+          </div>
+        )}
       </div>
 
-      {/* Internal File Viewer Modal */}
+      {/* Document View Modal */}
       {viewingDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-[9999] flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-5xl bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[90vh]">
-            <div className="p-4 border-b flex justify-between items-center bg-white">
-              <h2 className="font-bold text-lg">{viewingDoc.title}</h2>
-              <button onClick={() => setViewingDoc(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={24} />
-              </button>
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(16px)',
+            padding: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center'
+          }}
+          onClick={() => setViewingDoc(null)}
+        >
+          <div 
+            className="glass-panel" 
+            style={{ width: '100%', maxWidth: '800px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>{viewingDoc.title}</h3>
+              <button className="btn-icon" onClick={() => setViewingDoc(null)}><X size={18} /></button>
             </div>
-            <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center">
-              {viewingDoc.fileType === 'PDF' ? (
-                <iframe src={viewingDoc.fileUrl} className="w-full h-full" title="PDF Viewer"></iframe>
-              ) : (
-                <img src={viewingDoc.fileUrl} className="max-w-full max-h-full object-contain" alt="Invoice Preview" />
-              )}
-            </div>
+
+            {viewingDoc.fileType === 'PDF' ? (
+              <iframe src={viewingDoc.fileUrl} style={{ width: '100%', height: '600px', border: 'none', borderRadius: '12px' }} title="Doc View" />
+            ) : (
+              <img src={viewingDoc.fileUrl} alt={viewingDoc.title} style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain', borderRadius: '12px', display: 'block', margin: '0 auto' }} />
+            )}
           </div>
         </div>
       )}
@@ -236,4 +315,4 @@ const Invoices = () => {
   );
 };
 
-export default Invoices;
+export default Documents;
