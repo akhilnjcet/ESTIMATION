@@ -19,34 +19,43 @@ export const ModuleProvider = ({ children }) => {
   const storageKey = getModuleStorageKey(selectedProgram?._id);
 
   const loadFromStorage = useCallback(() => {
-    // If selectedProgram has saved enabledModules from database, use it!
-    if (selectedProgram && Array.isArray(selectedProgram.enabledModules) && selectedProgram.enabledModules.length > 0) {
+    // 1. Prioritize program workspace enabledModules configuration if present
+    if (selectedProgram && Array.isArray(selectedProgram.enabledModules)) {
+      const programModules = selectedProgram.enabledModules.includes('dashboard')
+        ? selectedProgram.enabledModules
+        : ['dashboard', ...selectedProgram.enabledModules];
+
       return {
-        enabledModules: selectedProgram.enabledModules,
+        enabledModules: programModules,
         menuOrder: getDefaultMenuOrder(),
         favoriteModules: [],
       };
     }
 
+    // 2. Check local storage cache
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        return {
-          enabledModules: parsed.enabledModules ?? getDefaultEnabledModules(role),
-          menuOrder: parsed.menuOrder ?? getDefaultMenuOrder(),
-          favoriteModules: parsed.favoriteModules ?? [],
-        };
+        if (Array.isArray(parsed.enabledModules)) {
+          return {
+            enabledModules: parsed.enabledModules,
+            menuOrder: parsed.menuOrder ?? getDefaultMenuOrder(),
+            favoriteModules: parsed.favoriteModules ?? [],
+          };
+        }
       }
     } catch {
       /* ignore malformed data */
     }
+
+    // 3. Fall back to defaults
     return {
-      enabledModules: getDefaultEnabledModules(role),
+      enabledModules: getDefaultEnabledModules(),
       menuOrder: getDefaultMenuOrder(),
       favoriteModules: [],
     };
-  }, [storageKey, role, selectedProgram]);
+  }, [storageKey, selectedProgram]);
 
   // ── state ──────────────────────────────────────────────────────
   const [enabledModules, setEnabledModules] = useState(() => loadFromStorage().enabledModules);
@@ -109,9 +118,7 @@ export const ModuleProvider = ({ children }) => {
   };
 
   const enableAll = () => {
-    const all = ALL_MODULES
-      .filter((m) => !m.adminOnly || role === 'admin')
-      .map((m) => m.id);
+    const all = ALL_MODULES.map((m) => m.id);
     setEnabledModules(all);
     persist(all, menuOrder, favoriteModules);
   };
@@ -124,7 +131,7 @@ export const ModuleProvider = ({ children }) => {
   };
 
   const resetDefaults = () => {
-    const defaults = getDefaultEnabledModules(role);
+    const defaults = getDefaultEnabledModules();
     const order = getDefaultMenuOrder();
     const faves = [];
     setEnabledModules(defaults);
@@ -145,6 +152,11 @@ export const ModuleProvider = ({ children }) => {
     if (pathname === '/' || pathname === '/login') return true;
     const mod = ALL_MODULES.find((m) => m.path === pathname);
     if (!mod) return true; // unknown routes pass through
+
+    // If module is adminOnly, block non-admins
+    if (mod.adminOnly && role !== 'admin') return false;
+
+    // Strictly check if module is enabled in workspace
     return enabledModules.includes(mod.id);
   };
 

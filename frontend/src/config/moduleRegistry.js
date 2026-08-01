@@ -217,9 +217,8 @@ export const getModuleStorageKey = (programId) =>
   programId ? `modules_${programId}` : 'modules_default';
 
 /** Returns the default enabled module ids */
-export const getDefaultEnabledModules = (role = 'admin') =>
+export const getDefaultEnabledModules = () =>
   ALL_MODULES
-    .filter((m) => !m.adminOnly || role === 'admin')
     .filter((m) => m.defaultEnabled)
     .map((m) => m.id);
 
