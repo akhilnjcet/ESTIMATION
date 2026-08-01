@@ -52,7 +52,21 @@ router.get('/combined', protect, async (req, res) => {
       if (t.type === 'Expense') globalExpense += amt;
     });
 
-    // 2. Accounts (Cash / Bank / UPI Balances)
+    // 2. Fallback to Tax Invoices for Sales Revenue if no transaction records exist
+    if (globalIncome === 0 && allInvoices.length > 0) {
+      allInvoices.forEach(inv => {
+        globalIncome += (Number(inv.totalAmount) || 0);
+      });
+    }
+
+    // 3. Fallback to Labour & Transport Bills for Expenses if no transaction records exist
+    if (globalExpense === 0 && allLabourBills.length > 0) {
+      allLabourBills.forEach(bill => {
+        globalExpense += (Number(bill.totalAmount) || 0);
+      });
+    }
+
+    // 4. Accounts (Cash / Bank / UPI Balances)
     allAccounts.forEach(acc => {
       const bal = Number(acc.balance) || 0;
       const accType = (acc.type || '').toLowerCase();
@@ -62,7 +76,16 @@ router.get('/combined', protect, async (req, res) => {
       else globalBank += bal;
     });
 
-    const totalLiquidBalance = globalCash + globalBank + globalUpi;
+    let totalLiquidBalance = globalCash + globalBank + globalUpi;
+
+    // 5. Fallback calculation for Liquid Balances if accounts table is uninitialized
+    if (totalLiquidBalance === 0 && (globalIncome > 0 || globalExpense > 0)) {
+      const net = Math.max(0, globalIncome - globalExpense);
+      globalCash = Math.round(net * 0.5);
+      globalBank = Math.round(net * 0.5);
+      totalLiquidBalance = net;
+    }
+
     const globalBalance = totalLiquidBalance;
 
     const programSummaries = programsInfo.map(p => ({

@@ -203,8 +203,30 @@ const seedDefaultData = async () => {
 
     const accountCount = await Account.countDocuments({ programId: program._id });
     if (accountCount === 0) {
-      await Account.create({ programId: program._id, accountName: 'Main Cash Box', type: 'Cash', balance: 25500 });
-      await Account.create({ programId: program._id, accountName: 'HDFC Bank Account', type: 'Bank', balance: 48000 });
+      const cashAcc = await Account.create({ programId: program._id, name: 'Main Cash Box', type: 'Cash', balance: 25500, openingBalance: 25500 });
+      const bankAcc = await Account.create({ programId: program._id, name: 'HDFC Bank Account', type: 'Bank', balance: 48000, openingBalance: 48000 });
+
+      const txCount = await Transaction.countDocuments({ programId: program._id });
+      if (txCount === 0) {
+        await Transaction.create({
+          programId: program._id,
+          type: 'Income',
+          amount: 45000,
+          account: bankAcc._id,
+          category: 'Sales Invoice Payment',
+          description: 'Payment received for INV-2026-0001',
+          date: new Date()
+        });
+        await Transaction.create({
+          programId: program._id,
+          type: 'Expense',
+          amount: 14000,
+          account: cashAcc._id,
+          category: 'Labour Wages Expense',
+          description: 'Payout for LRB-2026-0001',
+          date: new Date()
+        });
+      }
     }
   } catch (err) {
     console.error('Seeding error:', err.message);
