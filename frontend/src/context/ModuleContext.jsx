@@ -7,6 +7,8 @@ import {
 } from '../config/moduleRegistry';
 import { useProgram } from './ProgramContext';
 
+import api from '../utils/api';
+
 const ModuleContext = createContext();
 
 export const ModuleProvider = ({ children }) => {
@@ -17,6 +19,15 @@ export const ModuleProvider = ({ children }) => {
   const storageKey = getModuleStorageKey(selectedProgram?._id);
 
   const loadFromStorage = useCallback(() => {
+    // If selectedProgram has saved enabledModules from database, use it!
+    if (selectedProgram && Array.isArray(selectedProgram.enabledModules) && selectedProgram.enabledModules.length > 0) {
+      return {
+        enabledModules: selectedProgram.enabledModules,
+        menuOrder: getDefaultMenuOrder(),
+        favoriteModules: [],
+      };
+    }
+
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
@@ -35,7 +46,7 @@ export const ModuleProvider = ({ children }) => {
       menuOrder: getDefaultMenuOrder(),
       favoriteModules: [],
     };
-  }, [storageKey, role]);
+  }, [storageKey, role, selectedProgram]);
 
   // ── state ──────────────────────────────────────────────────────
   const [enabledModules, setEnabledModules] = useState(() => loadFromStorage().enabledModules);
@@ -48,7 +59,7 @@ export const ModuleProvider = ({ children }) => {
     setEnabledModules(data.enabledModules);
     setMenuOrderState(data.menuOrder);
     setFavoriteModules(data.favoriteModules);
-  }, [loadFromStorage, selectedProgram?._id]);
+  }, [loadFromStorage, selectedProgram?._id, selectedProgram?.enabledModules]);
 
   // ── persistence ────────────────────────────────────────────────
   const persist = useCallback(
@@ -61,8 +72,14 @@ export const ModuleProvider = ({ children }) => {
           favoriteModules: favorites,
         })
       );
+
+      // Also persist to backend database so viewers and other users inherit hidden module settings
+      if (selectedProgram?._id) {
+        api.put(`/programs/${selectedProgram._id}`, { enabledModules: enabled })
+          .catch((err) => console.error('Failed to sync enabledModules to database:', err));
+      }
     },
-    [storageKey]
+    [storageKey, selectedProgram?._id]
   );
 
   // ── actions ────────────────────────────────────────────────────

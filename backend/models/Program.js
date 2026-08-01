@@ -24,6 +24,9 @@ const programSchema = new mongoose.Schema({
   showTermsByDefault: { type: Boolean, default: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
+  /** List of module IDs enabled for this program workspace */
+  enabledModules: [{ type: String }],
+
   // ── New fields for Workspace Management (all optional / backward-compatible) ──
   /** If this program was duplicated, points to the source program */
   parentProgramId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', default: null },
