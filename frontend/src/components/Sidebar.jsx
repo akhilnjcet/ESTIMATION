@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon, 
-  LogOut, Shield as ShieldIcon, Download, FileCode, ChevronLeft, Sparkles
+  LogOut, Shield as ShieldIcon, UserCheck, Download, FileCode, ChevronLeft, Sparkles
 } from 'lucide-react';
 import ProgramSelector from './ProgramSelector';
 import logo from '../assets/logo.jpg';
@@ -68,7 +68,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     navGroups.push({
       title: 'ADMINISTRATION',
       items: [
-        { path: '/user-access', label: 'User Access', icon: ShieldIcon },
+        { path: '/user-access', label: 'Login Manager', icon: UserCheck },
         { path: '/settings', label: 'Settings', icon: SettingsIcon }
       ]
     });

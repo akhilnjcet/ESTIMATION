@@ -168,6 +168,7 @@ function App() {
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/notes" element={<PrivateRoute><Notes /></PrivateRoute>} />
             <Route path="/user-access" element={<PrivateRoute><UserAccess /></PrivateRoute>} />
+            <Route path="/login-manager" element={<PrivateRoute><UserAccess /></PrivateRoute>} />
             <Route path="/bill-upload" element={<PrivateRoute><Documents /></PrivateRoute>} />
             
             <Route path="*" element={<Navigate to="/" />} />
