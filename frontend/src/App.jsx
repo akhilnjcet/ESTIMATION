@@ -22,6 +22,7 @@ import Ledger from './pages/Ledger';
 import Settings from './pages/Settings';
 import Notes from './pages/Notes';
 import UserAccess from './pages/UserAccess';
+import AdminSettings from './pages/AdminSettings';
 import Documents from './pages/Documents';
 import { ShieldAlert, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -242,6 +243,7 @@ function App() {
               <Route path="/notes"           element={<PrivateRoute><Notes /></PrivateRoute>} />
               <Route path="/user-access"     element={<PrivateRoute><AdminOnlyRoute><UserAccess /></AdminOnlyRoute></PrivateRoute>} />
               <Route path="/login-manager"   element={<PrivateRoute><AdminOnlyRoute><UserAccess /></AdminOnlyRoute></PrivateRoute>} />
+              <Route path="/admin-settings"  element={<PrivateRoute><AdminOnlyRoute><AdminSettings /></AdminOnlyRoute></PrivateRoute>} />
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />

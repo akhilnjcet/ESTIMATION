@@ -16,7 +16,7 @@ import { useProgram } from '../context/ProgramContext';
 const ICON_MAP = {
   LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings: SettingsIcon,
-  UserCheck, FileCode, StickyNote,
+  UserCheck, FileCode, StickyNote, Shield,
 };
 const getIcon = (name) => ICON_MAP[name] || FileText;
 
