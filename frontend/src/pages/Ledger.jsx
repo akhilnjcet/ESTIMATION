@@ -295,19 +295,19 @@ const Ledger = () => {
             justify: 'center'
           }}
         >
-          <div style={{ width: '100%', maxWidth: '900px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
-                <X size={18} /> Close Statement
-              </button>
-              
-              <button className="btn-gradient" onClick={triggerPrint}>
-                <Printer size={18} /> Print Statement PDF
-              </button>
-            </div>
-
-            <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-              {renderStatementPreview(previewData)}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+            <div className="printable" style={{ width: '100%', maxWidth: '900px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
+                  <X size={18} /> Close Statement
+                </button>
+                <button className="btn-gradient" onClick={triggerPrint}>
+                  <Printer size={18} /> Print Statement PDF
+                </button>
+              </div>
+              <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+                {renderStatementPreview(previewData)}
+              </div>
             </div>
           </div>
         </div>
