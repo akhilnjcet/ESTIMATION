@@ -186,7 +186,7 @@ const WorkspaceSwitcher = () => {
               borderRadius: '16px',
               boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
               zIndex: 1200,
-              overflow: 'hidden',
+              overflow: 'visible',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -216,7 +216,7 @@ const WorkspaceSwitcher = () => {
             </div>
 
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', padding: '0.35rem 0.5rem', borderBottom: '1px solid var(--glass-border)', gap: '0.2rem', overflowX: 'auto', background: 'rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', padding: '0.35rem 0.5rem', borderBottom: '1px solid var(--glass-border)', gap: '0.2rem', overflowX: 'auto', background: 'var(--sidebar-item-hover)' }}>
               {[
                 { id: 'all', label: 'All' },
                 { id: 'favorites', label: 'Starred' },
@@ -320,7 +320,7 @@ const WorkspaceSwitcher = () => {
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: isFav ? '#F59E0B' : 'rgba(255,255,255,0.2)',
+                            color: isFav ? '#F59E0B' : 'var(--text-muted)',
                             padding: '0.2rem',
                             display: 'flex',
                           }}
@@ -354,71 +354,54 @@ const WorkspaceSwitcher = () => {
                             style={{
                               position: 'absolute',
                               right: '0.5rem',
-                              top: '2rem',
-                              width: '180px',
-                              background: '#0E1726',
-                              border: '1px solid var(--glass-border-hover)',
-                              borderRadius: '12px',
-                              boxShadow: '0 10px 25px rgba(0,0,0,0.7)',
+                              top: '2.2rem',
+                              width: '185px',
+                              background: 'var(--bg-card-solid)',
+                              border: '1px solid var(--glass-border)',
+                              borderRadius: '14px',
+                              boxShadow: 'var(--shadow-card)',
                               zIndex: 1300,
                               padding: '0.35rem',
                             }}
                           >
-                            <button
-                              onClick={(e) => { e.stopPropagation(); selectProgram(p); setIsOpen(false); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Check size={13} style={{ color: 'var(--success)' }} /> Switch to Program
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('rename', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Edit3 size={13} /> Rename
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('duplicate', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Copy size={13} /> Duplicate
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('transfer', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Send size={13} /> Transfer
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('share', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Users size={13} /> Share & Roles
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('archive', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Archive size={13} /> {p.status === 'archived' ? 'Restore' : 'Archive'}
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setIsOpen(false); navigate('/settings'); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Settings size={13} /> Settings
-                            </button>
-
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openModal('delete', p); }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.4rem 0.6rem', border: 'none', background: 'none', color: '#EF4444', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '6px' }}
-                            >
-                              <Trash2 size={13} /> Delete
-                            </button>
+                            {[
+                              { label: 'Switch to Program', icon: Check, color: 'var(--success)', action: () => { selectProgram(p); setIsOpen(false); } },
+                              { label: 'Rename', icon: Edit3, action: () => openModal('rename', p) },
+                              { label: 'Duplicate', icon: Copy, action: () => openModal('duplicate', p) },
+                              { label: 'Transfer', icon: Send, action: () => openModal('transfer', p) },
+                              { label: 'Share & Roles', icon: Users, action: () => openModal('share', p) },
+                              { label: p.status === 'archived' ? 'Restore' : 'Archive', icon: Archive, action: () => openModal('archive', p) },
+                              { label: 'Settings', icon: Settings, action: () => { setIsOpen(false); navigate('/settings'); } },
+                              { label: 'Delete', icon: Trash2, color: '#EF4444', action: () => openModal('delete', p) },
+                            ].map((item, idx) => {
+                              const IconComponent = item.icon;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={(e) => { e.stopPropagation(); item.action(); }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--sidebar-item-hover)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.55rem',
+                                    width: '100%',
+                                    padding: '0.45rem 0.65rem',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: item.color || 'var(--text-primary)',
+                                    fontSize: '0.78rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    borderRadius: '8px',
+                                    transition: 'background 0.15s ease'
+                                  }}
+                                >
+                                  <IconComponent size={13} style={{ color: item.color || 'var(--primary)' }} />
+                                  {item.label}
+                                </button>
+                              );
+                            })}
                           </motion.div>
                         )}
                       </AnimatePresence>

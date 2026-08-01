@@ -89,7 +89,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         zIndex: 1100,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'visible',
         transition: 'background 0.3s ease, border-color 0.3s ease',
       }}
     >
@@ -169,7 +169,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       </div>
 
       {/* Workspace Switcher */}
-      <div style={{ padding: '0.75rem 1rem' }}>
+      <div style={{ padding: '0.75rem 1rem', position: 'relative', zIndex: 1200 }}>
         <WorkspaceSwitcher />
       </div>
 
