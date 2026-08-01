@@ -283,31 +283,47 @@ const Ledger = () => {
       {/* Statement Print Modal Overlay */}
       {previewData && (
         <div 
+          className="modal-print-overlay labour-preview-overlay"
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 99999,
-            background: 'rgba(15, 23, 42, 0.8)',
+            background: 'rgba(15, 23, 42, 0.85)',
             backdropFilter: 'blur(16px)',
-            padding: '2rem',
+            padding: '2rem 1rem',
             overflowY: 'auto',
             display: 'flex',
-            justify: 'center'
+            justifyContent: 'center',
+            alignItems: 'flex-start'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-            <div className="printable" style={{ width: '100%', maxWidth: '900px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
-                  <X size={18} /> Close Statement
-                </button>
-                <button className="btn-gradient" onClick={triggerPrint}>
-                  <Printer size={18} /> Print Statement PDF
-                </button>
-              </div>
-              <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-                {renderStatementPreview(previewData)}
-              </div>
+          <div className="printable" style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+            <div 
+              className="no-print" 
+              style={{ 
+                display: 'flex', 
+                justify: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '1.25rem',
+                background: 'rgba(15, 23, 42, 0.95)',
+                padding: '1rem 1.5rem',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10
+              }}
+            >
+              <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}>
+                <X size={18} /> Close Statement
+              </button>
+              <button className="btn-gradient" onClick={triggerPrint}>
+                <Printer size={18} /> Print Statement PDF
+              </button>
+            </div>
+            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              {renderStatementPreview(previewData)}
             </div>
           </div>
         </div>

@@ -476,7 +476,7 @@ select option {
    PRINT STYLES - HIDE WEBPAGE UI AND PRINT ONLY CLEAN DOCUMENT FILE
    ========================================================================== */
 @media print {
-  /* Reset container margins & layout bounds */
+  /* Reset container margins & layout bounds for clean multi-page document printing */
   html, body, #root, .app-container, .main-content, .main-content-inner {
     background: #FFFFFF !important;
     color: #0F172A !important;
@@ -487,10 +487,12 @@ select option {
     min-width: 100% !important;
     position: static !important;
     overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
     transform: none !important;
   }
 
-  /* Hide app navigation, sidebar, headers, form builders, action buttons */
+  /* Hide app navigation, sidebar, headers, form builders, action buttons, and modal header controls */
   aside,
   nav,
   header,
@@ -512,33 +514,38 @@ select option {
     overflow: hidden !important;
   }
 
-  /* Reset modal overlay container for printing */
+  /* Reset modal overlay container for multi-page printing */
   .labour-preview-overlay,
   .modal-print-overlay {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
     width: 100% !important;
     height: auto !important;
+    max-height: none !important;
     background: #FFFFFF !important;
     backdrop-filter: none !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     display: block !important;
-    z-index: 99999999 !important;
+    overflow: visible !important;
+    z-index: auto !important;
   }
 
   .labour-preview-overlay > div,
-  .modal-print-overlay > div {
+  .modal-print-overlay > div,
+  .printable {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
+    overflow: visible !important;
+    height: auto !important;
   }
 
-  /* Format invoice container for clean A4 paper print */
+  /* Format invoice & statement container for clean A4 paper print */
   .invoice-container {
     width: 100% !important;
     max-width: 100% !important;
@@ -549,8 +556,25 @@ select option {
     border-radius: 0 !important;
     background: #FFFFFF !important;
     color: #0F172A !important;
+    overflow: visible !important;
+    height: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
   }
 
   @page {
