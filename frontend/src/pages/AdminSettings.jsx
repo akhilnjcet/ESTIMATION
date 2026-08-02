@@ -124,54 +124,26 @@ const AdminSettings = () => {
       </div>
 
       {/* Top Health Stats Cards */}
-      <div className="grid-12">
-        <div className="glass-card col-span-3">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Database Health</span>
-            <Server size={18} style={{ color: 'var(--success)' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+        {[
+          { label: 'Database Health', value: 'Connected', sub: 'MongoDB Primary Cluster (Latency 12ms)', color: 'var(--success)', Icon: Server },
+          { label: 'Security Protocol', value: 'Enforced', sub: 'JWT 256-bit Token Authentication', color: 'var(--text-primary)', Icon: Lock },
+          { label: 'Program Isolation', value: 'Strict Active', sub: 'Multi-tenant data boundary active', color: 'var(--text-primary)', Icon: Layers },
+          { label: 'System Version', value: 'v2.5.0', sub: 'Krishna ERP Enterprise Build', color: 'var(--secondary)', Icon: Activity },
+        ].map(({ label, value, sub, color, Icon }) => (
+          <div key={label} className="glass-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
+              <Icon size={16} style={{ color, flexShrink: 0 }} />
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '900', color, lineHeight: 1.2 }}>{value}</div>
+            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.25rem' }}>{sub}</span>
           </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.4rem' }}>
-            Connected
-          </div>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>MongoDB Primary Cluster (Latency 12ms)</span>
-        </div>
-
-        <div className="glass-card col-span-3">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Security Protocol</span>
-            <Lock size={18} style={{ color: 'var(--primary)' }} />
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--text-primary)', marginTop: '0.4rem' }}>
-            Enforced
-          </div>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>JWT 256-bit Token Authentication</span>
-        </div>
-
-        <div className="glass-card col-span-3">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Program Isolation</span>
-            <Layers size={18} style={{ color: 'var(--warning)' }} />
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--text-primary)', marginTop: '0.4rem' }}>
-            Strict Active
-          </div>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Multi-tenant data boundary active</span>
-        </div>
-
-        <div className="glass-card col-span-3">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>System Version</span>
-            <Activity size={18} style={{ color: 'var(--secondary)' }} />
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--secondary)', marginTop: '0.4rem' }}>
-            v2.5.0
-          </div>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Krishna ERP Enterprise Build</span>
-        </div>
+        ))}
       </div>
 
       {/* Tabs Bar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', overflowX: 'auto', gap: '0.4rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
         {[
           { id: 'security', label: 'Security & Access', icon: Lock },
           { id: 'database', label: 'Database & Backup', icon: Database },
@@ -191,11 +163,13 @@ const AdminSettings = () => {
                 borderColor: isActive ? 'var(--primary)' : 'transparent',
                 color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
                 fontWeight: isActive ? '800' : '600',
-                padding: '0.55rem 1rem',
-                fontSize: '0.85rem'
+                padding: '0.5rem 0.85rem',
+                fontSize: '0.8rem',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              <IconComp size={16} />
+              <IconComp size={15} />
               {tab.label}
             </button>
           );
@@ -211,52 +185,29 @@ const AdminSettings = () => {
           </h2>
 
           <form onSubmit={handleSaveSecurity} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>Strict Program Data Isolation</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Prevent users from viewing or leaking data across different workspace units</div>
+            {[
+              { key: 'strictProgramIsolation', label: 'Strict Program Data Isolation', sub: 'Prevent users from viewing or leaking data across different workspace units' },
+              { key: 'autoBlockInactive', label: 'Auto-Block Suspended Accounts', sub: 'Automatically invalidate session tokens immediately when an account is marked suspended' },
+              { key: 'requirePasswordChange90Days', label: 'Enforce 90-Day Password Expiry', sub: 'Require staff user accounts to rotate password credentials every 90 days' },
+            ].map(({ key, label, sub }) => (
+              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{label}</div>
+                  <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{sub}</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={securitySettings[key]}
+                  onChange={e => setSecuritySettings({ ...securitySettings, [key]: e.target.checked })}
+                  style={{ width: '22px', height: '22px', cursor: 'pointer', accentColor: 'var(--primary)', flexShrink: 0, marginTop: '0.1rem' }}
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={securitySettings.strictProgramIsolation}
-                onChange={e => setSecuritySettings({ ...securitySettings, strictProgramIsolation: e.target.checked })}
-                style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-              />
-            </div>
+            ))}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>Auto-Block Suspended Accounts</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Automatically invalidate session tokens immediately when an account is marked suspended</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={securitySettings.autoBlockInactive}
-                onChange={e => setSecuritySettings({ ...securitySettings, autoBlockInactive: e.target.checked })}
-                style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>Enforce 90-Day Password Expiry</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Require staff user accounts to rotate password credentials every 90 days</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={securitySettings.requirePasswordChange90Days}
-                onChange={e => setSecuritySettings({ ...securitySettings, requirePasswordChange90Days: e.target.checked })}
-                style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-              />
-            </div>
-
-            <div className="form-group" style={{ maxWidth: '320px' }}>
+            <div className="form-group" style={{ maxWidth: '100%' }}>
               <label className="form-label">Inactivity Session Timeout</label>
-              <select
-                className="form-select"
-                value={securitySettings.sessionTimeoutMins}
-                onChange={e => setSecuritySettings({ ...securitySettings, sessionTimeoutMins: e.target.value })}
-              >
+              <select className="form-select" value={securitySettings.sessionTimeoutMins}
+                onChange={e => setSecuritySettings({ ...securitySettings, sessionTimeoutMins: e.target.value })}>
                 <option value="30">30 Minutes</option>
                 <option value="60">1 Hour</option>
                 <option value="120">2 Hours (Recommended)</option>
@@ -264,7 +215,7 @@ const AdminSettings = () => {
               </select>
             </div>
 
-            <button type="submit" className="btn-gradient" style={{ alignSelf: 'flex-start', minWidth: '180px' }}>
+            <button type="submit" className="btn-gradient" style={{ width: '100%', maxWidth: '320px', padding: '0.75rem' }}>
               Save Security Policies
             </button>
           </form>
@@ -356,52 +307,43 @@ const AdminSettings = () => {
             System-Wide Global Defaults
           </h2>
 
-          <form onSubmit={handleSaveDefaults} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            <div className="form-group">
-              <label className="form-label">System Currency Standard</label>
-              <select
-                className="form-select"
-                value={globalDefaults.currency}
-                onChange={e => setGlobalDefaults({ ...globalDefaults, currency: e.target.value })}
-              >
-                <option value="INR (₹)">Indian Rupee - INR (₹)</option>
-                <option value="USD ($)">US Dollar - USD ($)</option>
-                <option value="EUR (€)">Euro - EUR (€)</option>
-                <option value="AED (AED)">UAE Dirham - AED</option>
-              </select>
+          <form onSubmit={handleSaveDefaults} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.25rem' }}>
+              <div className="form-group">
+                <label className="form-label">System Currency Standard</label>
+                <select className="form-select" value={globalDefaults.currency}
+                  onChange={e => setGlobalDefaults({ ...globalDefaults, currency: e.target.value })}>
+                  <option value="INR (₹)">Indian Rupee - INR (₹)</option>
+                  <option value="USD ($)">US Dollar - USD ($)</option>
+                  <option value="EUR (€)">Euro - EUR (€)</option>
+                  <option value="AED (AED)">UAE Dirham - AED</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">System Timezone</label>
+                <select className="form-select" value={globalDefaults.timezone}
+                  onChange={e => setGlobalDefaults({ ...globalDefaults, timezone: e.target.value })}>
+                  <option value="Asia/Kolkata (IST +5:30)">Asia/Kolkata (IST +5:30)</option>
+                  <option value="UTC (GMT +0:00)">UTC (GMT +0:00)</option>
+                  <option value="America/New_York (EST)">America/New_York (EST)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Auto-Archive Deleted Workspaces</label>
+                <select className="form-select" value={globalDefaults.autoArchiveDays}
+                  onChange={e => setGlobalDefaults({ ...globalDefaults, autoArchiveDays: e.target.value })}>
+                  <option value="30">Keep in Trash for 30 Days</option>
+                  <option value="60">Keep in Trash for 60 Days</option>
+                  <option value="0">Permanent Immediate Deletion</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">System Timezone</label>
-              <select
-                className="form-select"
-                value={globalDefaults.timezone}
-                onChange={e => setGlobalDefaults({ ...globalDefaults, timezone: e.target.value })}
-              >
-                <option value="Asia/Kolkata (IST +5:30)">Asia/Kolkata (IST +5:30)</option>
-                <option value="UTC (GMT +0:00)">UTC (GMT +0:00)</option>
-                <option value="America/New_York (EST)">America/New_York (EST)</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Auto-Archive Deleted Workspaces</label>
-              <select
-                className="form-select"
-                value={globalDefaults.autoArchiveDays}
-                onChange={e => setGlobalDefaults({ ...globalDefaults, autoArchiveDays: e.target.value })}
-              >
-                <option value="30">Keep in Trash for 30 Days</option>
-                <option value="60">Keep in Trash for 60 Days</option>
-                <option value="0">Permanent Immediate Deletion</option>
-              </select>
-            </div>
-
-            <div className="col-span-12" style={{ marginTop: '0.5rem' }}>
-              <button type="submit" className="btn-gradient" style={{ minWidth: '180px' }}>
-                Save System Defaults
-              </button>
-            </div>
+            <button type="submit" className="btn-gradient" style={{ width: '100%', maxWidth: '320px', padding: '0.75rem' }}>
+              Save System Defaults
+            </button>
           </form>
         </div>
       )}
