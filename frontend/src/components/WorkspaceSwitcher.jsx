@@ -25,7 +25,7 @@ const WorkspaceSwitcher = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [actionMenuProgramId, setActionMenuProgramId] = useState(null);
-  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
+  const [popoverPos, setPopoverPos] = useState({});
 
   // Modal state
   const [modalType, setModalType] = useState(null);
@@ -333,10 +333,16 @@ const WorkspaceSwitcher = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setPopoverPos({
-                              top: rect.bottom + 6,
-                              left: rect.right + 8,
-                            });
+                            const popoverHeight = 380; // approximate menu height
+                            let newPos = { left: rect.right + 8 };
+                            
+                            if (rect.bottom + 6 + popoverHeight > window.innerHeight) {
+                              newPos.bottom = Math.max(10, window.innerHeight - rect.bottom + 10);
+                            } else {
+                              newPos.top = rect.bottom + 6;
+                            }
+                            
+                            setPopoverPos(newPos);
                             setActionMenuProgramId(actionMenuProgramId === p._id ? null : p._id);
                           }}
                           style={{
@@ -419,24 +425,27 @@ const WorkspaceSwitcher = () => {
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   position: 'fixed',
-                  top: popoverPos.top,
+                  top: popoverPos.top !== undefined ? popoverPos.top : 'auto',
+                  bottom: popoverPos.bottom !== undefined ? popoverPos.bottom : 'auto',
                   left: popoverPos.left,
                   width: '240px',
+                  maxHeight: 'calc(100vh - 20px)',
                   background: 'var(--bg-card-solid)',
                   border: '1px solid var(--glass-border-hover)',
                   borderRadius: '18px',
                   boxShadow: '0 24px 48px -8px rgba(0,0,0,0.8)',
                   zIndex: 9999,
-                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
                 {/* Header */}
-                <div style={{ padding: '0.85rem 1rem 0.6rem', borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)' }}>
+                <div style={{ padding: '0.85rem 1rem 0.6rem', borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', flexShrink: 0 }}>
                   <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Workspace</div>
                   <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeP.name}</div>
                 </div>
 
-                <div style={{ padding: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', overflowY: 'auto', flex: 1, scrollbarWidth: 'thin' }}>
 
                   {/* Switch */}
                   <button
