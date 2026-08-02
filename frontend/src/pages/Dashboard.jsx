@@ -89,6 +89,9 @@ const Dashboard = () => {
     cashBalance: combined.cashBalance || 0,
     bankBalance: combined.bankBalance || 0,
     upiBalance: combined.upiBalance || 0,
+    cashOpeningBalance: combined.cashOpeningBalance || 0,
+    bankOpeningBalance: combined.bankOpeningBalance || 0,
+    upiOpeningBalance: combined.upiOpeningBalance || 0,
   };
 
   const filteredDocs = activeDocTab === 'All' 
@@ -185,6 +188,9 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <span className="form-label">Physical Cash on Hand</span>
+              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>
+                Opening: &#8377;{stats.cashOpeningBalance.toLocaleString()}
+              </div>
               <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: 'var(--success)', marginTop: '0.15rem', letterSpacing: '-0.02em' }}>
                 <AnimatedCounter value={stats.cashBalance} />
               </h2>
@@ -203,6 +209,9 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <span className="form-label">Digital & Bank Assets</span>
+              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>
+                Opening: &#8377;{(stats.bankOpeningBalance + stats.upiOpeningBalance).toLocaleString()}
+              </div>
               <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: 'var(--warning)', marginTop: '0.15rem', letterSpacing: '-0.02em' }}>
                 <AnimatedCounter value={stats.bankBalance + stats.upiBalance} />
               </h2>

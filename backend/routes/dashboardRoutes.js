@@ -64,6 +64,9 @@ router.get('/combined', protect, async (req, res) => {
     let globalCash = 0;
     let globalBank = 0;
     let globalUpi = 0;
+    let globalCashOpening = 0;
+    let globalBankOpening = 0;
+    let globalUpiOpening = 0;
 
     // 1. Calculate Income & Expense from program's transactions
     allTransactions.forEach(t => {
@@ -89,11 +92,21 @@ router.get('/combined', protect, async (req, res) => {
     // 4. Calculate actual Account balances for this program
     allAccounts.forEach(acc => {
       const bal = Number(acc.balance) || 0;
+      const opBal = Number(acc.openingBalance) || 0;
       const accType = (acc.type || '').toLowerCase();
-      if (accType === 'cash') globalCash += bal;
-      else if (accType === 'bank') globalBank += bal;
-      else if (accType === 'upi') globalUpi += bal;
-      else globalBank += bal;
+      if (accType === 'cash') {
+        globalCash += bal;
+        globalCashOpening += opBal;
+      } else if (accType === 'bank') {
+        globalBank += bal;
+        globalBankOpening += opBal;
+      } else if (accType === 'upi') {
+        globalUpi += bal;
+        globalUpiOpening += opBal;
+      } else {
+        globalBank += bal;
+        globalBankOpening += opBal;
+      }
     });
 
     const totalLiquidBalance = globalCash + globalBank + globalUpi;
@@ -163,7 +176,10 @@ router.get('/combined', protect, async (req, res) => {
         totalLiquidBalance,
         cashBalance: globalCash,
         bankBalance: globalBank,
-        upiBalance: globalUpi
+        upiBalance: globalUpi,
+        cashOpeningBalance: globalCashOpening,
+        bankOpeningBalance: globalBankOpening,
+        upiOpeningBalance: globalUpiOpening
       },
       programSummaries,
       recentInvoices: invoices,

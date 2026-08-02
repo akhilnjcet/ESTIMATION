@@ -448,9 +448,6 @@ select option {
     max-width: 160px !important;
     padding: 0.35rem 0.75rem !important;
   }
-  .navbar-date-text {
-    display: none !important;
-  }
   .table-glass {
     min-width: 580px;
   }
