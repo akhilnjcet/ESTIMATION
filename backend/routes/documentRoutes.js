@@ -31,6 +31,25 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Update document
+router.put('/:id', protect, async (req, res) => {
+  try {
+    if (!req.programId) return res.status(400).json({ message: 'No program selected' });
+    const { title, fileName, fileUrl, fileType, date, description, amount, externalLink } = req.body;
+
+    const doc = await Document.findOneAndUpdate(
+      { _id: req.params.id, programId: req.programId },
+      { title, fileName, fileUrl, fileType, date, description, amount, externalLink },
+      { new: true }
+    );
+
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+    res.json(doc);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete document
 router.delete('/:id', protect, async (req, res) => {
   try {

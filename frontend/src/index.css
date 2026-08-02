@@ -632,6 +632,26 @@ select option {
     print-color-adjust: exact !important;
   }
 
+  /* Force white background on everything inside the print overlay */
+  html, body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  .labour-preview-overlay *,
+  .modal-print-overlay * {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Re-apply white to the invoice itself so coloured summary cells still show */
+  .invoice-container,
+  .invoice-container * {
+    background-color: revert !important;
+  }
+
   table {
     width: 100% !important;
     border-collapse: collapse !important;

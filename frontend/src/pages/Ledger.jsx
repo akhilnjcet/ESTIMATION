@@ -364,7 +364,7 @@ const Ledger = () => {
                 <Printer size={18} /> Print Statement PDF
               </button>
             </div>
-            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ borderRadius: '16px', background: '#fff' }}>
               {renderStatementPreview(previewData)}
             </div>
           </div>
