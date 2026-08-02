@@ -44,6 +44,8 @@ const Ledger = () => {
 
   const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
   const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
+  const cashOpeningBalance = accounts.filter(a => a.type === 'Cash').reduce((acc, curr) => acc + (curr.openingBalance || 0), 0);
+  const bankOpeningBalance = accounts.filter(a => a.type !== 'Cash').reduce((acc, curr) => acc + (curr.openingBalance || 0), 0);
   const totalOpeningBalance = accounts.reduce((acc, curr) => acc + (curr.openingBalance || 0), 0);
   const totalCredit = filteredTransactions.filter(t => t.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
   const totalDebit = filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
@@ -59,6 +61,8 @@ const Ledger = () => {
       netBalance,
       cashBalance,
       bankBalance,
+      cashOpeningBalance,
+      bankOpeningBalance,
       includeBalances,
       date: new Date().toLocaleDateString('en-GB')
     });
@@ -147,6 +151,33 @@ const Ledger = () => {
             ))}
           </tbody>
         </table>
+
+        {data.includeBalances && (
+          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ padding: '1rem 1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                💵 Cash on Hand
+              </span>
+              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#15803d', marginTop: '0.25rem' }}>
+                ₹ {data.cashBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#4ade80', marginTop: '0.25rem', borderTop: '1px dashed #86efac', paddingTop: '0.25rem' }}>
+                Opening Balance: ₹ {data.cashOpeningBalance.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ padding: '1rem 1.25rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                🏦 Bank Balance
+              </span>
+              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#1d4ed8', marginTop: '0.25rem' }}>
+                ₹ {data.bankBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#60a5fa', marginTop: '0.25rem', borderTop: '1px dashed #93c5fd', paddingTop: '0.25rem' }}>
+                Opening Balance: ₹ {data.bankOpeningBalance.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
