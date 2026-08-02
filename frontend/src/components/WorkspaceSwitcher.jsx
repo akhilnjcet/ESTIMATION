@@ -334,13 +334,19 @@ const WorkspaceSwitcher = () => {
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
                             const popoverHeight = 380; // approximate menu height
-                            let newPos = { left: rect.right + 8 };
+                            let topPos = rect.bottom + 6;
                             
-                            if (rect.bottom + 6 + popoverHeight > window.innerHeight) {
-                              newPos.bottom = Math.max(10, window.innerHeight - rect.bottom + 10);
-                            } else {
-                              newPos.top = rect.bottom + 6;
+                            // If placing it below pushes it off the bottom of the window
+                            if (topPos + popoverHeight > window.innerHeight) {
+                              topPos = window.innerHeight - popoverHeight - 10;
                             }
+                            // Clamp so it never goes off the top of the window
+                            if (topPos < 10) {
+                              topPos = 10;
+                            }
+                            
+                            let newPos = { left: rect.right + 8 };
+                            newPos.top = topPos;
                             
                             setPopoverPos(newPos);
                             setActionMenuProgramId(actionMenuProgramId === p._id ? null : p._id);
