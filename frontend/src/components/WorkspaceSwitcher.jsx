@@ -23,9 +23,10 @@ const WorkspaceSwitcher = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'favorites' | 'recents' | 'archived'
+  const [activeTab, setActiveTab] = useState('all');
   const [actionMenuProgramId, setActionMenuProgramId] = useState(null);
-  
+  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
+
   // Modal state
   const [modalType, setModalType] = useState(null);
   const [targetProgram, setTargetProgram] = useState(null);
@@ -329,132 +330,30 @@ const WorkspaceSwitcher = () => {
                         </button>
 
                         <button
-                          onClick={() => setActionMenuProgramId(actionMenuProgramId === p._id ? null : p._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setPopoverPos({
+                              top: rect.bottom + 6,
+                              left: rect.right + 8,
+                            });
+                            setActionMenuProgramId(actionMenuProgramId === p._id ? null : p._id);
+                          }}
                           style={{
-                            background: 'none',
+                            background: actionMenuProgramId === p._id ? 'var(--primary-light)' : 'none',
                             border: 'none',
+                            borderRadius: '6px',
                             cursor: 'pointer',
-                            color: 'var(--text-muted)',
-                            padding: '0.2rem',
+                            color: actionMenuProgramId === p._id ? 'var(--primary)' : 'var(--text-muted)',
+                            padding: '0.2rem 0.25rem',
                             display: 'flex',
+                            transition: 'all 0.15s',
                           }}
                         >
                           <MoreVertical size={14} />
                         </button>
                       </div>
 
-                      {/* Context Popover Menu */}
-                      <AnimatePresence>
-                        {actionMenuProgramId === p._id && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.92, y: -6 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.92, y: -6 }}
-                            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              position: 'absolute',
-                              right: '0.25rem',
-                              top: '2.4rem',
-                              width: '210px',
-                              background: 'var(--bg-card-solid)',
-                              border: '1px solid var(--glass-border-hover)',
-                              borderRadius: '16px',
-                              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.7)',
-                              zIndex: 1300,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {/* Workspace name header */}
-                            <div style={{ padding: '0.75rem 0.85rem 0.5rem', borderBottom: '1px solid var(--glass-border)' }}>
-                              <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Workspace</div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                            </div>
-
-                            <div style={{ padding: '0.4rem' }}>
-
-                              {/* ── Primary Action ── */}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); selectProgram(p); setIsOpen(false); setActionMenuProgramId(null); }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(16,185,129,0.12)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', width: '100%', padding: '0.55rem 0.65rem', border: 'none', background: 'transparent', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
-                              >
-                                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <Check size={14} style={{ color: '#10B981' }} />
-                                </div>
-                                <div style={{ textAlign: 'left' }}>
-                                  <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#10B981' }}>Switch Here</div>
-                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Set as active workspace</div>
-                                </div>
-                              </button>
-
-                              {/* ── Divider ── */}
-                              <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.35rem 0' }} />
-
-                              {/* ── Management Actions ── */}
-                              <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.25rem 0.65rem 0.1rem' }}>Manage</div>
-
-                              {[
-                                { label: 'Rename', sub: 'Change workspace name', icon: Edit3, color: '#6366F1', bg: 'rgba(99,102,241,0.12)', action: () => openModal('rename', p) },
-                                { label: 'Duplicate', sub: 'Copy this workspace', icon: Copy, color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', action: () => openModal('duplicate', p) },
-                                { label: 'Share & Roles', sub: 'Manage user access', icon: Users, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)', action: () => openModal('share', p) },
-                                { label: 'Settings', sub: 'Workspace preferences', icon: Settings, color: '#64748B', bg: 'rgba(100,116,139,0.12)', action: () => { setIsOpen(false); navigate('/settings'); } },
-                              ].map((item, idx) => {
-                                const IconComp = item.icon;
-                                return (
-                                  <button
-                                    key={idx}
-                                    onClick={(e) => { e.stopPropagation(); item.action(); }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--sidebar-item-hover)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', width: '100%', padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
-                                  >
-                                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                      <IconComp size={13} style={{ color: item.color }} />
-                                    </div>
-                                    <div style={{ textAlign: 'left' }}>
-                                      <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>{item.label}</div>
-                                      <div style={{ fontSize: '0.63rem', color: 'var(--text-muted)' }}>{item.sub}</div>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-
-                              {/* ── Divider ── */}
-                              <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.35rem 0' }} />
-
-                              {/* ── Danger Zone ── */}
-                              <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.25rem 0.65rem 0.1rem' }}>Danger Zone</div>
-
-                              {[
-                                { label: p.status === 'archived' ? 'Restore Workspace' : 'Archive', sub: p.status === 'archived' ? 'Move back to active' : 'Hide from main list', icon: Archive, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', action: () => openModal('archive', p) },
-                                { label: 'Delete Workspace', sub: 'Permanently remove', icon: Trash2, color: '#EF4444', bg: 'rgba(239,68,68,0.12)', action: () => openModal('delete', p) },
-                              ].map((item, idx) => {
-                                const IconComp = item.icon;
-                                return (
-                                  <button
-                                    key={idx}
-                                    onClick={(e) => { e.stopPropagation(); item.action(); }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--sidebar-item-hover)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', width: '100%', padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
-                                  >
-                                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                      <IconComp size={13} style={{ color: item.color }} />
-                                    </div>
-                                    <div style={{ textAlign: 'left' }}>
-                                      <div style={{ fontSize: '0.78rem', fontWeight: '700', color: item.color }}>{item.label}</div>
-                                      <div style={{ fontSize: '0.63rem', color: 'var(--text-muted)' }}>{item.sub}</div>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </div>
                   );
                 })
@@ -499,6 +398,120 @@ const WorkspaceSwitcher = () => {
         modalType={modalType}
         program={targetProgram}
       />
+
+      {/* ── Fixed-position context popover (escapes overflow clipping) ── */}
+      <AnimatePresence>
+        {actionMenuProgramId && (() => {
+          const activeP = programs.find(p => p._id === actionMenuProgramId);
+          if (!activeP) return null;
+          return (
+            <>
+              {/* Backdrop to close on outside click */}
+              <div
+                style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                onClick={() => setActionMenuProgramId(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: -6 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: 'fixed',
+                  top: popoverPos.top,
+                  left: popoverPos.left,
+                  width: '240px',
+                  background: 'var(--bg-card-solid)',
+                  border: '1px solid var(--glass-border-hover)',
+                  borderRadius: '18px',
+                  boxShadow: '0 24px 48px -8px rgba(0,0,0,0.8)',
+                  zIndex: 9999,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Header */}
+                <div style={{ padding: '0.85rem 1rem 0.6rem', borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Workspace</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeP.name}</div>
+                </div>
+
+                <div style={{ padding: '0.5rem' }}>
+
+                  {/* Switch */}
+                  <button
+                    onClick={() => { selectProgram(activeP); setIsOpen(false); setActionMenuProgramId(null); }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(16,185,129,0.12)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.6rem 0.75rem', border: 'none', background: 'transparent', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.15s', marginBottom: '0.15rem' }}
+                  >
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Check size={15} style={{ color: '#10B981' }} />
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#10B981' }}>Switch Here</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Set as active workspace</div>
+                    </div>
+                  </button>
+
+                  <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.4rem 0.25rem' }} />
+                  <div style={{ fontSize: '0.63rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0.2rem 0.75rem 0.3rem' }}>Manage</div>
+
+                  {[
+                    { label: 'Rename', sub: 'Change workspace name', icon: Edit3, color: '#6366F1', bg: 'rgba(99,102,241,0.12)', action: () => openModal('rename', activeP) },
+                    { label: 'Duplicate', sub: 'Copy this workspace', icon: Copy, color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', action: () => openModal('duplicate', activeP) },
+                    { label: 'Share & Roles', sub: 'Manage user access', icon: Users, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)', action: () => openModal('share', activeP) },
+                    { label: 'Settings', sub: 'Workspace preferences', icon: Settings, color: '#64748B', bg: 'rgba(100,116,139,0.12)', action: () => { setIsOpen(false); setActionMenuProgramId(null); navigate('/settings'); } },
+                  ].map((item, idx) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button key={idx} onClick={() => item.action()}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--sidebar-item-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.5rem 0.75rem', border: 'none', background: 'transparent', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.15s' }}
+                      >
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <IconComp size={14} style={{ color: item.color }} />
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)' }}>{item.label}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{item.sub}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.4rem 0.25rem' }} />
+                  <div style={{ fontSize: '0.63rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0.2rem 0.75rem 0.3rem' }}>Danger Zone</div>
+
+                  {[
+                    { label: activeP.status === 'archived' ? 'Restore Workspace' : 'Archive', sub: activeP.status === 'archived' ? 'Move back to active' : 'Hide from list', icon: Archive, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', action: () => openModal('archive', activeP) },
+                    { label: 'Delete Workspace', sub: 'Permanently remove', icon: Trash2, color: '#EF4444', bg: 'rgba(239,68,68,0.12)', action: () => openModal('delete', activeP) },
+                  ].map((item, idx) => {
+                    const IconComp = item.icon;
+                    return (
+                      <button key={idx} onClick={() => item.action()}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--sidebar-item-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.5rem 0.75rem', border: 'none', background: 'transparent', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.15s' }}
+                      >
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <IconComp size={14} style={{ color: item.color }} />
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: '700', color: item.color }}>{item.label}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{item.sub}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                </div>
+              </motion.div>
+            </>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };

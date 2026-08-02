@@ -6,7 +6,7 @@ const documentSchema = new mongoose.Schema({
   fileName: { type: String }, // Optional if link
   fileUrl: { type: String },  // Optional if link
   externalLink: { type: String }, // For Drive/Web links
-  fileType: { type: String, enum: ['PDF', 'Image', 'Link'], required: true },
+  fileType: { type: String, enum: ['PDF', 'Image', 'Link', 'Both'], required: true },
   date: { type: Date, default: Date.now },
   description: String,
   amount: Number,
