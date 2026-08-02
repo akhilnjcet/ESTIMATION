@@ -148,9 +148,8 @@ function PrivateRoute({ children }) {
           className={`access-bar ${showAccessBar ? 'show' : 'hide'}`}
           style={{
             position: 'fixed',
-            top: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            bottom: '1.5rem',
+            right: '1.5rem',
             background: 'rgba(239, 68, 68, 0.95)',
             backdropFilter: 'blur(12px)',
             color: '#FFFFFF',
