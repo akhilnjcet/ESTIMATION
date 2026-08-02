@@ -333,20 +333,27 @@ const WorkspaceSwitcher = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
-                            const popoverHeight = 380; // approximate menu height
-                            let topPos = rect.bottom + 6;
-                            
-                            // If placing it below pushes it off the bottom of the window
-                            if (topPos + popoverHeight > window.innerHeight) {
-                              topPos = window.innerHeight - popoverHeight - 10;
-                            }
-                            // Clamp so it never goes off the top of the window
-                            if (topPos < 10) {
-                              topPos = 10;
-                            }
+                            const popoverHeight = 420; // estimated max menu height
+                            const spaceBelow = window.innerHeight - rect.bottom;
+                            const spaceAbove = rect.top;
                             
                             let newPos = { left: rect.right + 8 };
-                            newPos.top = topPos;
+                            
+                            if (spaceBelow >= popoverHeight + 10) {
+                              newPos.top = rect.bottom + 6;
+                              newPos.maxHeight = spaceBelow - 16;
+                            } else if (spaceAbove >= popoverHeight + 10) {
+                              newPos.bottom = window.innerHeight - rect.top + 6;
+                              newPos.maxHeight = spaceAbove - 16;
+                            } else {
+                              if (spaceBelow > spaceAbove) {
+                                newPos.top = rect.bottom + 6;
+                                newPos.maxHeight = Math.max(120, spaceBelow - 16);
+                              } else {
+                                newPos.bottom = window.innerHeight - rect.top + 6;
+                                newPos.maxHeight = Math.max(120, spaceAbove - 16);
+                              }
+                            }
                             
                             setPopoverPos(newPos);
                             setActionMenuProgramId(actionMenuProgramId === p._id ? null : p._id);
@@ -435,7 +442,7 @@ const WorkspaceSwitcher = () => {
                   bottom: popoverPos.bottom !== undefined ? popoverPos.bottom : 'auto',
                   left: popoverPos.left,
                   width: '240px',
-                  maxHeight: 'calc(100vh - 20px)',
+                  maxHeight: popoverPos.maxHeight ? `${popoverPos.maxHeight}px` : '400px',
                   background: 'var(--bg-card-solid)',
                   border: '1px solid var(--glass-border-hover)',
                   borderRadius: '18px',
