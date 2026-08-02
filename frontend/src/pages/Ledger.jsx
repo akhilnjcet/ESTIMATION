@@ -120,6 +120,33 @@ const Ledger = () => {
           </div>
         </div>
 
+        {data.includeBalances && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ padding: '1rem 1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                💵 Cash on Hand
+              </span>
+              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#15803d', marginTop: '0.25rem' }}>
+                ₹ {data.cashBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#4ade80', marginTop: '0.25rem', borderTop: '1px dashed #86efac', paddingTop: '0.25rem' }}>
+                Opening Balance: ₹ {data.cashOpeningBalance.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ padding: '1rem 1.25rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                🏦 Bank Balance
+              </span>
+              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#1d4ed8', marginTop: '0.25rem' }}>
+                ₹ {data.bankBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#60a5fa', marginTop: '0.25rem', borderTop: '1px dashed #93c5fd', paddingTop: '0.25rem' }}>
+                Opening Balance: ₹ {data.bankOpeningBalance.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        )}
+
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
@@ -152,32 +179,16 @@ const Ledger = () => {
           </tbody>
         </table>
 
-        {data.includeBalances && (
-          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div style={{ padding: '1rem 1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px' }}>
-              <span style={{ fontSize: '10px', fontWeight: '700', color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                💵 Cash on Hand
-              </span>
-              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#15803d', marginTop: '0.25rem' }}>
-                ₹ {data.cashBalance.toLocaleString()}
-              </div>
-              <div style={{ fontSize: '11px', color: '#4ade80', marginTop: '0.25rem', borderTop: '1px dashed #86efac', paddingTop: '0.25rem' }}>
-                Opening Balance: ₹ {data.cashOpeningBalance.toLocaleString()}
-              </div>
-            </div>
-            <div style={{ padding: '1rem 1.25rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px' }}>
-              <span style={{ fontSize: '10px', fontWeight: '700', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                🏦 Bank Balance
-              </span>
-              <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#1d4ed8', marginTop: '0.25rem' }}>
-                ₹ {data.bankBalance.toLocaleString()}
-              </div>
-              <div style={{ fontSize: '11px', color: '#60a5fa', marginTop: '0.25rem', borderTop: '1px dashed #93c5fd', paddingTop: '0.25rem' }}>
-                Opening Balance: ₹ {data.bankOpeningBalance.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Footer Note */}
+        <div style={{ marginTop: '2rem', borderTop: '1px dashed #e2e8f0', paddingTop: '1rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, fontStyle: 'italic', letterSpacing: '0.02em' }}>
+            ✅ This is a digitally generated statement. No signature is required.
+          </p>
+          <p style={{ fontSize: '10px', color: '#cbd5e1', margin: '0.25rem 0 0', }}>
+            Generated on {new Date().toLocaleString('en-GB')} &nbsp;|&nbsp; {selectedProgram?.name}
+          </p>
+        </div>
+
       </div>
     );
   };

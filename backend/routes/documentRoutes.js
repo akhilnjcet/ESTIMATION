@@ -18,10 +18,10 @@ router.get('/', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const { title, fileName, fileUrl, fileType, date, description, amount } = req.body;
+    const { title, fileName, fileUrl, fileType, date, description, amount, externalLink } = req.body;
     
     const document = await Document.create({
-      title, fileName, fileUrl, fileType, date, description, amount,
+      title, fileName, fileUrl, fileType, date, description, amount, externalLink,
       programId: req.programId
     });
     

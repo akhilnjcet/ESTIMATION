@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, Upload, Trash2, Eye, Calendar, Link as LinkIcon,
-  X, Download, Plus, Search, AlertCircle, CheckCircle2, File
+  X, Download, Plus, Search, AlertCircle, CheckCircle2, File, Pencil
 } from 'lucide-react';
 
 const Documents = () => {
@@ -15,6 +15,7 @@ const Documents = () => {
   const [viewingDoc, setViewingDoc] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState(null);
+  const [editingDoc, setEditingDoc] = useState(null);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -52,15 +53,33 @@ const Documents = () => {
       fileName: '', fileUrl: '', fileType: 'Image', externalLink: ''
     });
     setUploadType('file');
+    setEditingDoc(null);
+  };
+
+  const handleEdit = (doc) => {
+    setEditingDoc(doc);
+    setFormData({
+      title: doc.title || '',
+      description: doc.description || '',
+      amount: doc.amount || '',
+      date: doc.date ? doc.date.split('T')[0] : new Date().toISOString().split('T')[0],
+      fileName: doc.fileName || '',
+      fileUrl: doc.fileUrl || '',
+      fileType: doc.fileType || 'Image',
+      externalLink: doc.externalLink || doc.fileUrl || ''
+    });
+    setUploadType(doc.fileType === 'Link' ? 'link' : 'file');
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Limit file size to 4MB to avoid MongoDB document size limit
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('File too large. Maximum size is 4MB. Use External URL for large files.', 'danger');
+    // Limit file size to 10MB to avoid MongoDB document size limit
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File too large. Maximum size is 10MB. Use External URL for larger files.', 'danger');
       return;
     }
 
@@ -86,7 +105,7 @@ const Documents = () => {
         return;
       }
       payload.fileType = 'Link';
-      payload.fileUrl = '';
+      payload.fileUrl = formData.externalLink.trim();
       payload.fileName = 'External Link';
     } else {
       if (!formData.fileUrl) {
@@ -102,11 +121,16 @@ const Documents = () => {
 
     setLoading(true);
     try {
-      await api.post('/documents', payload);
+      if (editingDoc) {
+        await api.put(`/documents/${editingDoc._id}`, payload);
+        showToast('Document updated successfully!');
+      } else {
+        await api.post('/documents', payload);
+        showToast('Document saved to vault successfully!');
+      }
       resetForm();
       setShowForm(false);
       await fetchDocuments();
-      showToast('Document saved to vault successfully!');
     } catch (err) {
       console.error('Save document error:', err);
       const msg = err.response?.data?.message || 'Failed to save document';
@@ -230,7 +254,9 @@ const Documents = () => {
             style={{ padding: '2rem' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Document Upload Station</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>
+                {editingDoc ? '✏️ Edit Document' : 'Document Upload Station'}
+              </h2>
               <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem', borderRadius: '12px' }}>
                 {['file', 'link'].map(type => (
                   <button
@@ -283,7 +309,7 @@ const Documents = () => {
 
               {uploadType === 'file' ? (
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label className="form-label">Upload PDF or Image File (max 4MB)</label>
+                  <label className="form-label">Upload PDF or Image File (max 10MB)</label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     style={{
@@ -343,7 +369,7 @@ const Documents = () => {
               </div>
 
               <button type="submit" className="btn-gradient" disabled={loading} style={{ width: '100%', padding: '0.85rem' }}>
-                {loading ? 'Processing...' : 'Save Document to Vault'}
+                {loading ? 'Processing...' : editingDoc ? 'Update Document' : 'Save Document to Vault'}
               </button>
             </form>
           </motion.div>
@@ -396,6 +422,13 @@ const Documents = () => {
                   style={{ flex: 1, padding: '0.45rem', fontSize: '0.8rem' }}
                 >
                   <Eye size={14} /> View
+                </button>
+                <button
+                  className="btn-secondary-glass"
+                  onClick={() => handleEdit(doc)}
+                  style={{ flex: 1, padding: '0.45rem', fontSize: '0.8rem', color: 'var(--primary)' }}
+                >
+                  <Pencil size={14} /> Edit
                 </button>
                 <button
                   className="btn-secondary-glass"
