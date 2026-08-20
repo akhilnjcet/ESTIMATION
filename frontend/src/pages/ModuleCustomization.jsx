@@ -591,7 +591,13 @@ const ModuleCustomization = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const canEdit = role === 'admin';
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUserId = currentUser._id;
+  const isOwner = selectedProgram?.owner && (
+    selectedProgram.owner === currentUserId || 
+    selectedProgram.owner._id === currentUserId
+  );
+  const canEdit = role === 'admin' || isOwner;
 
   // Build per-category ordered module lists
   const getModulesForCategory = useCallback(
