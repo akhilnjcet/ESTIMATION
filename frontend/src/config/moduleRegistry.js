@@ -186,7 +186,7 @@ export const ALL_MODULES = [
     category: 'ADMINISTRATION',
     categoryKey: 'admin',
     defaultEnabled: true,
-    adminOnly: true,
+    adminOnly: false,
   },
   {
     id: 'settings',

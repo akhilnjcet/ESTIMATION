@@ -12,6 +12,8 @@ const UserAccess = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   
+  const currentUserRole = localStorage.getItem('role');
+  
   // Quick Password Change Modal state
   const [pwdModalUser, setPwdModalUser] = useState(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
@@ -184,9 +186,11 @@ const UserAccess = () => {
         <div>
           <h1 className="page-title">
             <UserCheck size={28} style={{ color: 'var(--primary)' }} />
-            Login Manager & Access Portal
+            {currentUserRole === 'admin' ? 'Login Manager & Access Portal' : 'Customer Login Manager'}
           </h1>
-          <p className="page-subtitle">Create logins, manage usernames, update passwords, and control system permissions</p>
+          <p className="page-subtitle">
+            {currentUserRole === 'admin' ? 'Create logins, manage usernames, update passwords, and control system permissions' : 'Create and manage view-only logins for your customers'}
+          </p>
         </div>
 
         <button className="btn-gradient" onClick={() => showForm ? resetForm() : setShowForm(true)}>
@@ -203,12 +207,14 @@ const UserAccess = () => {
             {totalUsers}
           </h3>
         </div>
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--secondary)' }}>
-          <span className="form-label">Admin Accounts</span>
-          <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--secondary)', marginTop: '0.25rem' }}>
-            {adminUsers}
-          </h3>
-        </div>
+        {currentUserRole === 'admin' && (
+          <div className="glass-card" style={{ borderLeft: '4px solid var(--secondary)' }}>
+            <span className="form-label">Admin Accounts</span>
+            <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--secondary)', marginTop: '0.25rem' }}>
+              {adminUsers}
+            </h3>
+          </div>
+        )}
         <div className="glass-card" style={{ borderLeft: '4px solid var(--info)' }}>
           <span className="form-label">Staff & Viewers</span>
           <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--info)', marginTop: '0.25rem' }}>
@@ -289,13 +295,20 @@ const UserAccess = () => {
                   className="form-select" 
                   value={formData.role} 
                   onChange={e => setFormData({...formData, role: e.target.value})}
+                  disabled={currentUserRole !== 'admin'}
                 >
-                  <option value="user">User / Customer (Full ERP Access, No Login Mgmt)</option>
-                  <option value="admin">Administrator (Full Access & Program Mgmt)</option>
-                  <option value="manager">Manager (Operations & Data Management)</option>
-                  <option value="accountant">Accountant (Finance, Income & Expense Control)</option>
-                  <option value="sales">Sales Staff (Invoices, Quotations & Customer Records)</option>
-                  <option value="viewer">Staff Viewer (Read-only mutations blocked)</option>
+                  {currentUserRole === 'admin' ? (
+                    <>
+                      <option value="user">User / Customer (Full ERP Access, No Login Mgmt)</option>
+                      <option value="admin">Administrator (Full Access & Program Mgmt)</option>
+                      <option value="manager">Manager (Operations & Data Management)</option>
+                      <option value="accountant">Accountant (Finance, Income & Expense Control)</option>
+                      <option value="sales">Sales Staff (Invoices, Quotations & Customer Records)</option>
+                      <option value="viewer">Staff Viewer (Read-only mutations blocked)</option>
+                    </>
+                  ) : (
+                    <option value="viewer">Staff Viewer (Read-only mutations blocked)</option>
+                  )}
                 </select>
               </div>
 
@@ -452,11 +465,15 @@ const UserAccess = () => {
               style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="All">All Roles</option>
-              <option value="admin">Administrator</option>
-              <option value="user">User / Customer</option>
-              <option value="manager">Manager</option>
-              <option value="accountant">Accountant</option>
-              <option value="sales">Sales Staff</option>
+              {currentUserRole === 'admin' && (
+                <>
+                  <option value="admin">Administrator</option>
+                  <option value="user">User / Customer</option>
+                  <option value="manager">Manager</option>
+                  <option value="accountant">Accountant</option>
+                  <option value="sales">Sales Staff</option>
+                </>
+              )}
               <option value="viewer">Staff Viewer</option>
             </select>
 
