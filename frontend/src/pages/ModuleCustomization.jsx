@@ -591,13 +591,7 @@ const ModuleCustomization = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const currentUserId = currentUser._id;
-  const isOwner = selectedProgram?.owner && (
-    selectedProgram.owner === currentUserId || 
-    selectedProgram.owner._id === currentUserId
-  );
-  const canEdit = role === 'admin' || isOwner;
+  const canEdit = true; // allow all users to customize their view
 
   // Build per-category ordered module lists
   const getModulesForCategory = useCallback(

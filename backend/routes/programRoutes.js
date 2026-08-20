@@ -58,8 +58,10 @@ router.put('/:id', protect, async (req, res) => {
 
     const isOwner = program.owner && program.owner.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
+    const hasAccess = req.user.programAccess && req.user.programAccess.some(id => id.toString() === program._id.toString());
+    const isShared = program.sharedUsers && program.sharedUsers.some(su => su.userId.toString() === req.user._id.toString());
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isAdmin && !hasAccess && !isShared) {
       return res.status(403).json({ message: 'Not authorized to update this program' });
     }
 
