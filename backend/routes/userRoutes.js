@@ -142,6 +142,22 @@ router.put('/:id/change-password', protect, async (req, res) => {
 // @desc    Delete user login
 router.delete('/:id', protect, async (req, res) => {
   try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required to authorize deletion' });
+    }
+
+    // Verify Password
+    const requester = await User.findById(req.user._id);
+    if (!requester) {
+      return res.status(404).json({ message: 'Requester not found' });
+    }
+    
+    const isMatch = await bcrypt.compare(password, requester.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid password. Deletion cancelled.' });
+    }
+
     if (req.user._id.toString() === req.params.id) {
       return res.status(400).json({ message: 'You cannot delete your own logged-in account' });
     }

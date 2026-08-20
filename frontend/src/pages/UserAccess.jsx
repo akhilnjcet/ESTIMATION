@@ -19,6 +19,18 @@ const UserAccess = () => {
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [pwdSaving, setPwdSaving] = useState(false);
 
+  // Delete flow state
+  const [deleteModalUser, setDeleteModalUser] = useState(null);
+  const [deleteStep, setDeleteStep] = useState('password'); // 'password', 'forgot-email', 'forgot-otp', 'forgot-reset'
+  const [deletePasswordInput, setDeletePasswordInput] = useState('');
+  const [deleteForgotEmail, setDeleteForgotEmail] = useState('');
+  const [deleteOtpCode, setDeleteOtpCode] = useState('');
+  const [deleteNewPassword, setDeleteNewPassword] = useState('');
+  const [deleteConfirmNewPassword, setDeleteConfirmNewPassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteMessage, setDeleteMessage] = useState('');
+
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
@@ -137,20 +149,100 @@ const UserAccess = () => {
     }
   };
 
-  const handleDelete = async (user) => {
+  const handleDeleteClick = (user) => {
     const currentUserId = localStorage.getItem('userId');
     if (currentUserId && currentUserId === user._id) {
       alert('Security Alert: You cannot delete your own logged-in admin account.');
       return;
     }
-    if (window.confirm(`Are you sure you want to delete the login account for ${user.name} (${user.email})?`)) {
-      try {
-        await api.delete(`/users/${user._id}`);
-        fetchUsers();
-        alert('User login deleted successfully.');
-      } catch (err) { 
-        alert(err.response?.data?.message || 'Failed to delete user'); 
-      }
+    setDeleteModalUser(user);
+    setDeleteStep('password');
+    setDeletePasswordInput('');
+    setDeleteError('');
+    setDeleteMessage('');
+    
+    // Attempt to prefill email from local storage
+    try {
+      const currentUserEmail = JSON.parse(localStorage.getItem('user'))?.email || '';
+      setDeleteForgotEmail(currentUserEmail);
+    } catch (e) {
+      setDeleteForgotEmail('');
+    }
+  };
+
+  const submitDelete = async (e) => {
+    if (e) e.preventDefault();
+    setDeleteError('');
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/users/${deleteModalUser._id}`, { data: { password: deletePasswordInput } });
+      alert('User login deleted successfully.');
+      setDeleteModalUser(null);
+      fetchUsers();
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleForgotRequestOtp = async (e) => {
+    e.preventDefault();
+    setDeleteError('');
+    setDeleteMessage('');
+    setDeleteLoading(true);
+    try {
+      const { data } = await api.post('/auth/forgot-password', { email: deleteForgotEmail });
+      setDeleteMessage(data.message);
+      setDeleteStep('forgot-otp');
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Something went wrong. Please check the email.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleForgotVerifyOtp = async (e) => {
+    e.preventDefault();
+    setDeleteError('');
+    setDeleteMessage('');
+    setDeleteLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-otp', { email: deleteForgotEmail, otp: deleteOtpCode });
+      setDeleteMessage(data.message);
+      setDeleteStep('forgot-reset');
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Invalid or expired OTP.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleForgotResetPassword = async (e) => {
+    e.preventDefault();
+    setDeleteError('');
+    setDeleteMessage('');
+    if (deleteNewPassword !== deleteConfirmNewPassword) {
+      return setDeleteError('Passwords do not match');
+    }
+    
+    setDeleteLoading(true);
+    try {
+      const { data } = await api.post('/auth/reset-password', { 
+        email: deleteForgotEmail, 
+        password: deleteNewPassword, 
+        confirmPassword: deleteConfirmNewPassword 
+      });
+      alert(data.message || 'Password reset successful! You can now confirm deletion.');
+      setDeleteStep('password');
+      setDeletePasswordInput('');
+      setDeleteOtpCode('');
+      setDeleteNewPassword('');
+      setDeleteConfirmNewPassword('');
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Failed to reset password.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -436,6 +528,119 @@ const UserAccess = () => {
         </div>
       )}
 
+      {/* Secure Delete Modal */}
+      {deleteModalUser && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+                <ShieldAlert size={20} />
+                {deleteStep === 'password' ? 'Authorize Deletion' : 'Reset Password'}
+              </h3>
+              <button className="btn-icon" onClick={() => setDeleteModalUser(null)}><X size={18} /></button>
+            </div>
+
+            {deleteError && (
+              <div style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '0.7rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '1rem', textAlign: 'center' }}>
+                {deleteError}
+              </div>
+            )}
+            {deleteMessage && (
+              <div style={{ background: 'var(--success-light)', color: 'var(--success)', padding: '0.7rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '1rem', textAlign: 'center' }}>
+                {deleteMessage}
+              </div>
+            )}
+
+            {deleteStep === 'password' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                  Please enter <b>your own password</b> to authorize the deletion of <b>{deleteModalUser.name}</b>.
+                </p>
+                <form onSubmit={submitDelete}>
+                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0 }}>Your Password</label>
+                      <button 
+                        type="button" 
+                        onClick={() => { setDeleteStep('forgot-email'); setDeleteError(''); setDeleteMessage(''); }} 
+                        style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700', cursor: 'pointer', border: 'none', background: 'none' }}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                    <input type="password" className="form-input" required value={deletePasswordInput} onChange={e => setDeletePasswordInput(e.target.value)} placeholder="••••••••" autoFocus />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <button type="button" className="btn-secondary-glass" onClick={() => setDeleteModalUser(null)}>Cancel</button>
+                    <button type="submit" className="btn-gradient" style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' }} disabled={deleteLoading}>
+                      {deleteLoading ? 'Processing...' : 'Confirm Deletion'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {deleteStep === 'forgot-email' && (
+              <form onSubmit={handleForgotRequestOtp}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                  Enter your registered email to receive an OTP.
+                </p>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label">Email Address</label>
+                  <input type="email" className="form-input" required value={deleteForgotEmail} onChange={e => setDeleteForgotEmail(e.target.value)} placeholder="your@email.com" />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn-secondary-glass" onClick={() => { setDeleteStep('password'); setDeleteError(''); setDeleteMessage(''); }}>Back</button>
+                  <button type="submit" className="btn-gradient" disabled={deleteLoading}>
+                    {deleteLoading ? 'Sending...' : 'Send OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {deleteStep === 'forgot-otp' && (
+              <form onSubmit={handleForgotVerifyOtp}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                  Verification code sent to <b>{deleteForgotEmail}</b>
+                </p>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label" style={{ textAlign: 'center' }}>6-Digit OTP Code</label>
+                  <input type="text" maxLength="6" className="form-input" required value={deleteOtpCode} onChange={e => setDeleteOtpCode(e.target.value.replace(/\D/g, ''))} style={{ textAlign: 'center', fontSize: '1.4rem', letterSpacing: '6px', fontWeight: '800' }} autoFocus />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn-secondary-glass" onClick={() => { setDeleteStep('forgot-email'); setDeleteError(''); setDeleteMessage(''); }}>Back</button>
+                  <button type="submit" className="btn-gradient" disabled={deleteLoading}>
+                    {deleteLoading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {deleteStep === 'forgot-reset' && (
+              <form onSubmit={handleForgotResetPassword}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                  OTP verified! Enter your new password below.
+                </p>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label">New Password</label>
+                  <input type="password" className="form-input" required value={deleteNewPassword} onChange={e => setDeleteNewPassword(e.target.value)} placeholder="••••••••" />
+                </div>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label">Confirm New Password</label>
+                  <input type="password" className="form-input" required value={deleteConfirmNewPassword} onChange={e => setDeleteConfirmNewPassword(e.target.value)} placeholder="••••••••" />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn-secondary-glass" onClick={() => { setDeleteStep('password'); setDeleteError(''); setDeleteMessage(''); }}>Cancel</button>
+                  <button type="submit" className="btn-gradient" disabled={deleteLoading}>
+                    {deleteLoading ? 'Updating...' : 'Save Password'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* User Accounts Data Table */}
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         {/* Search & Filter Bar */}
@@ -611,7 +816,7 @@ const UserAccess = () => {
 
                         <button 
                           className="btn-icon" 
-                          onClick={() => handleDelete(user)} 
+                          onClick={() => handleDeleteClick(user)} 
                           title="Delete Login Account" 
                           style={{ color: 'var(--danger)' }}
                         >

@@ -374,6 +374,15 @@ const Login = () => {
                 {loading ? 'Verifying...' : 'Verify OTP'}
               </motion.button>
             </form>
+
+            <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <button 
+                onClick={() => { setForgotPasswordStep('email'); setError(''); setMessage(''); setOtpCode(''); }} 
+                style={{ color: 'var(--text-secondary)', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.825rem' }}
+              >
+                ← Back
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -423,6 +432,15 @@ const Login = () => {
                 {loading ? 'Updating...' : 'Save New Password'}
               </motion.button>
             </form>
+
+            <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <button 
+                onClick={() => { setForgotPasswordStep('login'); setError(''); setMessage(''); }} 
+                style={{ color: 'var(--text-secondary)', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.825rem' }}
+              >
+                Cancel and Return to Login
+              </button>
+            </div>
           </>
         )}
       </motion.div>
