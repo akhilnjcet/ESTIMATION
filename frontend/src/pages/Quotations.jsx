@@ -383,6 +383,20 @@ const Quotations = () => {
     );
   };
 
+  const triggerPrint = async () => {
+    const images = document.querySelectorAll('.invoice-container img');
+    await Promise.all(
+      [...images].map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+    setTimeout(() => { window.print(); }, 500);
+  };
+
   const handleDownloadPdf = (docData) => {
     const element = document.querySelector('.modal-print-overlay .invoice-container') || document.querySelector('.invoice-container');
     if (!element) return;
