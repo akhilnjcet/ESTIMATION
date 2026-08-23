@@ -197,6 +197,7 @@ const Invoices = () => {
               )}
               <h2 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0, color: '#FFFFFF' }}>{selectedProgram?.name}</h2>
               <p style={{ fontSize: '0.775rem', opacity: 0.9, margin: '0.2rem 0 0 0', maxWidth: '320px' }}>{selectedProgram?.address}</p>
+              {selectedProgram?.phone && <p style={{ fontSize: '0.775rem', opacity: 0.9, margin: '0.1rem 0 0 0' }}>Ph: {selectedProgram.phone}</p>}
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ display: 'inline-block', background: 'rgba(255, 255, 255, 0.2)', padding: '0.3rem 0.85rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
@@ -213,6 +214,7 @@ const Invoices = () => {
               <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#3B82F6', textTransform: 'uppercase' }}>Billed To Customer</span>
               <p style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0F172A', margin: '0.2rem 0 0 0' }}>{docData.customer?.customerName || 'Select Customer'}</p>
               <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>{docData.customer?.address || ''}</p>
+              {docData.customer?.phone && <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>Ph: {docData.customer.phone}</p>}
             </div>
             <div style={{ background: '#FFFFFF', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #10B981', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#059669', textTransform: 'uppercase' }}>Payment Details</span>
@@ -272,6 +274,7 @@ const Invoices = () => {
               {selectedProgram?.name}
             </h2>
             <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.2rem 0 0 0' }}>{selectedProgram?.address}</p>
+            {selectedProgram?.phone && <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.1rem 0 0 0' }}>Ph: {selectedProgram.phone}</p>}
           </div>
 
           <div style={{ background: '#0F172A', color: '#FFFFFF', padding: '0.75rem 1.25rem', marginTop: '1.25rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -289,6 +292,7 @@ const Invoices = () => {
             </div>
             <p style={{ fontSize: '0.95rem', fontWeight: '900', color: '#0F172A', margin: 0 }}>{docData.customer?.customerName || 'Select Customer'}</p>
             <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.2rem 0 0 0' }}>{docData.customer?.address || ''}</p>
+            {docData.customer?.phone && <p style={{ fontSize: '0.775rem', color: '#475569', margin: '0.1rem 0 0 0' }}>Ph: {docData.customer.phone}</p>}
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1.25rem', border: '1px solid #0F172A' }}>
@@ -334,6 +338,7 @@ const Invoices = () => {
             <div className="company-details">
               <h1 className="company-name" style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>{selectedProgram?.name}</h1>
               <p className="company-address" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>{selectedProgram?.address}</p>
+              {selectedProgram?.phone && <p className="company-phone" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Ph: {selectedProgram.phone}</p>}
             </div>
           </div>
           
@@ -354,6 +359,7 @@ const Invoices = () => {
             <h3 style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', color: '#94a3b8', marginBottom: '4px' }}>Billed To:</h3>
             <p style={{ margin: 0, fontSize: '15px', fontWeight: '700' }}>{docData.customer?.customerName || 'Select Customer'}</p>
             <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b', maxWidth: '250px' }}>{docData.customer?.address || ''}</p>
+            {docData.customer?.phone && <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b', maxWidth: '250px' }}>Ph: {docData.customer.phone}</p>}
           </div>
           {docData.showPaymentTerms !== false && (
             <div style={{ textAlign: 'right' }}>

@@ -361,6 +361,7 @@ const RentalBills = () => {
             <div className="company-details">
               <h1 className="company-name" style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>{selectedProgram?.name}</h1>
               <p className="company-address" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>{selectedProgram?.address}</p>
+              {selectedProgram?.phone && <p className="company-phone" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Ph: {selectedProgram.phone}</p>}
             </div>
           </div>
           
