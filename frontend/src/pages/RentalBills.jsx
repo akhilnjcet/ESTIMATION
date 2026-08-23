@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { Edit2, Printer, Trash2, Plus, X, Eye, CalendarRange, Search, RefreshCcw, ArrowLeft } from 'lucide-react';
+import { Edit2, Printer, Trash2, Plus, X, Eye, CalendarRange, Search, RefreshCcw, ArrowLeft, Phone, MessageCircle, Mail } from 'lucide-react';
 
 const RentalBills = () => {
   const [rentals, setRentals] = useState([]);
@@ -863,7 +863,26 @@ const RentalBills = () => {
                   <button className="btn-icon" onClick={() => handleDelete(r._id)} style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
                 </div>
               </div>
-              <div style={{ marginBottom: '0.5rem' }}><b style={{ color: 'var(--text-primary)' }}>{r.customer?.customerName}</b></div>
+              <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <b style={{ color: 'var(--text-primary)' }}>{r.customer?.customerName}</b>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {r.customer?.contactNumber && (
+                    <>
+                      <a href={`tel:${r.customer.contactNumber}`} onClick={e => e.stopPropagation()} style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="Call Customer">
+                        <Phone size={14} />
+                      </a>
+                      <a href={`https://wa.me/${r.customer.contactNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="WhatsApp Customer">
+                        <MessageCircle size={14} />
+                      </a>
+                    </>
+                  )}
+                  {r.customer?.email && (
+                    <a href={`mailto:${r.customer.email}`} onClick={e => e.stopPropagation()} style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="Email Customer">
+                      <Mail size={14} />
+                    </a>
+                  )}
+                </div>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 <span>Expected: {new Date(r.expectedReturnDate).toLocaleDateString()}</span>
                 <span>Amt: &#8377;{r.balanceAmount?.toLocaleString()}</span>
