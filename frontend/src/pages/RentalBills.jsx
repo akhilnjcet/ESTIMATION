@@ -524,10 +524,34 @@ const RentalBills = () => {
 
   if (previewData) {
     return (
-      <div className="modal-print-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999999, background: 'rgba(11, 18, 32, 0.88)', padding: '2rem 1rem', overflowY: 'auto' }}>
+      <div className="modal-print-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999999, background: 'rgba(11, 18, 32, 0.88)', padding: '2rem 1rem', overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
         <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
-          <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}><X size={18} /> Close</button>
+            
+            <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.06)', padding: '0.35rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              {['classic', 'modern', 'executive'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setPreviewTheme(t)}
+                  style={{
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    border: 'none',
+                    background: previewTheme === t ? 'var(--secondary)' : 'transparent',
+                    color: previewTheme === t ? '#FFFFFF' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
             <button className="btn-secondary-glass" onClick={triggerPrint}><Printer size={18} /> Print</button>
           </div>
           <div style={{ borderRadius: '18px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
@@ -829,11 +853,11 @@ const RentalBills = () => {
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   {r.status !== 'Active' ? (
                     <>
-                      <button className="btn-icon" title="View Original Rental Bill" onClick={() => setPreviewData({ ...r, _isOriginalView: true })}><Eye size={14} /></button>
-                      <button className="btn-icon" title="View Return Bill" onClick={() => setPreviewData(r)}><RefreshCcw size={14} /></button>
+                      <button className="btn-icon" title="View Original Rental Bill" onClick={() => { setPreviewData({ ...r, _isOriginalView: true }); setPreviewTheme(r.theme || 'classic'); }}><Eye size={14} /></button>
+                      <button className="btn-icon" title="View Return Bill" onClick={() => { setPreviewData(r); setPreviewTheme(r.theme || 'classic'); }}><RefreshCcw size={14} /></button>
                     </>
                   ) : (
-                    <button className="btn-icon" title="View Rental Bill" onClick={() => setPreviewData(r)}><Eye size={14} /></button>
+                    <button className="btn-icon" title="View Rental Bill" onClick={() => { setPreviewData(r); setPreviewTheme(r.theme || 'classic'); }}><Eye size={14} /></button>
                   )}
                   <button className="btn-icon" onClick={() => handleEdit(r)}><Edit2 size={14} /></button>
                   <button className="btn-icon" onClick={() => handleDelete(r._id)} style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
