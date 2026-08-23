@@ -732,6 +732,7 @@ const RentalBills = () => {
                           <b style={{ fontSize: '0.85rem' }}>{item.productName}</b>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qty: {item.quantity} {item.itemNos ? `| SN: ${item.itemNos}` : ''}</div>
                         </div>
+                        <div>
                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
                            <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
                               <option value="">-- Select --</option>
