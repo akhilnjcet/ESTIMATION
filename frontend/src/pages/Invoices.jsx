@@ -131,7 +131,7 @@ const Invoices = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0 }]);
+    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0, autoCalculate: true }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -146,7 +146,10 @@ const Invoices = () => {
     } else {
       newItems[index][field] = value;
     }
-    newItems[index].total = Number(newItems[index].price) * Number(newItems[index].quantity);
+    const shouldCalculate = newItems[index].autoCalculate !== false;
+    newItems[index].total = shouldCalculate
+      ? Number(newItems[index].price) * Number(newItems[index].quantity)
+      : Number(newItems[index].price);
     setItems(newItems);
   };
 
@@ -673,7 +676,17 @@ const Invoices = () => {
                           />
                         </div>
                         <div>
-                          <label className="form-label">Price (&#8377;)</label>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="form-label">Price (&#8377;)</label>
+                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={item.autoCalculate !== false} 
+                                onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                              />
+                              Per Pc
+                            </label>
+                          </div>
                           <input 
                             type="number" 
                             className="form-input" 

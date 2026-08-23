@@ -151,7 +151,7 @@ const RentalBills = () => {
       product: '', productName: '', description: '', price: 0, quantity: 1, 
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
-      itemNos: '', condition: 'Good'
+      itemNos: '', condition: 'Good', autoCalculate: true
     }]);
   };
 
@@ -168,7 +168,10 @@ const RentalBills = () => {
       newItems[index][field] = value;
     }
     
-    newItems[index].total = Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1);
+    const shouldCalculate = newItems[index].autoCalculate !== false;
+    newItems[index].total = shouldCalculate
+      ? Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1)
+      : Number(newItems[index].price);
     setItems(newItems);
   };
 
@@ -675,7 +678,17 @@ const RentalBills = () => {
                         <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
                       </div>
                       <div style={{ flex: '1 1 80px' }}>
-                        <label className="form-label">Rate (&#8377;)</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <label className="form-label">Rate (&#8377;)</label>
+                          <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={item.autoCalculate !== false} 
+                              onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                            />
+                            Auto
+                          </label>
+                        </div>
                         <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
                       </div>
                       <div style={{ flex: '1 1 80px' }}>
