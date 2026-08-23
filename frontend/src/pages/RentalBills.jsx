@@ -291,16 +291,15 @@ const RentalBills = () => {
     
     const allReturned = updatedItems.every(i => i.isReturned);
     const newStatus = allReturned ? 'Returned Completely' : 'Partially Returned';
-    const sumItemLateFees = updatedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
-    const hasItemLossFees = updatedItems.some(i => i.isReturned === false && i.returnCondition === 'LOSS');
-    const sumItemLossFees = updatedItems.reduce((sum, item) => sum + (item.isReturned === false && item.returnCondition === 'LOSS' ? Number(item.itemLossCharge) || 0 : 0), 0);
+    const sumItemLateFees = updatedItems.reduce((sum, item) => sum + (Number(item.itemLateCharge) || 0), 0);
+    const sumItemLossFees = updatedItems.reduce((sum, item) => sum + (Number(item.itemLossCharge) || 0), 0);
     
     setReturnFormData(prev => ({
       ...prev,
       items: updatedItems,
       status: newStatus,
       lateCharge: sumItemLateFees,
-      lossCharge: hasItemLossFees ? sumItemLossFees : prev.lossCharge
+      lossCharge: sumItemLossFees
     }));
   };
 
@@ -731,7 +730,7 @@ const RentalBills = () => {
                   <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Item Return Checklist</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {(returnFormData.items || []).map((item, index) => (
-                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 2fr 2fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 2fr 2fr 1fr 1fr', gap: '1rem', alignItems: 'center' }}>
                         <div>
                           <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
                         </div>
@@ -754,17 +753,12 @@ const RentalBills = () => {
                            </select>
                         </div>
                         <div>
-                           {item.isReturned === false && item.returnCondition === 'LOSS' ? (
-                             <>
-                               <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
-                               <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
-                             </>
-                           ) : (
-                             <>
-                               <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
-                               <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
-                             </>
-                           )}
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
+                           <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                        </div>
+                        <div>
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
+                           <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
                         </div>
                       </div>
                     ))}
