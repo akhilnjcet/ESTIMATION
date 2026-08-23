@@ -206,35 +206,47 @@ const RentalBills = () => {
     setReturnRentalId(rentalId);
     const r = rentals.find(rent => rent._id === rentalId);
     if (r) {
-      const now = new Date();
-      const expected = new Date(r.expectedReturnDate);
-      
-      let delayedDays = 0;
-      if (now > expected) {
-        const diffTime = Math.abs(now - expected);
-        delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      if (['Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)) {
+        // Load existing return data for editing
+        let actualReturnDate = r.actualReturnDate;
+        if (actualReturnDate) {
+           const d = new Date(actualReturnDate);
+           if (!isNaN(d.getTime())) {
+               actualReturnDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+           }
+        }
+        setReturnFormData({ ...r, actualReturnDate });
+      } else {
+        const now = new Date();
+        const expected = new Date(r.expectedReturnDate);
+        
+        let delayedDays = 0;
+        if (now > expected) {
+          const diffTime = Math.abs(now - expected);
+          delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        }
+        
+        const initializedItems = (r.items || []).map(item => ({
+          ...item,
+          isReturned: true,
+          returnCondition: 'GOOD',
+          itemLateCharge: delayedDays * (Number(item.lateFeePerDay) || selectedProgram?.rentalDefaultLateFee || 0)
+        }));
+
+        const sumItemLateFees = initializedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
+
+        setReturnFormData({
+          ...r,
+          items: initializedItems,
+          actualReturnDate: new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+          conditionReturn: 'Good',
+          damageCharge: r.damageCharge || 0,
+          lossCharge: r.lossCharge || 0,
+          lateCharge: r.lateCharge || sumItemLateFees,
+          delayedDays: delayedDays,
+          status: 'Returned Completely'
+        });
       }
-      
-      const initializedItems = (r.items || []).map(item => ({
-        ...item,
-        isReturned: true,
-        returnCondition: 'Ok',
-        itemLateCharge: delayedDays * (Number(item.lateFeePerDay) || selectedProgram?.rentalDefaultLateFee || 0)
-      }));
-
-      const sumItemLateFees = initializedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
-
-      setReturnFormData({
-        ...r,
-        items: initializedItems,
-        actualReturnDate: now.toISOString().slice(0, 16),
-        conditionReturn: 'Good',
-        damageCharge: r.damageCharge || 0,
-        lossCharge: r.lossCharge || 0,
-        lateCharge: r.lateCharge || sumItemLateFees,
-        delayedDays: delayedDays,
-        status: 'Returned Completely'
-      });
     } else {
       setReturnFormData({});
     }
@@ -674,17 +686,17 @@ const RentalBills = () => {
 
             {returnCustomer && (
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">2. Select Active Rental</label>
+                <label className="form-label">2. Select Rental Bill</label>
                 <select className="form-select" value={returnRentalId} onChange={e => handleReturnRentalSelect(e.target.value)}>
                   <option value="">-- Choose Rental Bill --</option>
-                  {rentals.filter(r => r.customer?._id === returnCustomer && r.status === 'Active').map(r => (
+                  {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).map(r => (
                     <option key={r._id} value={r._id}>
-                      Bill #{r.billNumber} (Exp: {new Date(r.expectedReturnDate).toLocaleDateString()})
+                      Bill #{r.billNumber} ({r.status === 'Active' ? 'Active' : 'Returned'})
                     </option>
                   ))}
                 </select>
-                {rentals.filter(r => r.customer?._id === returnCustomer && r.status === 'Active').length === 0 && (
-                  <small style={{ color: 'var(--danger)', display: 'block', marginTop: '4px' }}>No active rentals found for this customer.</small>
+                {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).length === 0 && (
+                  <small style={{ color: 'var(--danger)', display: 'block', marginTop: '4px' }}>No active or returned rentals found for this customer.</small>
                 )}
               </div>
             )}
