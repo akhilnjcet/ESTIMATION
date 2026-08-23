@@ -9,6 +9,7 @@ const RentalBills = () => {
   const [rentals, setRentals] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [members, setMembers] = useState([]);
   const { selectedProgram } = useProgram();
   const [activeView, setActiveView] = useState('list'); // 'list', 'new', 'return'
   const [previewData, setPreviewData] = useState(null); 
@@ -46,6 +47,13 @@ const RentalBills = () => {
     } catch (err) { console.error(err); }
   };
 
+  const fetchMembers = async () => {
+    try {
+      const { data } = await api.get('/staff');
+      setMembers(data);
+    } catch (err) { console.error(err); }
+  };
+
   const [prevProgramId, setPrevProgramId] = useState(selectedProgram?._id);
   if (selectedProgram?._id !== prevProgramId) {
     setPrevProgramId(selectedProgram?._id);
@@ -65,6 +73,7 @@ const RentalBills = () => {
     fetchRentals();
     fetchCustomers();
     fetchProducts();
+    fetchMembers();
   }, [selectedProgram]);
 
   const filteredRentals = rentals.filter(r => 
@@ -516,7 +525,12 @@ const RentalBills = () => {
               <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Equipment {isReturned ? 'Returned' : 'Received'} By</div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Authorized Signatory</div>
+              {(isReturned ? docData.returnIssuedBy : docData.issuedBy) && (
+                <div style={{ marginBottom: '15px', fontSize: '14px', fontFamily: 'cursive' }}>{isReturned ? docData.returnIssuedBy : docData.issuedBy}</div>
+              )}
+              <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>
+                {isReturned ? 'Return Issued By' : 'Rental Issued By'}
+              </div>
             </div>
           </div>
         )}
@@ -620,6 +634,13 @@ const RentalBills = () => {
               <div className="form-group">
                 <label className="form-label">Expected Return</label>
                 <input type="datetime-local" className="form-input" required value={formData.expectedReturnDate} onChange={e => setFormData({...formData, expectedReturnDate: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Issued By</label>
+                <select className="form-select" value={formData.issuedBy || ''} onChange={e => setFormData({...formData, issuedBy: e.target.value})}>
+                  <option value="">Select Member...</option>
+                  {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                </select>
               </div>
             </div>
 
@@ -818,6 +839,13 @@ const RentalBills = () => {
                       <option value="Returned Completely">Returned Completely</option>
                       <option value="Partially Returned">Partially Returned</option>
                       <option value="Returned">Returned</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Return Issued By</label>
+                    <select className="form-select" value={returnFormData.returnIssuedBy || ''} onChange={e => setReturnFormData({...returnFormData, returnIssuedBy: e.target.value})}>
+                      <option value="">Select Member...</option>
+                      {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                     </select>
                   </div>
                 </div>

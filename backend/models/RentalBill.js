@@ -66,7 +66,9 @@ const rentalBillSchema = new mongoose.Schema({
   // Signatures
   customerSignature: { type: String },
   receivedBy: { type: String },
-  returnedBy: { type: String }
+  returnedBy: { type: String },
+  issuedBy: { type: String },
+  returnIssuedBy: { type: String }
 
 }, { timestamps: true });
 

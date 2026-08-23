@@ -90,7 +90,9 @@ router.post('/', protect, async (req, res) => {
       theme: theme || 'classic',
       customerSignature,
       receivedBy,
-      returnedBy
+      returnedBy,
+      issuedBy,
+      returnIssuedBy
     });
 
     const createdBill = await rentalBill.save();
