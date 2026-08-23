@@ -68,7 +68,7 @@ const Staff = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', contactNumber: '', designation: '', expiryDate: '', isActive: true });
+    setFormData({ name: '', contactNumber: '', designation: '', memberOf: '', expiryDate: '', isActive: true });
     setEditingId(null);
     setIsFormOpen(false);
   };
@@ -110,7 +110,8 @@ const Staff = () => {
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>{staff.memberId}</span>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0, color: 'var(--text-primary)' }}>{staff.name}</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>{staff.designation}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600', display: 'block' }}>{staff.designation}</span>
+                {staff.memberOf && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{staff.memberOf}</span>}
               </div>
               <div style={{ display: 'flex', gap: '0.3rem' }}>
                 <button className="btn-icon" title="View ID Card" onClick={() => setPreviewStaff(staff)} style={{ color: 'var(--primary)' }}><QrCode size={16} /></button>
@@ -157,6 +158,10 @@ const Staff = () => {
               <div className="form-group">
                 <label className="form-label">Designation</label>
                 <input type="text" className="form-input" required value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} placeholder="e.g. Manager, Technician" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Member Of (Optional)</label>
+                <input type="text" className="form-input" value={formData.memberOf || ''} onChange={e => setFormData({...formData, memberOf: e.target.value})} placeholder="e.g. Finance Committee" />
               </div>
               <div className="form-group">
                 <label className="form-label">Contact Number</label>
@@ -216,7 +221,8 @@ const Staff = () => {
               </div>
 
               <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#FFF', margin: '0 0 0.25rem 0', textAlign: 'center' }}>{previewStaff.name}</h2>
-              <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: '600', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{previewStaff.designation}</div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: '600', marginBottom: previewStaff.memberOf ? '0.25rem' : '1.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{previewStaff.designation}</div>
+              {previewStaff.memberOf && <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1.5rem', textAlign: 'center' }}>{previewStaff.memberOf}</div>}
 
               <div style={{ width: '100%', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
@@ -261,7 +267,7 @@ const Staff = () => {
               </div>
 
               <div style={{ background: '#FFF', padding: '0.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', marginBottom: '1rem' }}>
-                <QRCode value={`ID:${previewStaff.memberId}|Name:${previewStaff.name}|Desg:${previewStaff.designation}|Ph:${previewStaff.contactNumber}`} size={120} />
+                <QRCode value={`ID:${previewStaff.memberId}|Name:${previewStaff.name}|Desg:${previewStaff.designation}${previewStaff.memberOf ? `|Grp:${previewStaff.memberOf}` : ''}|Ph:${previewStaff.contactNumber}`} size={120} />
               </div>
               <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', textTransform: 'uppercase' }}>Scan for Validation</div>
               

@@ -6,6 +6,7 @@ const staffSchema = new mongoose.Schema({
   name: { type: String, required: true },
   contactNumber: { type: String, required: true },
   designation: { type: String, required: true },
+  memberOf: { type: String },
   expiryDate: { type: Date },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });

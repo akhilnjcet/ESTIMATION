@@ -29,7 +29,7 @@ router.post('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
 
-    const { name, contactNumber, designation, expiryDate, isActive } = req.body;
+    const { name, contactNumber, designation, memberOf, expiryDate, isActive } = req.body;
 
     // Get program to generate memberId
     const program = await Program.findById(req.programId);
@@ -54,6 +54,7 @@ router.post('/', protect, async (req, res) => {
       name,
       contactNumber,
       designation,
+      memberOf,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
       isActive: isActive !== undefined ? isActive : true
     });
@@ -69,12 +70,13 @@ router.post('/', protect, async (req, res) => {
 // Update staff
 router.put('/:id', protect, async (req, res) => {
   try {
-    const { name, contactNumber, designation, expiryDate, isActive } = req.body;
+    const { name, contactNumber, designation, memberOf, expiryDate, isActive } = req.body;
     
     const updateData = {
       name,
       contactNumber,
       designation,
+      memberOf,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
       isActive
     };
