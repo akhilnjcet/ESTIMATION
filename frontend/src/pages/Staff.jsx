@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, X, Search, QrCode } from 'lucide-react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import QRCode from 'react-qr-code';
+import IdCardPreview from '../components/IdCardPreview';
 
 const Staff = () => {
   const [staffList, setStaffList] = useState([]);
@@ -183,109 +183,14 @@ const Staff = () => {
         </div>
       )}
 
-      {/* Premium ID Card Preview Modal */}
+      {/* Staff ID Card Preview Modal */}
       {previewStaff && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11, 18, 32, 0.9)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem', flexWrap: 'wrap', gap: '2rem' }}>
-          
-          <button onClick={() => setPreviewStaff(null)} style={{ position: 'absolute', top: '1.5rem', right: '2rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#FFF', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>
-            <X size={24} />
-          </button>
-
-          {/* FRONT OF ID CARD */}
-          <div style={{ 
-            width: '320px', 
-            height: '500px', 
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
-            borderRadius: '20px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)',
-            position: 'relative',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            border: '1px solid rgba(255,255,255,0.05)'
-          }}>
-            {/* Background Accents */}
-            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'var(--primary)', filter: 'blur(60px)', opacity: 0.4, borderRadius: '50%' }}></div>
-            <div style={{ position: 'absolute', bottom: '-50px', left: '-50px', width: '150px', height: '150px', background: 'var(--secondary)', filter: 'blur(60px)', opacity: 0.4, borderRadius: '50%' }}></div>
-            
-            {/* Header */}
-            <div style={{ padding: '1.5rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', zIndex: 2 }}>
-              <div style={{ fontSize: '0.75rem', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{selectedProgram?.name || 'Workspace'}</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>MEMBER IDENTITY</div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '2rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 2, position: 'relative' }}>
-              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '2px solid rgba(255,255,255,0.1)', marginBottom: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                <div style={{ fontSize: '2.5rem', color: 'rgba(255,255,255,0.8)', fontWeight: 'bold' }}>{previewStaff.name.charAt(0).toUpperCase()}</div>
-              </div>
-
-              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#FFF', margin: '0 0 0.25rem 0', textAlign: 'center' }}>{previewStaff.name}</h2>
-              <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: '600', marginBottom: previewStaff.memberOf ? '0.25rem' : '1.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{previewStaff.designation}</div>
-              {previewStaff.memberOf && <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1.5rem', textAlign: 'center' }}>{previewStaff.memberOf}</div>}
-
-              <div style={{ width: '100%', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>MEMBER ID</span>
-                  <b style={{ color: '#FFF', letterSpacing: '1px' }}>{previewStaff.memberId}</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>VALID THRU</span>
-                  <b style={{ color: '#FFF' }}>{previewStaff.expiryDate ? new Date(previewStaff.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : 'N/A'}</b>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ padding: '1rem 1.5rem', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)', zIndex: 2, display: 'flex', justifyContent: 'center' }}>
-               <div style={{ width: '40px', height: '5px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px' }}></div>
-            </div>
-          </div>
-
-
-          {/* BACK OF ID CARD */}
-          <div style={{ 
-            width: '320px', 
-            height: '500px', 
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
-            borderRadius: '20px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)',
-            position: 'relative',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            border: '1px solid rgba(255,255,255,0.05)'
-          }}>
-            {/* Magnetic Stripe Fake */}
-            <div style={{ width: '100%', height: '45px', background: '#000', marginTop: '2rem', opacity: 0.8 }}></div>
-            
-            <div style={{ padding: '2rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: '2rem', lineHeight: '1.5' }}>
-                This card is the property of <br/><b style={{ color: 'rgba(255,255,255,0.7)' }}>{selectedProgram?.name || 'The Company'}</b>.<br/>
-                If found, please return to the authorized personnel. Use of this card is governed by company policy.
-              </div>
-
-              <div style={{ background: '#FFF', padding: '0.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', marginBottom: '1rem' }}>
-                <QRCode value={`ID:${previewStaff.memberId}|Name:${previewStaff.name}|Desg:${previewStaff.designation}${previewStaff.memberOf ? `|Grp:${previewStaff.memberOf}` : ''}|Ph:${previewStaff.contactNumber}`} size={120} />
-              </div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', textTransform: 'uppercase' }}>Scan for Validation</div>
-              
-              <div style={{ marginTop: '2rem', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '0.75rem' }}>
-                <div style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  <div style={{ fontSize: '0.6rem', marginBottom: '2px' }}>EMERGENCY CONTACT</div>
-                  <b style={{ color: '#FFF' }}>{previewStaff.contactNumber}</b>
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.6rem', marginBottom: '2px' }}>STATUS</div>
-                  <b style={{ color: previewStaff.isActive ? '#22c55e' : '#ef4444' }}>{previewStaff.isActive ? 'ACTIVE' : 'INACTIVE'}</b>
-                </div>
-              </div>
-
-            </div>
-          </div>
-          
-        </div>
+        <IdCardPreview
+          data={previewStaff}
+          program={selectedProgram}
+          onClose={() => setPreviewStaff(null)}
+          type="member"
+        />
       )}
     </div>
   );

@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
+const Program = require('../models/Program');
 const { protect } = require('../middleware/authMiddleware');
+
+// Helper to generate initials from program name
+const getInitials = (name) => {
+  if (!name) return 'CUS';
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].substring(0, 3).toUpperCase();
+  return words.slice(0, 3).map(w => w[0]).join('').toUpperCase();
+};
 
 // @route   GET /api/customers
 // @desc    Get all customers
@@ -24,8 +33,25 @@ router.post('/', protect, async (req, res) => {
 
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
+
+    // Generate Customer ID
+    const program = await Program.findById(req.programId);
+    const prefix = getInitials(program?.name) + '-C';
+    
+    const lastCustomer = await Customer.findOne({ programId: req.programId, customerId: { $exists: true } }).sort({ createdAt: -1 });
+    let nextNum = 1;
+    if (lastCustomer && lastCustomer.customerId) {
+      const parts = lastCustomer.customerId.split('-C');
+      const lastNum = parseInt(parts[parts.length - 1]);
+      if (!isNaN(lastNum)) {
+        nextNum = lastNum + 1;
+      }
+    }
+    const customerId = `${prefix}${nextNum.toString().padStart(4, '0')}`;
+
     const customer = new Customer({
       programId: req.programId,
+      customerId,
       customerName,
       phone,
       email,

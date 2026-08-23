@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
+  customerId: { type: String },
   customerName: {
     type: String,
     required: true

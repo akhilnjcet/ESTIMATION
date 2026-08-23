@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Users, Plus, Search, Edit2, Trash2, X, Phone, Mail, FileText, CheckCircle2 } from 'lucide-react';
+import { Users, Plus, Search, Edit2, Trash2, X, Phone, Mail, QrCode } from 'lucide-react';
+import { useProgram } from '../context/ProgramContext';
+import IdCardPreview from '../components/IdCardPreview';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -11,6 +13,9 @@ const Customers = () => {
   });
 
   const [editingId, setEditingId] = useState(null);
+  const [previewCustomer, setPreviewCustomer] = useState(null);
+  
+  const { selectedProgram } = useProgram();
 
   useEffect(() => {
     fetchCustomers();
@@ -162,6 +167,7 @@ const Customers = () => {
         <table className="table-glass">
           <thead>
             <tr>
+              <th>Customer ID</th>
               <th>Customer Name</th>
               <th>Phone</th>
               <th>Email</th>
@@ -172,6 +178,9 @@ const Customers = () => {
           <tbody>
             {filteredCustomers.map(customer => (
               <tr key={customer._id}>
+                <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  {customer.customerId || 'N/A'}
+                </td>
                 <td style={{ fontWeight: '800' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem' }}>
@@ -201,6 +210,14 @@ const Customers = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                     <button 
                       className="btn-icon" 
+                      onClick={() => setPreviewCustomer(customer)} 
+                      title="View ID Card"
+                      style={{ color: 'var(--primary)' }}
+                    >
+                      <QrCode size={16} />
+                    </button>
+                    <button 
+                      className="btn-icon" 
                       onClick={() => handleEdit(customer)} 
                       title="Edit Customer"
                     >
@@ -228,6 +245,16 @@ const Customers = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Customer ID Card Preview Modal */}
+      {previewCustomer && (
+        <IdCardPreview
+          data={previewCustomer}
+          program={selectedProgram}
+          onClose={() => setPreviewCustomer(null)}
+          type="customer"
+        />
+      )}
     </div>
   );
 };
