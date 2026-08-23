@@ -316,7 +316,7 @@ const RentalBills = () => {
   const renderPreviewDocument = (docData, activeTheme = null) => {
     const theme = activeTheme || docData.theme || 'classic';
     const itemsList = Array.isArray(docData.items) ? docData.items : [];
-    const isReturned = ['Returned', 'Partially Returned'].includes(docData.status);
+    const isReturned = !docData._isOriginalView && ['Returned', 'Partially Returned', 'Returned Completely'].includes(docData.status);
 
     return (
       <div className={`invoice-container theme-${theme}`} style={{ '--theme-color': selectedProgram?.themeColor || '#3b82f6', padding: '2rem', background: '#FFF', color: '#1e293b' }}>
@@ -434,13 +434,13 @@ const RentalBills = () => {
                 <span style={{ fontWeight: '600' }}>&#8377;{(Number(docData.taxAmount) || 0).toLocaleString()}</span>
               </div>
             )}
-            {Number(docData.damageCharge) > 0 && (
+            {isReturned && Number(docData.damageCharge) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#EF4444' }}>
                 <span>Damage Charge</span>
                 <span>+ &#8377;{Number(docData.damageCharge).toLocaleString()}</span>
               </div>
             )}
-            {Number(docData.lateCharge) > 0 && (
+            {isReturned && Number(docData.lateCharge) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#F59E0B' }}>
                 <span>Late Charge</span>
                 <span>+ &#8377;{Number(docData.lateCharge).toLocaleString()}</span>
@@ -461,7 +461,7 @@ const RentalBills = () => {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)', borderTop: '2px solid #3b82f6', paddingTop: '0.5rem' }}>
               <span>Balance Payable</span>
-              <span>&#8377;{(Number(docData.balanceAmount) || 0).toLocaleString()}</span>
+              <span>&#8377;{((Number(docData.subTotal) || 0) + (docData.showTax !== false ? (Number(docData.taxAmount) || 0) : 0) + (isReturned ? (Number(docData.damageCharge) || 0) + (Number(docData.lateCharge) || 0) : 0) + (Number(docData.otherCharges) || 0) - (Number(docData.advancePaid) || 0)).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -778,7 +778,14 @@ const RentalBills = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
                 <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Bill #</span><div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{r.billNumber}</div></div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button className="btn-icon" onClick={() => setPreviewData(r)}><Eye size={14} /></button>
+                  {r.status !== 'Active' ? (
+                    <>
+                      <button className="btn-icon" title="View Original Rental Bill" onClick={() => setPreviewData({ ...r, _isOriginalView: true })}><Eye size={14} /></button>
+                      <button className="btn-icon" title="View Return Bill" onClick={() => setPreviewData(r)}><RefreshCcw size={14} /></button>
+                    </>
+                  ) : (
+                    <button className="btn-icon" title="View Rental Bill" onClick={() => setPreviewData(r)}><Eye size={14} /></button>
+                  )}
                   <button className="btn-icon" onClick={() => handleEdit(r)}><Edit2 size={14} /></button>
                   <button className="btn-icon" onClick={() => handleDelete(r._id)} style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
                 </div>
