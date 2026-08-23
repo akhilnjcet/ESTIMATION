@@ -13,7 +13,10 @@ const itemSchema = new mongoose.Schema({
   total: { type: Number, required: true, min: 0 },
   lateFeePerDay: { type: Number, default: 0 },
   itemNos: { type: String },
-  condition: { type: String }
+  condition: { type: String },
+  isReturned: { type: Boolean, default: false },
+  returnCondition: { type: String },
+  itemLateCharge: { type: Number, default: 0 }
 });
 
 const rentalBillSchema = new mongoose.Schema({

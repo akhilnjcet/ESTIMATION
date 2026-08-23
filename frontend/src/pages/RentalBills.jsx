@@ -215,17 +215,24 @@ const RentalBills = () => {
         delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
       }
       
-      const sumItemLateFees = (r.items || []).reduce((sum, item) => sum + (Number(item.lateFeePerDay) || 0), 0);
-      const calculatedLateCharge = delayedDays * (sumItemLateFees > 0 ? sumItemLateFees : (selectedProgram?.rentalDefaultLateFee || 0));
+      const initializedItems = (r.items || []).map(item => ({
+        ...item,
+        isReturned: true,
+        returnCondition: 'Ok',
+        itemLateCharge: delayedDays * (Number(item.lateFeePerDay) || selectedProgram?.rentalDefaultLateFee || 0)
+      }));
+
+      const sumItemLateFees = initializedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
 
       setReturnFormData({
         ...r,
+        items: initializedItems,
         actualReturnDate: now.toISOString().slice(0, 16),
         conditionReturn: 'Good',
         damageCharge: r.damageCharge || 0,
-        lateCharge: r.lateCharge || calculatedLateCharge,
+        lateCharge: r.lateCharge || sumItemLateFees,
         delayedDays: delayedDays,
-        status: 'Returned'
+        status: 'Returned Completely'
       });
     } else {
       setReturnFormData({});
@@ -242,14 +249,39 @@ const RentalBills = () => {
       delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     }
     
-    const sumItemLateFees = (returnFormData.items || []).reduce((sum, item) => sum + (Number(item.lateFeePerDay) || 0), 0);
-    const calculatedLateCharge = delayedDays * (sumItemLateFees > 0 ? sumItemLateFees : (selectedProgram?.rentalDefaultLateFee || 0));
+    const initializedItems = (returnFormData.items || []).map(item => ({
+      ...item,
+      itemLateCharge: delayedDays * (Number(item.lateFeePerDay) || selectedProgram?.rentalDefaultLateFee || 0)
+    }));
+
+    const sumItemLateFees = initializedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
 
     setReturnFormData(prev => ({
       ...prev,
+      items: initializedItems,
       actualReturnDate: dateString,
       delayedDays,
-      lateCharge: calculatedLateCharge
+      lateCharge: sumItemLateFees
+    }));
+  };
+
+  const handleReturnItemChange = (index, field, value) => {
+    const updatedItems = [...returnFormData.items];
+    if (field === 'isReturned') {
+        updatedItems[index].isReturned = value;
+    } else {
+        updatedItems[index][field] = value;
+    }
+    
+    const allReturned = updatedItems.every(i => i.isReturned);
+    const newStatus = allReturned ? 'Returned Completely' : 'Partially Returned';
+    const sumItemLateFees = updatedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
+    
+    setReturnFormData(prev => ({
+      ...prev,
+      items: updatedItems,
+      status: newStatus,
+      lateCharge: sumItemLateFees
     }));
   };
 
@@ -355,6 +387,11 @@ const RentalBills = () => {
                       {item.itemNos && `SN/No: ${item.itemNos}`}
                       {item.itemNos && item.condition && ' | '}
                       {item.condition && `Cond: ${item.condition}`}
+                    </div>
+                  )}
+                  {isReturned && (
+                    <div style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold', color: item.isReturned === false ? '#EF4444' : '#22C55E' }}>
+                      {item.isReturned === false ? 'NOT RETURNED' : `Returned (${item.returnCondition || 'Ok'})`}
                     </div>
                   )}
                 </td>
@@ -663,16 +700,42 @@ const RentalBills = () => {
                   </div>
                 )}
 
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Item Return Checklist</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {(returnFormData.items || []).map((item, index) => (
+                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 2fr 2fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                        <div>
+                          <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                        </div>
+                        <div>
+                          <b style={{ fontSize: '0.85rem' }}>{item.productName}</b>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qty: {item.quantity} {item.itemNos ? `| SN: ${item.itemNos}` : ''}</div>
+                        </div>
+                        <div>
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
+                           <input type="text" className="form-input" list="condition-options" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                        </div>
+                        <div>
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
+                           <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Condition on Return</label>
-                    <input type="text" className="form-input" required value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({...returnFormData, conditionReturn: e.target.value})} placeholder="e.g. Good, Minor Scratches" />
+                    <label className="form-label">General Condition Note</label>
+                    <input type="text" className="form-input" value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({...returnFormData, conditionReturn: e.target.value})} placeholder="e.g. Good, Minor Scratches" />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Status</label>
-                    <select className="form-select" value={returnFormData.status} onChange={e => setReturnFormData({...returnFormData, status: e.target.value})}>
-                      <option value="Returned">Returned Completely</option>
+                    <label className="form-label">Status (Auto-calculated)</label>
+                    <select className="form-select" disabled value={returnFormData.status || 'Returned Completely'} onChange={e => setReturnFormData({...returnFormData, status: e.target.value})}>
+                      <option value="Returned Completely">Returned Completely</option>
                       <option value="Partially Returned">Partially Returned</option>
+                      <option value="Returned">Returned</option>
                     </select>
                   </div>
                 </div>
