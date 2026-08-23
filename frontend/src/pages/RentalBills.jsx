@@ -85,6 +85,7 @@ const RentalBills = () => {
     setFormData({ 
       customer: '', 
       notes: '', 
+      altContactNumber: '',
       terms: selectedProgram?.rentalDefaultTerms || '',
       showTerms: selectedProgram?.showRentalTermsByDefault !== undefined ? selectedProgram.showRentalTermsByDefault : true,
       showTax: true,
@@ -372,7 +373,8 @@ const RentalBills = () => {
             <h3 style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', color: '#94a3b8', marginBottom: '4px' }}>Billed To:</h3>
             <p style={{ margin: 0, fontSize: '15px', fontWeight: '700' }}>{docData.customer?.customerName || 'Select Customer'}</p>
             <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b', maxWidth: '250px' }}>{docData.customer?.address || ''}</p>
-            <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>Ph: {docData.customer?.phone}</p>
+            <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>Ph: {docData.customer?.contactNumber || docData.customer?.phone}</p>
+            {docData.altContactNumber && <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>Alt Ph: {docData.altContactNumber}</p>}
           </div>
           
           <div style={{ textAlign: 'right', background: '#F8FAFC', padding: '10px', borderRadius: '8px' }}>
@@ -605,6 +607,10 @@ const RentalBills = () => {
                   <option value="">Select party...</option>
                   {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Alt Contact No. (Optional)</label>
+                <input type="text" className="form-input" placeholder="Alternative Phone" value={formData.altContactNumber || ''} onChange={e => setFormData({...formData, altContactNumber: e.target.value})} />
               </div>
               <div className="form-group">
                 <label className="form-label">Rental Start Date/Time</label>

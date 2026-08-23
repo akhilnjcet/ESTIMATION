@@ -24,6 +24,7 @@ const rentalBillSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
   billNumber: { type: String, required: true, unique: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+  altContactNumber: { type: String },
   items: [itemSchema],
   
   // Rental dates
