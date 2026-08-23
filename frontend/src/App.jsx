@@ -15,6 +15,7 @@ import Products from './pages/Products';
 import Quotations from './pages/Quotations';
 import Invoices from './pages/Invoices';
 import LabourBills from './pages/LabourBills';
+import RentalBills from './pages/RentalBills';
 import Income from './pages/Income';
 import Expense from './pages/Expense';
 import Accounts from './pages/Accounts';
@@ -244,6 +245,7 @@ function App() {
               <Route path="/login-manager"   element={<PrivateRoute><UserAccess /></PrivateRoute>} />
               <Route path="/admin-settings"  element={<PrivateRoute><AdminOnlyRoute><AdminSettings /></AdminOnlyRoute></PrivateRoute>} />
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
+              <Route path="/rental-bills"    element={<PrivateRoute><RentalBills /></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
