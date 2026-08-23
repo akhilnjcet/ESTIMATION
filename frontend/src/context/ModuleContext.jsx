@@ -156,6 +156,9 @@ export const ModuleProvider = ({ children }) => {
     // Block adminOnly routes from non-admins always
     if (mod.adminOnly && role !== 'admin') return false;
 
+    // Block noViewer routes from viewers
+    if (mod.noViewer && role === 'viewer') return false;
+
     // Strict check — module must be in the enabled list
     return enabledModules.includes(mod.id);
   };

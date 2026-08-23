@@ -83,11 +83,11 @@ const Staff = () => {
     <div className="page-container" style={{ position: 'relative' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 className="page-title">Staff Directory</h1>
-          <p className="page-subtitle">Manage staff, generate ID cards, and update details</p>
+          <h1 className="page-title">Member Directory</h1>
+          <p className="page-subtitle">Manage members, generate ID cards, and update details</p>
         </div>
         <button className="btn-gradient" onClick={() => setIsFormOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Plus size={18} /> Add Staff
+          <Plus size={18} /> Add Member
         </button>
       </div>
 
@@ -146,7 +146,7 @@ const Staff = () => {
         <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11, 18, 32, 0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div className="glass-panel" style={{ width: '90%', maxWidth: '500px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>{editingId ? 'Edit Staff Details' : 'Add New Staff'}</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>{editingId ? 'Edit Member Details' : 'Add New Member'}</h2>
               <button className="btn-icon" onClick={resetForm}><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -171,7 +171,7 @@ const Staff = () => {
                 <label htmlFor="isActive" style={{ fontSize: '0.9rem', cursor: 'pointer' }}>Account Active</label>
               </div>
               <div style={{ marginTop: '1.5rem' }}>
-                <button type="submit" className="btn-gradient" style={{ width: '100%' }}>{editingId ? 'Update Staff' : 'Save Staff'}</button>
+                <button type="submit" className="btn-gradient" style={{ width: '100%' }}>{editingId ? 'Update Member' : 'Save Member'}</button>
               </div>
             </form>
           </div>
@@ -206,7 +206,7 @@ const Staff = () => {
             {/* Header */}
             <div style={{ padding: '1.5rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', zIndex: 2 }}>
               <div style={{ fontSize: '0.75rem', letterSpacing: '2px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{selectedProgram?.name || 'Workspace'}</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>STAFF IDENTITY</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>MEMBER IDENTITY</div>
             </div>
 
             {/* Content */}

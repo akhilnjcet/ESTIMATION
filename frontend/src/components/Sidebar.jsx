@@ -70,7 +70,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const visibleModules = orderedModules.filter(
     (m) =>
       authoritativeEnabled.includes(m.id) &&
-      (!m.adminOnly || role === 'admin')
+      (!m.adminOnly || role === 'admin') &&
+      !(m.noViewer && role === 'viewer')
   );
 
   // Group by category — only include categories that have ≥1 visible module

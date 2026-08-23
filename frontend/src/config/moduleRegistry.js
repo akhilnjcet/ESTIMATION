@@ -213,13 +213,14 @@ export const ALL_MODULES = [
   {
     id: 'staff',
     path: '/staff',
-    label: 'Staff',
-    description: 'Manage staff details and generate dynamic ID cards',
+    label: 'Members',
+    description: 'Manage members and generate dynamic ID cards',
     iconName: 'BadgeCheck',
     category: 'CORE MODULES',
     categoryKey: 'core',
     defaultEnabled: true,
     adminOnly: false,
+    noViewer: true,
   },
   {
     id: 'admin-settings',
