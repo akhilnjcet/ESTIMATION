@@ -54,9 +54,9 @@ router.get('/combined', protect, async (req, res) => {
           { _id: { $in: req.user.programAccess || [] } }
         ]
       }, 'name'),
-      Invoice.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
-      Quotation.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName'),
-      LabourBill.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName')
+      Invoice.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName phone address email gstNumber'),
+      Quotation.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName phone address email gstNumber'),
+      LabourBill.find(filter).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName phone address email gstNumber')
     ]);
 
     let globalIncome = 0;

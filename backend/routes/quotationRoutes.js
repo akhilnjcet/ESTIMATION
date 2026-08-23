@@ -9,7 +9,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     const query = req.programId ? { programId: req.programId } : {};
-    const quotations = await Quotation.find(query).populate('customer', 'customerName').sort({ createdAt: -1 });
+    const quotations = await Quotation.find(query).populate('customer', 'customerName phone address email gstNumber').sort({ createdAt: -1 });
     res.json(quotations);
   } catch (error) {
     console.error('FETCH_QUOTATIONS_ERROR:', error);

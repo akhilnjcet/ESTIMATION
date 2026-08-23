@@ -7,7 +7,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     const filter = req.programId ? { programId: req.programId } : {};
-    const invoices = await Invoice.find(filter).populate('customer', 'customerName').sort({ createdAt: -1 });
+    const invoices = await Invoice.find(filter).populate('customer', 'customerName phone address email gstNumber').sort({ createdAt: -1 });
     res.json(invoices);
   } catch (error) {
     console.error('FETCH_INVOICES_ERROR:', error);
