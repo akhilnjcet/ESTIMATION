@@ -131,7 +131,7 @@ const Customers = () => {
           </h2>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label">Customer Name</label>
                 <input type="text" className="form-input" required value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} placeholder="Acme Corp / John Doe" />

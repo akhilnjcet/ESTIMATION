@@ -611,7 +611,7 @@ const RentalBills = () => {
       </div>
 
       {activeView === 'new' && (
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div className="glass-panel" style={{ padding: '1.75rem', flex: '1' }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
           <form onSubmit={handleSubmit}>
@@ -653,35 +653,35 @@ const RentalBills = () => {
                 {items.map((item, index) => (
                   <div key={index} className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
                     <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={15} /></button>
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '0.65rem' }}>
-                      <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+                      <div style={{ flex: '2 1 150px' }}>
                         <label className="form-label">Equipment</label>
                         <input type="text" className="form-input" required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" />
                       </div>
-                      <div>
+                      <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Qty</label>
                         <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
                       </div>
-                      <div>
+                      <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Rate (&#8377;)</label>
                         <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
                       </div>
-                      <div>
+                      <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Per</label>
                         <select className="form-select" value={item.rateType} onChange={e => updateItem(index, 'rateType', e.target.value)}>
                           <option value="Hour">Hour</option><option value="Day">Day</option><option value="Week">Week</option><option value="Month">Month</option><option value="Fixed">Fixed</option>
                         </select>
                       </div>
-                      <div>
+                      <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Duration</label>
                         <input type="number" className="form-input" required value={item.rentalDuration} onChange={e => updateItem(index, 'rentalDuration', e.target.value)} />
                       </div>
-                      <div>
+                      <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Total</label>
                         <div style={{ padding: '0.6rem', background: 'var(--bg-body)', borderRadius: '6px', fontWeight: 'bold' }}>&#8377;{item.total}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.65rem', marginTop: '0.65rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.65rem', marginTop: '0.65rem' }}>
                       <div>
                         <label className="form-label" style={{ fontSize: '0.7rem' }}>Item No(s)</label>
                         <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
@@ -706,7 +706,7 @@ const RentalBills = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div className="form-group"><label className="form-label">Checkout Condition</label><input type="text" className="form-input" value={formData.conditionCheckout} onChange={e => setFormData({...formData, conditionCheckout: e.target.value})} /></div>
                 <div className="form-group"><label className="form-label">Advance Paid (&#8377;)</label><input type="number" className="form-input" value={formData.advancePaid} onChange={e => setFormData({...formData, advancePaid: e.target.value})} /></div>
@@ -738,7 +738,7 @@ const RentalBills = () => {
       )}
 
       {activeView === 'return' && (
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {/* Form Side */}
           <div className="glass-panel" style={{ padding: '1.75rem', flex: '1' }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -772,7 +772,7 @@ const RentalBills = () => {
 
             {returnRentalId && returnFormData && (
               <form onSubmit={handleReturnSubmit} style={{ marginTop: '1.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Expected Return Date</label>
                     <input type="text" className="form-input" disabled value={new Date(returnFormData.expectedReturnDate).toLocaleString()} />
@@ -793,18 +793,16 @@ const RentalBills = () => {
                   <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Item Return Checklist</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {(returnFormData.items || []).map((item, index) => (
-                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'grid', gridTemplateColumns: 'auto 2fr 2fr 1fr 1fr', gap: '1rem', alignItems: 'center' }}>
-                        <div>
-                          <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+                        <div style={{ flex: '0 0 auto' }}>
+                           <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
                         </div>
-                        <div>
-                          <b style={{ fontSize: '0.85rem' }}>{item.productName}</b>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qty: {item.quantity} {item.itemNos ? `| SN: ${item.itemNos}` : ''}</div>
+                        <div style={{ flex: '2 1 120px' }}>
+                           <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{item.productName}</div>
+                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.quantity} Qty | {item.rentalDuration} {item.rateType}(s)</div>
                         </div>
-                        <div>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>
-                             {item.isReturned === false ? 'Reason' : 'Return Condition'}
-                           </label>
+                        <div style={{ flex: '2 1 120px' }}>
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
                            <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
                               <option value="">-- Select --</option>
                               <option value="GOOD">GOOD</option>
@@ -815,11 +813,11 @@ const RentalBills = () => {
                               <option value="STILL RENTING">STILL RENTING</option>
                            </select>
                         </div>
-                        <div>
+                        <div style={{ flex: '1 1 80px' }}>
                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
                            <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
                         </div>
-                        <div>
+                        <div style={{ flex: '1 1 80px' }}>
                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
                            <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
                         </div>
@@ -828,7 +826,7 @@ const RentalBills = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label">General Condition Note</label>
                     <input type="text" className="form-input" value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({...returnFormData, conditionReturn: e.target.value})} placeholder="e.g. Good, Minor Scratches" />
@@ -850,7 +848,7 @@ const RentalBills = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ color: '#F59E0B' }}>Late Chg (&#8377;)</label>
                     <input type="number" className="form-input" value={returnFormData.lateCharge || 0} onChange={e => setReturnFormData({...returnFormData, lateCharge: e.target.value})} />
@@ -891,7 +889,7 @@ const RentalBills = () => {
       )}
 
       {activeView === 'list' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: '1.25rem' }}>
           {filteredRentals.map((r) => (
             <div key={r._id} className="glass-card" style={{ padding: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>

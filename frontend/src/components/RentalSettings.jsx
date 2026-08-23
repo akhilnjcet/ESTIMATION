@@ -51,7 +51,7 @@ const RentalSettings = () => {
       </h2>
       
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label">Rental Bill Prefix</label>
             <input 

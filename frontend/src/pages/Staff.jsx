@@ -81,7 +81,7 @@ const Staff = () => {
 
   return (
     <div className="page-container" style={{ position: 'relative' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="page-title">Member Directory</h1>
           <p className="page-subtitle">Manage members, generate ID cards, and update details</p>
@@ -103,9 +103,9 @@ const Staff = () => {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
         {filteredStaff.map((staff) => (
-          <div key={staff._id} className="glass-card" style={{ padding: '1.5rem', position: 'relative', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div key={staff._id} className="glass-card" style={{ padding: '1.25rem', position: 'relative', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>{staff.memberId}</span>
@@ -144,8 +144,8 @@ const Staff = () => {
 
       {/* Staff Form Modal */}
       {isFormOpen && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11, 18, 32, 0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '500px', padding: '2rem' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(11, 18, 32, 0.8)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>{editingId ? 'Edit Member Details' : 'Add New Member'}</h2>
               <button className="btn-icon" onClick={resetForm}><X size={20} /></button>
