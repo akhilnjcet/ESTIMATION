@@ -254,7 +254,8 @@ const RentalBills = () => {
           lossCharge: r.lossCharge || 0,
           lateCharge: r.lateCharge || sumItemLateFees,
           delayedDays: delayedDays,
-          status: 'Returned Completely'
+          status: 'Returned Completely',
+          returnedBy: r.customer?.customerName || ''
         });
       }
     } else {
@@ -522,6 +523,9 @@ const RentalBills = () => {
               <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Customer Signature</div>
             </div>
             <div style={{ textAlign: 'center' }}>
+              {isReturned && docData.returnedBy && (
+                <div style={{ marginBottom: '15px', fontSize: '14px', fontFamily: 'cursive' }}>{docData.returnedBy}</div>
+              )}
               <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Equipment {isReturned ? 'Returned' : 'Received'} By</div>
             </div>
             <div style={{ textAlign: 'center' }}>
@@ -827,6 +831,10 @@ const RentalBills = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Equipment Returned By</label>
+                    <input type="text" className="form-input" value={returnFormData.returnedBy || ''} onChange={e => setReturnFormData({...returnFormData, returnedBy: e.target.value})} placeholder="Customer Name..." />
+                  </div>
                   <div className="form-group">
                     <label className="form-label">General Condition Note</label>
                     <input type="text" className="form-input" value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({...returnFormData, conditionReturn: e.target.value})} placeholder="e.g. Good, Minor Scratches" />

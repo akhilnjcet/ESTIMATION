@@ -26,7 +26,7 @@ router.post('/', protect, async (req, res) => {
       notes, terms, date, rentalStartDate, expectedReturnDate, actualReturnDate, status,
       conditionCheckout, conditionReturn,
       showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, 
-      billNumber, customerSignature, receivedBy, returnedBy
+      billNumber, customerSignature, receivedBy, returnedBy, issuedBy, returnIssuedBy
     } = req.body;
 
     let finalBillNumber = billNumber;
@@ -114,7 +114,7 @@ router.put('/:id', protect, async (req, res) => {
       notes, terms, date, rentalStartDate, expectedReturnDate, actualReturnDate, status,
       conditionCheckout, conditionReturn,
       showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, 
-      billNumber, customerSignature, receivedBy, returnedBy
+      billNumber, customerSignature, receivedBy, returnedBy, issuedBy, returnIssuedBy
     } = req.body;
     
     const sanitizedItems = items.map(item => ({
@@ -152,7 +152,9 @@ router.put('/:id', protect, async (req, res) => {
       theme: theme || 'classic',
       customerSignature,
       receivedBy,
-      returnedBy
+      returnedBy,
+      issuedBy,
+      returnIssuedBy
     };
     
     if (billNumber && billNumber.trim() !== '') {
