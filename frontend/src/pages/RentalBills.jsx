@@ -666,18 +666,17 @@ const RentalBills = () => {
                         <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
                       </div>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.7rem' }}>Condition</label>
+                        <label className="form-label" style={{ fontSize: '0.7rem' }}>Checkout Condition</label>
                         <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
                           <option value="">-- Select --</option>
                           <option value="GOOD">GOOD</option>
                           <option value="BAD">BAD</option>
                           <option value="NOT BAD">NOT BAD</option>
                           <option value="DAMAGED">DAMAGED</option>
-                          <option value="LOSS">LOSS</option>
                         </select>
                       </div>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Late Fee / Day (&#8377;)</label>
+                        <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Agreed Late Fee/Day (&#8377;)</label>
                         <input type="number" className="form-input" value={item.lateFeePerDay} onChange={e => updateItem(index, 'lateFeePerDay', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
                       </div>
                     </div>
