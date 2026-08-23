@@ -302,8 +302,8 @@ const ModuleRow = ({ module, enabled, isFavorite, onToggle, onFavorite, readOnly
           gap: '0.85rem',
           padding: '0.85rem 1rem',
           borderRadius: '12px',
-          background: enabled ? 'rgba(59,130,246,0.05)' : 'rgba(255,255,255,0.02)',
-          border: `1px solid ${enabled ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)'}`,
+          background: enabled ? 'rgba(59,130,246,0.05)' : 'var(--bg-card)',
+          border: `1px solid ${enabled ? 'rgba(59,130,246,0.15)' : 'var(--glass-border)'}`,
           marginBottom: '0.5rem',
           cursor: 'default',
           transition: 'background 0.2s, border-color 0.2s',
@@ -330,7 +330,7 @@ const ModuleRow = ({ module, enabled, isFavorite, onToggle, onFavorite, readOnly
         {!readOnly && (
           <div
             style={{
-              color: 'rgba(255,255,255,0.2)',
+              color: 'var(--text-muted)',
               cursor: 'grab',
               display: 'flex',
               alignItems: 'center',
@@ -348,15 +348,15 @@ const ModuleRow = ({ module, enabled, isFavorite, onToggle, onFavorite, readOnly
             borderRadius: '10px',
             background: enabled
               ? `linear-gradient(135deg, ${module.color || '#3B82F6'}22, ${module.color || '#3B82F6'}11)`
-              : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${enabled ? (module.color || '#3B82F6') + '33' : 'rgba(255,255,255,0.06)'}`,
+              : 'rgba(128,128,128,0.1)',
+            border: `1px solid ${enabled ? (module.color || '#3B82F6') + '33' : 'rgba(128,128,128,0.2)'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={17} style={{ color: enabled ? (module.color || '#3B82F6') : 'rgba(255,255,255,0.25)' }} />
+          <Icon size={17} style={{ color: enabled ? (module.color || '#3B82F6') : 'var(--text-muted)' }} />
         </div>
 
         {/* Text */}
@@ -365,7 +365,7 @@ const ModuleRow = ({ module, enabled, isFavorite, onToggle, onFavorite, readOnly
             style={{
               fontSize: '0.875rem',
               fontWeight: '700',
-              color: enabled ? 'var(--text-primary)' : 'rgba(255,255,255,0.35)',
+              color: enabled ? 'var(--text-primary)' : 'var(--text-secondary)',
               marginBottom: '0.15rem',
               transition: 'color 0.2s',
             }}
@@ -414,7 +414,7 @@ const ModuleRow = ({ module, enabled, isFavorite, onToggle, onFavorite, readOnly
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: isFavorite ? '#F59E0B' : 'rgba(255,255,255,0.2)',
+              color: isFavorite ? '#F59E0B' : 'var(--text-muted)',
               display: 'flex',
               alignItems: 'center',
               padding: '0.25rem',
