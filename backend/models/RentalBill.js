@@ -16,7 +16,8 @@ const itemSchema = new mongoose.Schema({
   condition: { type: String },
   isReturned: { type: Boolean, default: false },
   returnCondition: { type: String },
-  itemLateCharge: { type: Number, default: 0 }
+  itemLateCharge: { type: Number, default: 0 },
+  itemLossCharge: { type: Number, default: 0 }
 });
 
 const rentalBillSchema = new mongoose.Schema({

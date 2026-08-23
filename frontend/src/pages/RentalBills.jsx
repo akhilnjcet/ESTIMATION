@@ -282,6 +282,9 @@ const RentalBills = () => {
     const updatedItems = [...returnFormData.items];
     if (field === 'isReturned') {
         updatedItems[index].isReturned = value;
+        if (!value && !['LOSS', 'DAMAGED', 'STILL RENTING'].includes(updatedItems[index].returnCondition)) {
+           updatedItems[index].returnCondition = 'STILL RENTING';
+        }
     } else {
         updatedItems[index][field] = value;
     }
@@ -289,14 +292,18 @@ const RentalBills = () => {
     const allReturned = updatedItems.every(i => i.isReturned);
     const newStatus = allReturned ? 'Returned Completely' : 'Partially Returned';
     const sumItemLateFees = updatedItems.reduce((sum, item) => sum + (item.isReturned ? Number(item.itemLateCharge) || 0 : 0), 0);
+    const hasItemLossFees = updatedItems.some(i => i.isReturned === false && i.returnCondition === 'LOSS');
+    const sumItemLossFees = updatedItems.reduce((sum, item) => sum + (item.isReturned === false && item.returnCondition === 'LOSS' ? Number(item.itemLossCharge) || 0 : 0), 0);
     
     setReturnFormData(prev => ({
       ...prev,
       items: updatedItems,
       status: newStatus,
-      lateCharge: sumItemLateFees
+      lateCharge: sumItemLateFees,
+      lossCharge: hasItemLossFees ? sumItemLossFees : prev.lossCharge
     }));
   };
+
 
   const handleReturnSubmit = async (e) => {
     e.preventDefault();
@@ -404,7 +411,7 @@ const RentalBills = () => {
                   )}
                   {isReturned && (
                     <div style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold', color: item.isReturned === false ? '#EF4444' : '#22C55E' }}>
-                      {item.isReturned === false ? 'NOT RETURNED' : `Returned (${item.returnCondition || 'Ok'})`}
+                      {item.isReturned === false ? `NOT RETURNED (${item.returnCondition || 'Missing'})` : `Returned (${item.returnCondition || 'Ok'})`}
                     </div>
                   )}
                 </td>
@@ -733,19 +740,31 @@ const RentalBills = () => {
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qty: {item.quantity} {item.itemNos ? `| SN: ${item.itemNos}` : ''}</div>
                         </div>
                         <div>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
-                           <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
+                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>
+                             {item.isReturned === false ? 'Reason' : 'Return Condition'}
+                           </label>
+                           <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
                               <option value="">-- Select --</option>
                               <option value="GOOD">GOOD</option>
                               <option value="BAD">BAD</option>
                               <option value="NOT BAD">NOT BAD</option>
                               <option value="DAMAGED">DAMAGED</option>
                               <option value="LOSS">LOSS</option>
+                              <option value="STILL RENTING">STILL RENTING</option>
                            </select>
                         </div>
                         <div>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
-                           <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                           {item.isReturned === false && item.returnCondition === 'LOSS' ? (
+                             <>
+                               <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
+                               <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                             </>
+                           ) : (
+                             <>
+                               <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
+                               <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                             </>
+                           )}
                         </div>
                       </div>
                     ))}
