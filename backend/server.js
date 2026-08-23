@@ -61,6 +61,7 @@ app.use('/api/labour-bills', protect, restrictToView, verifyProgramAccess, requi
 app.use('/api/settings', protect, restrictToView, require('./routes/settingsRoutes'));
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
 app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));
+app.use('/api/rentals', protect, restrictToView, verifyProgramAccess, require('./routes/rentalRoutes'));
 
 
 
