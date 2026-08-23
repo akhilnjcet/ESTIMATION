@@ -872,12 +872,12 @@ const RentalBills = () => {
               <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <b style={{ color: 'var(--text-primary)' }}>{r.customer?.customerName}</b>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {r.customer?.contactNumber && (
+                  {r.customer?.phone && (
                     <>
-                      <a href={`tel:${r.customer.contactNumber}`} onClick={e => e.stopPropagation()} style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="Call Customer">
+                      <a href={`tel:${r.customer.phone}`} onClick={e => e.stopPropagation()} style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="Call Customer">
                         <Phone size={14} />
                       </a>
-                      <a href={`https://wa.me/${r.customer.contactNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="WhatsApp Customer">
+                      <a href={`https://wa.me/${r.customer.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="WhatsApp Customer">
                         <MessageCircle size={14} />
                       </a>
                     </>
