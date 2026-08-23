@@ -170,7 +170,7 @@ const RentalBills = () => {
       ? currentItems.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0)
       : 0;
     
-    let totalAmount = subTotal + taxAmount + Number(currentFormData.damageCharge || 0) + Number(currentFormData.lateCharge || 0) + Number(currentFormData.otherCharges || 0) - Number(currentFormData.discount || 0);
+    let totalAmount = subTotal + taxAmount + Number(currentFormData.damageCharge || 0) + Number(currentFormData.lossCharge || 0) + Number(currentFormData.lateCharge || 0) + Number(currentFormData.otherCharges || 0) - Number(currentFormData.discount || 0);
     let balanceAmount = totalAmount - Number(currentFormData.advancePaid || 0);
 
     return { subTotal, taxAmount, totalAmount, balanceAmount };
@@ -230,6 +230,7 @@ const RentalBills = () => {
         actualReturnDate: now.toISOString().slice(0, 16),
         conditionReturn: 'Good',
         damageCharge: r.damageCharge || 0,
+        lossCharge: r.lossCharge || 0,
         lateCharge: r.lateCharge || sumItemLateFees,
         delayedDays: delayedDays,
         status: 'Returned Completely'
@@ -440,6 +441,12 @@ const RentalBills = () => {
                 <span>+ &#8377;{Number(docData.damageCharge).toLocaleString()}</span>
               </div>
             )}
+            {isReturned && Number(docData.lossCharge) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#DC2626' }}>
+                <span>Loss Charge</span>
+                <span>+ &#8377;{Number(docData.lossCharge).toLocaleString()}</span>
+              </div>
+            )}
             {isReturned && Number(docData.lateCharge) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#F59E0B' }}>
                 <span>Late Charge</span>
@@ -461,23 +468,23 @@ const RentalBills = () => {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)', borderTop: '2px solid #3b82f6', paddingTop: '0.5rem' }}>
               <span>Balance Payable</span>
-              <span>&#8377;{((Number(docData.subTotal) || 0) + (docData.showTax !== false ? (Number(docData.taxAmount) || 0) : 0) + (isReturned ? (Number(docData.damageCharge) || 0) + (Number(docData.lateCharge) || 0) : 0) + (Number(docData.otherCharges) || 0) - (Number(docData.advancePaid) || 0)).toLocaleString()}</span>
+              <span>&#8377;{((Number(docData.subTotal) || 0) + (docData.showTax !== false ? (Number(docData.taxAmount) || 0) : 0) + (isReturned ? (Number(docData.damageCharge) || 0) + (Number(docData.lossCharge) || 0) + (Number(docData.lateCharge) || 0) : 0) + (Number(docData.otherCharges) || 0) - (Number(docData.advancePaid) || 0)).toLocaleString()}</span>
             </div>
           </div>
         </div>
 
-        {/* If the bill is returned, we DO NOT SHOW the Terms and conditions, we show a simple message */}
-        {isReturned ? (
+        {/* Conditional Terms and Conditions */}
+        {(!isReturned || docData.showTermsOnReturn) && docData.showTerms !== false && docData.terms && (
+          <div style={{ marginTop: '2rem', fontSize: '10px', color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+            <h4 style={{ margin: '0 0 5px 0' }}>ഉപകരണ വാടക നിബന്ധനകളും വ്യവസ്ഥകളും:</h4>
+            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{docData.terms}</div>
+          </div>
+        )}
+        
+        {isReturned && !docData.showTermsOnReturn && (
           <div style={{ marginTop: '3rem', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>
             THANK YOU, VISIT AGAIN!
           </div>
-        ) : (
-          docData.showTerms !== false && docData.terms && (
-            <div style={{ marginTop: '2rem', fontSize: '10px', color: '#334155', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-              <h4 style={{ margin: '0 0 5px 0' }}>ഉപകരണ വാടക നിബന്ധനകളും വ്യവസ്ഥകളും:</h4>
-              <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{docData.terms}</div>
-            </div>
-          )
         )}
 
         {docData.showSignature !== false && (
@@ -611,13 +618,14 @@ const RentalBills = () => {
                       </div>
                       <div>
                         <label className="form-label" style={{ fontSize: '0.7rem' }}>Condition</label>
-                        <input type="text" className="form-input" list="condition-options" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} placeholder="e.g. Good" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
-                        <datalist id="condition-options">
-                          <option value="Good" />
-                          <option value="Minor Scratches" />
-                          <option value="Damaged" />
-                          <option value="New" />
-                        </datalist>
+                        <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
+                          <option value="">-- Select --</option>
+                          <option value="GOOD">GOOD</option>
+                          <option value="BAD">BAD</option>
+                          <option value="NOT BAD">NOT BAD</option>
+                          <option value="DAMAGED">DAMAGED</option>
+                          <option value="LOSS">LOSS</option>
+                        </select>
                       </div>
                       <div>
                         <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Late Fee / Day (&#8377;)</label>
@@ -712,9 +720,15 @@ const RentalBills = () => {
                           <b style={{ fontSize: '0.85rem' }}>{item.productName}</b>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qty: {item.quantity} {item.itemNos ? `| SN: ${item.itemNos}` : ''}</div>
                         </div>
-                        <div>
                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
-                           <input type="text" className="form-input" list="condition-options" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                           <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} disabled={item.isReturned === false} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
+                              <option value="">-- Select --</option>
+                              <option value="GOOD">GOOD</option>
+                              <option value="BAD">BAD</option>
+                              <option value="NOT BAD">NOT BAD</option>
+                              <option value="DAMAGED">DAMAGED</option>
+                              <option value="LOSS">LOSS</option>
+                           </select>
                         </div>
                         <div>
                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
@@ -740,15 +754,24 @@ const RentalBills = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ color: '#F59E0B' }}>Late Charge (&#8377;)</label>
+                    <label className="form-label" style={{ color: '#F59E0B' }}>Late Chg (&#8377;)</label>
                     <input type="number" className="form-input" value={returnFormData.lateCharge || 0} onChange={e => setReturnFormData({...returnFormData, lateCharge: e.target.value})} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ color: '#EF4444' }}>Damage Charge (&#8377;)</label>
+                    <label className="form-label" style={{ color: '#EF4444' }}>Damage (&#8377;)</label>
                     <input type="number" className="form-input" value={returnFormData.damageCharge || 0} onChange={e => setReturnFormData({...returnFormData, damageCharge: e.target.value})} />
                   </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ color: '#DC2626' }}>Loss (&#8377;)</label>
+                    <input type="number" className="form-input" value={returnFormData.lossCharge || 0} onChange={e => setReturnFormData({...returnFormData, lossCharge: e.target.value})} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                   <input type="checkbox" id="showTerms" checked={returnFormData.showTermsOnReturn || false} onChange={e => setReturnFormData({...returnFormData, showTermsOnReturn: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                   <label htmlFor="showTerms" style={{ fontSize: '0.85rem', cursor: 'pointer' }}>Print Terms & Conditions on Return Bill</label>
                 </div>
 
                 <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>Save & Generate Return Bill</button>

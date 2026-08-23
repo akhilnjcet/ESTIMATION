@@ -38,9 +38,10 @@ const rentalBillSchema = new mongoose.Schema({
   securityDeposit: { type: Number, default: 0, min: 0 },
   advancePaid: { type: Number, default: 0, min: 0 },
   damageCharge: { type: Number, default: 0, min: 0 },
+  lossCharge: { type: Number, default: 0, min: 0 },
   lateCharge: { type: Number, default: 0, min: 0 },
   otherCharges: { type: Number, default: 0, min: 0 },
-  totalAmount: { type: Number, required: true, min: 0 }, // subTotal - discount + taxAmount + damageCharge + lateCharge + otherCharges
+  totalAmount: { type: Number, required: true, min: 0 }, // subTotal - discount + taxAmount + damageCharge + lossCharge + lateCharge + otherCharges
   balanceAmount: { type: Number, required: true, min: 0 }, // totalAmount - advancePaid
   
   // Status & Conditions
