@@ -597,8 +597,9 @@ const RentalBills = () => {
       </div>
 
       {activeView === 'new' && (
-        <div className="glass-panel" style={{ padding: '1.75rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+          <div className="glass-panel" style={{ padding: '1.75rem', flex: '1' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
               <div className="form-group">
@@ -702,6 +703,18 @@ const RentalBills = () => {
             </div>
           </form>
         </div>
+        
+        {/* Live PDF Preview Side */}
+        <div style={{ flex: '1', borderRadius: '18px', overflow: 'hidden', boxShadow: 'var(--shadow-card)', background: '#FFF', position: 'sticky', top: '1rem', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+            <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Bill Preview</b>
+            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Real-time updates</span>
+          </div>
+          <div style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%', marginBottom: '-15%' }}>
+             {renderPreviewDocument({ ...formData, customer: customers.find(c => c._id === formData.customer) || {}, items: items, subTotal: getTotals().subTotal, taxAmount: getTotals().taxAmount, balanceAmount: getTotals().balanceAmount, totalAmount: getTotals().totalAmount }, previewTheme)}
+          </div>
+        </div>
+      </div>
       )}
 
       {activeView === 'return' && (
