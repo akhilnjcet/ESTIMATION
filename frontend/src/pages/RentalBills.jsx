@@ -523,8 +523,8 @@ const RentalBills = () => {
               <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Customer Signature</div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              {isReturned && docData.returnedBy && (
-                <div style={{ marginBottom: '15px', fontSize: '14px', fontFamily: 'cursive' }}>{docData.returnedBy}</div>
+              {(isReturned ? docData.returnedBy : docData.receivedBy) && (
+                <div style={{ marginBottom: '15px', fontSize: '14px', fontFamily: 'cursive' }}>{isReturned ? docData.returnedBy : docData.receivedBy}</div>
               )}
               <div style={{ borderTop: '1px solid #000', width: '150px', paddingTop: '5px' }}>Equipment {isReturned ? 'Returned' : 'Received'} By</div>
             </div>
@@ -622,7 +622,11 @@ const RentalBills = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
               <div className="form-group">
                 <label className="form-label">Customer</label>
-                <select className="form-select" required value={formData.customer} onChange={e => setFormData({...formData, customer: e.target.value})}>
+                <select className="form-select" required value={formData.customer} onChange={e => {
+                  const custId = e.target.value;
+                  const selectedCust = customers.find(c => c._id === custId);
+                  setFormData({...formData, customer: custId, receivedBy: selectedCust?.customerName || ''});
+                }}>
                   <option value="">Select party...</option>
                   {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
                 </select>
@@ -638,6 +642,10 @@ const RentalBills = () => {
               <div className="form-group">
                 <label className="form-label">Expected Return</label>
                 <input type="datetime-local" className="form-input" required value={formData.expectedReturnDate} onChange={e => setFormData({...formData, expectedReturnDate: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Equipment Received By</label>
+                <input type="text" className="form-input" placeholder="Customer Name..." value={formData.receivedBy || ''} onChange={e => setFormData({...formData, receivedBy: e.target.value})} />
               </div>
               <div className="form-group">
                 <label className="form-label">Issued By</label>
