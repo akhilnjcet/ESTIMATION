@@ -6,6 +6,7 @@ import {
   Palette, Settings as SettingsIcon, X, Layers
 } from 'lucide-react';
 import ModuleCustomization from './ModuleCustomization';
+import RentalSettings from '../components/RentalSettings';
 
 const Settings = () => {
   const { programs, setPrograms } = useProgram();
@@ -157,6 +158,7 @@ const Settings = () => {
         {[
           { key: 'programs', label: 'Program Units', icon: Building2 },
           { key: 'modules',  label: 'Module Customization', icon: Layers },
+          { key: 'rentals',  label: 'Rental Settings', icon: SettingsIcon },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -289,6 +291,9 @@ const Settings = () => {
 
       {/* ── Tab: Module Customization ── */}
       {activeTab === 'modules' && <ModuleCustomization />}
+
+      {/* ── Tab: Rental Settings ── */}
+      {activeTab === 'rentals' && <RentalSettings />}
     </div>
   );
 };

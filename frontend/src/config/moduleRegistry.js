@@ -104,6 +104,17 @@ export const ALL_MODULES = [
     defaultEnabled: true,
     adminOnly: false,
   },
+  {
+    id: 'rental-bills',
+    path: '/rental-bills',
+    label: 'Rental Bills',
+    description: 'Manage equipment rentals, security deposits, and returns',
+    iconName: 'CalendarRange',
+    category: 'BILLING & ESTIMATION',
+    categoryKey: 'billing',
+    defaultEnabled: true,
+    adminOnly: false,
+  },
 
   // ── FINANCE & ACCOUNTS ─────────────────────────────────────────
   {

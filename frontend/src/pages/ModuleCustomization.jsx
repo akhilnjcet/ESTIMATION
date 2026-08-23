@@ -6,7 +6,7 @@ import {
   UserCheck, FileCode, StickyNote, Search, ToggleLeft, ToggleRight,
   Star, GripVertical, ChevronDown, ChevronUp, Eye, EyeOff,
   Sparkles, CheckCircle2, XCircle, RotateCcw, Save, Shield,
-  Layers, Zap, Monitor
+  Layers, Zap, Monitor, CalendarRange
 } from 'lucide-react';
 import { ALL_MODULES, MODULE_CATEGORIES } from '../config/moduleRegistry';
 import { useModules } from '../context/ModuleContext';
@@ -16,7 +16,7 @@ import { useProgram } from '../context/ProgramContext';
 const ICON_MAP = {
   LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings: SettingsIcon,
-  UserCheck, FileCode, StickyNote, Shield,
+  UserCheck, FileCode, StickyNote, Shield, CalendarRange
 };
 const getIcon = (name) => ICON_MAP[name] || FileText;
 
