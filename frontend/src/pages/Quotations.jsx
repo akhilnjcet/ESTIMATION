@@ -825,7 +825,16 @@ const Quotations = () => {
             {filteredQuotations.map(q => (
               <motion.tr key={q._id} whileHover={{ backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
                 <td style={{ fontWeight: '800', color: 'var(--secondary)' }}>{q.quotationNumber}</td>
-                <td style={{ fontWeight: '700' }}>{q.customer?.customerName || 'Unknown'}</td>
+                <td>
+                  <div style={{ fontWeight: '700' }}>{q.customer?.customerName || 'Unknown'}</div>
+                  {(q.customer?.phone || q.customer?.address) && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      {q.customer?.phone && <span>Ph: {q.customer.phone}</span>}
+                      {q.customer?.phone && q.customer?.address && <span> | </span>}
+                      {q.customer?.address && <span>{q.customer.address}</span>}
+                    </div>
+                  )}
+                </td>
                 <td style={{ color: 'var(--text-muted)' }}>{new Date(q.createdAt).toLocaleDateString()}</td>
                 <td style={{ fontWeight: '800' }}>&#8377; {q.totalAmount?.toLocaleString()}</td>
                 <td>

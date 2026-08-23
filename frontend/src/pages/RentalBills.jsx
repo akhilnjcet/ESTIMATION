@@ -937,8 +937,17 @@ const RentalBills = () => {
                   <button className="btn-icon" onClick={() => handleDelete(r._id)} style={{ color: 'var(--danger)' }}><Trash2 size={14} /></button>
                 </div>
               </div>
-              <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ color: 'var(--text-primary)' }}>{r.customer?.customerName}</b>
+              <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <b style={{ color: 'var(--text-primary)', display: 'block' }}>{r.customer?.customerName}</b>
+                  {(r.customer?.phone || r.customer?.address) && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      {r.customer?.phone && <span>Ph: {r.customer.phone}</span>}
+                      {r.customer?.phone && r.customer?.address && <span> | </span>}
+                      {r.customer?.address && <span>{r.customer.address}</span>}
+                    </div>
+                  )}
+                </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {r.customer?.phone && (
                     <>

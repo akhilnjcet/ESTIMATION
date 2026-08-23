@@ -855,7 +855,16 @@ const Invoices = () => {
             {filteredInvoices.map(inv => (
               <motion.tr key={inv._id} whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
                 <td style={{ fontWeight: '800', color: 'var(--primary)' }}>{inv.invoiceNumber}</td>
-                <td style={{ fontWeight: '700' }}>{inv.customer?.customerName || 'Unknown'}</td>
+                <td>
+                  <div style={{ fontWeight: '700' }}>{inv.customer?.customerName || 'Unknown'}</div>
+                  {(inv.customer?.phone || inv.customer?.address) && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      {inv.customer?.phone && <span>Ph: {inv.customer.phone}</span>}
+                      {inv.customer?.phone && inv.customer?.address && <span> | </span>}
+                      {inv.customer?.address && <span>{inv.customer.address}</span>}
+                    </div>
+                  )}
+                </td>
                 <td style={{ color: 'var(--text-muted)' }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
                 <td style={{ fontWeight: '800' }}>&#8377; {inv.totalAmount?.toLocaleString()}</td>
                 <td>
