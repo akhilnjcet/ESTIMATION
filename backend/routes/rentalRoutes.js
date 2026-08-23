@@ -8,7 +8,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', protect, async (req, res) => {
   try {
     const filter = req.programId ? { programId: req.programId } : {};
-    const rentals = await RentalBill.find(filter).populate('customer', 'customerName').sort({ createdAt: -1 });
+    const rentals = await RentalBill.find(filter).populate('customer', 'customerName phone email').sort({ createdAt: -1 });
     res.json(rentals);
   } catch (error) {
     console.error('FETCH_RENTALS_ERROR:', error);
