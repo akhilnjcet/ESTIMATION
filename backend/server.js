@@ -62,6 +62,7 @@ app.use('/api/settings', protect, restrictToView, require('./routes/settingsRout
 app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./routes/noteRoutes'));
 app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));
 app.use('/api/rentals', protect, restrictToView, verifyProgramAccess, require('./routes/rentalRoutes'));
+app.use('/api/staff', protect, restrictToView, verifyProgramAccess, require('./routes/staffRoutes'));
 
 
 

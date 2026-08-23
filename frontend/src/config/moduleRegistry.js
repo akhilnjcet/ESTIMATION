@@ -211,6 +211,17 @@ export const ALL_MODULES = [
     adminOnly: false,
   },
   {
+    id: 'staff',
+    path: '/staff',
+    label: 'Staff',
+    description: 'Manage staff details and generate dynamic ID cards',
+    iconName: 'BadgeCheck',
+    category: 'ADMINISTRATION',
+    categoryKey: 'admin',
+    defaultEnabled: true,
+    adminOnly: false,
+  },
+  {
     id: 'admin-settings',
     path: '/admin-settings',
     label: 'Admin Settings',

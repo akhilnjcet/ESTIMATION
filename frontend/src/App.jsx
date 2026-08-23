@@ -25,6 +25,7 @@ import Notes from './pages/Notes';
 import UserAccess from './pages/UserAccess';
 import AdminSettings from './pages/AdminSettings';
 import Documents from './pages/Documents';
+import Staff from './pages/Staff';
 import { ShieldAlert, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -246,6 +247,7 @@ function App() {
               <Route path="/admin-settings"  element={<PrivateRoute><AdminOnlyRoute><AdminSettings /></AdminOnlyRoute></PrivateRoute>} />
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
               <Route path="/rental-bills"    element={<PrivateRoute><RentalBills /></PrivateRoute>} />
+              <Route path="/staff"           element={<PrivateRoute><Staff /></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

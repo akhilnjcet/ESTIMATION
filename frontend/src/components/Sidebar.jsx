@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings as SettingsIcon,
-  LogOut, UserCheck, FileCode, StickyNote, ChevronLeft, Star, Shield, CalendarRange
+  LogOut, UserCheck, FileCode, StickyNote, ChevronLeft, Star, Shield, CalendarRange, BadgeCheck
 } from 'lucide-react';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import logo from '../assets/logo.jpg';
@@ -15,7 +15,7 @@ import { ALL_MODULES, MODULE_CATEGORIES } from '../config/moduleRegistry';
 const ICON_MAP = {
   LayoutDashboard, Users, Package, FileText, Receipt, Truck, HardHat,
   ArrowUpRight, ArrowDownRight, BookOpen, Wallet, Settings: SettingsIcon,
-  UserCheck, FileCode, StickyNote, Shield, CalendarRange,
+  UserCheck, FileCode, StickyNote, Shield, CalendarRange, BadgeCheck
 };
 const getIcon = (name) => ICON_MAP[name] || FileText;
 
