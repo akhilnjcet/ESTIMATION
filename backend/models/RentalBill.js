@@ -10,7 +10,10 @@ const itemSchema = new mongoose.Schema({
   rateType: { type: String, enum: ['Hour', 'Day', 'Week', 'Month', 'Fixed'], default: 'Day' },
   rentalDuration: { type: Number, default: 1 },
   taxPercentage: { type: Number, default: 0 },
-  total: { type: Number, required: true, min: 0 }
+  total: { type: Number, required: true, min: 0 },
+  lateFeePerDay: { type: Number, default: 0 },
+  itemNos: { type: String },
+  condition: { type: String }
 });
 
 const rentalBillSchema = new mongoose.Schema({
