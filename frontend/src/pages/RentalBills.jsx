@@ -101,6 +101,7 @@ const RentalBills = () => {
       showPaymentTerms: true,
       showSignature: true,
       showFooter: true,
+      combinedTotals: {},
       footerText: selectedProgram?.footerText || 'This is a computer generated rental bill.\nThank you for your business! | Powered by Krishna ERP',
       theme: 'classic',
       date: new Date().toISOString().split('T')[0],
@@ -138,6 +139,7 @@ const RentalBills = () => {
       rentalStartDate: r.rentalStartDate ? new Date(r.rentalStartDate).toISOString().slice(0, 16) : '',
       expectedReturnDate: r.expectedReturnDate ? new Date(r.expectedReturnDate).toISOString().slice(0, 16) : '',
       actualReturnDate: r.actualReturnDate ? new Date(r.actualReturnDate).toISOString().slice(0, 16) : '',
+      combinedTotals: r.combinedTotals || {},
     });
     setItems(r.items.map(item => ({
       ...item,
@@ -148,11 +150,25 @@ const RentalBills = () => {
   };
 
   const addItem = () => {
+    let prevSectionId = null;
+    if (items.length > 0 && items[items.length - 1].isCombinedMode) {
+      prevSectionId = items[items.length - 1].combinedSectionId;
+    }
     setItems([...items, { 
       product: '', productName: '', description: '', price: 0, quantity: 1, 
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
-      itemNos: '', condition: 'Good', isCombinedMode: false, autoCalculate: true
+      itemNos: '', condition: 'Good', isCombinedMode: false, autoCalculate: true, combinedSectionId: null
+    }]);
+  };
+
+  const addNewCombinedSection = () => {
+    const newSectionId = `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setItems([...items, { 
+      product: '', productName: '', description: '', price: 0, quantity: 1, 
+      unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
+      lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
+      itemNos: '', condition: 'Good', isCombinedMode: true, autoCalculate: true, combinedSectionId: newSectionId
     }]);
   };
 
@@ -174,7 +190,18 @@ const RentalBills = () => {
     if (isCombinedMode) {
       newItems[index].price = 0;
       newItems[index].total = 0;
+      if (!newItems[index].combinedSectionId) {
+        let prevSectionId = null;
+        for (let i = index - 1; i >= 0; i--) {
+          if (newItems[i].isCombinedMode && newItems[i].combinedSectionId) {
+            prevSectionId = newItems[i].combinedSectionId;
+            break;
+          }
+        }
+        newItems[index].combinedSectionId = prevSectionId || `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      }
     } else {
+      newItems[index].combinedSectionId = null;
       const shouldCalculate = newItems[index].autoCalculate !== false;
       newItems[index].total = shouldCalculate
         ? Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1)
@@ -187,7 +214,8 @@ const RentalBills = () => {
 
   const getTotals = (currentFormData = formData, currentItems = items) => {
     let individualTotal = currentItems.reduce((acc, item) => item.isCombinedMode ? acc : acc + item.total, 0);
-    let subTotal = individualTotal + Number(currentFormData.combinedTotal || 0);
+    let combinedSectionsSum = Object.values(currentFormData.combinedTotals || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
+    let subTotal = individualTotal + combinedSectionsSum;
     let taxAmount = currentFormData.showTax
       ? currentItems.reduce((acc, item) => item.isCombinedMode ? acc : acc + (item.total * Number(item.taxPercentage || 0) / 100), 0)
       : 0;
@@ -421,36 +449,41 @@ const RentalBills = () => {
             </tr>
           </thead>
           <tbody>
-            {itemsList.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
-                  <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.productName || 'Item'}</div>
-                  {item.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{item.description}</div>}
-                  {(item.itemNos || item.condition) && (
-                    <div style={{ fontSize: '10px', color: '#3b82f6', marginTop: '2px' }}>
-                      {item.itemNos && `SN/No: ${item.itemNos}`}
-                      {item.itemNos && item.condition && ' | '}
-                      {item.condition && `Cond: ${item.condition}`}
-                    </div>
+            {itemsList.map((item, idx) => {
+              const isLastInSection = item.isCombinedMode && (idx === itemsList.length - 1 || itemsList[idx + 1].combinedSectionId !== item.combinedSectionId);
+              return (
+                <React.Fragment key={idx}>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
+                      <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.productName || 'Item'}</div>
+                      {item.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{item.description}</div>}
+                      {(item.itemNos || item.condition) && (
+                        <div style={{ fontSize: '10px', color: '#3b82f6', marginTop: '2px' }}>
+                          {item.itemNos && `SN/No: ${item.itemNos}`}
+                          {item.itemNos && item.condition && ' | '}
+                          {item.condition && `Cond: ${item.condition}`}
+                        </div>
+                      )}
+                      {isReturned && (
+                        <div style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold', color: item.isReturned === false ? '#EF4444' : '#22C55E' }}>
+                          {item.isReturned === false ? `NOT RETURNED (${item.returnCondition || 'Missing'})` : `Returned (${item.returnCondition || 'Ok'})`}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
+                    <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()} / ${item.rateType}`}</td>
+                    <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.rentalDuration} {item.rateType}(s)</td>
+                    <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
+                  </tr>
+                  {isLastInSection && (
+                    <tr style={{ background: '#f8fafc', borderTop: '2px solid #cbd5e1' }}>
+                      <td colSpan="4" style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.9rem', color: '#475569' }}>Total</td>
+                      <td style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: '#0f172a' }}>&#8377;{(Number(docData.combinedTotals?.[item.combinedSectionId]) || 0).toLocaleString()}</td>
+                    </tr>
                   )}
-                  {isReturned && (
-                    <div style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold', color: item.isReturned === false ? '#EF4444' : '#22C55E' }}>
-                      {item.isReturned === false ? `NOT RETURNED (${item.returnCondition || 'Missing'})` : `Returned (${item.returnCondition || 'Ok'})`}
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()} / ${item.rateType}`}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.rentalDuration} {item.rateType}(s)</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
-              </tr>
-            ))}
-            {docData.combinedTotal > 0 && (
-              <tr style={{ background: '#f8fafc', borderTop: '2px solid #cbd5e1' }}>
-                <td colSpan="4" style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.9rem', color: '#475569' }}>Combined Items Total</td>
-                <td style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: '#0f172a' }}>&#8377;{(docData.combinedTotal || 0).toLocaleString()}</td>
-              </tr>
-            )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
 
@@ -678,107 +711,124 @@ const RentalBills = () => {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                 <span className="form-label">Equipment Items</span>
-                <button type="button" className="btn-secondary-glass" onClick={addItem}>+ Add Equipment</button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn-secondary-glass" onClick={addNewCombinedSection} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                    + New Combined Section
+                  </button>
+                  <button type="button" className="btn-secondary-glass" onClick={addItem} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                    + Add Equipment
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                {items.map((item, index) => (
-                  <div key={index} className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
-                    <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={15} /></button>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
-                      <div style={{ flex: '2 1 150px' }}>
-                        <label className="form-label">Equipment</label>
-                        <input type="text" className="form-input" required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" />
-                      </div>
-                      <div style={{ flex: '1 1 80px' }}>
-                        <label className="form-label">Qty</label>
-                        <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
-                      </div>
-                      <div style={{ flex: '1 1 80px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {!item.isCombinedMode && (
-                              <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={item.autoCalculate !== false} 
-                                  onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
-                                />
-                                Auto
-                              </label>
+                {items.map((item, index) => {
+                  const isLastInSection = item.isCombinedMode && (index === items.length - 1 || items[index + 1].combinedSectionId !== item.combinedSectionId);
+                  
+                  return (
+                    <div key={index}>
+                      <div className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
+                        <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={15} /></button>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+                          <div style={{ flex: '2 1 150px' }}>
+                            <label className="form-label">Equipment</label>
+                            <input type="text" className="form-input" required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" />
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label">Qty</label>
+                            <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {!item.isCombinedMode && (
+                                  <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={item.autoCalculate !== false} 
+                                      onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                                    />
+                                    Auto
+                                  </label>
+                                )}
+                                <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={item.isCombinedMode || false} 
+                                    onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
+                                  />
+                                  Combined
+                                </label>
+                              </div>
+                            </div>
+                            {!item.isCombinedMode ? (
+                              <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                            ) : (
+                              <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                Included
+                              </div>
                             )}
-                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={item.isCombinedMode || false} 
-                                onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
-                              />
-                              Combined
-                            </label>
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label">Per</label>
+                            <select className="form-select" value={item.rateType} onChange={e => updateItem(index, 'rateType', e.target.value)}>
+                              <option value="Hour">Hour</option><option value="Day">Day</option><option value="Week">Week</option><option value="Month">Month</option><option value="Fixed">Fixed</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label">Duration</label>
+                            <input type="number" className="form-input" required value={item.rentalDuration} onChange={e => updateItem(index, 'rentalDuration', e.target.value)} />
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label">Total</label>
+                            <div style={{ padding: '0.6rem', background: 'var(--bg-body)', borderRadius: '6px', fontWeight: 'bold' }}>&#8377;{item.total}</div>
                           </div>
                         </div>
-                        {!item.isCombinedMode ? (
-                          <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
-                        ) : (
-                          <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                            Included
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.65rem', marginTop: '0.65rem' }}>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Item No(s)</label>
+                            <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
                           </div>
-                        )}
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Checkout Condition</label>
+                            <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
+                              <option value="">-- Select --</option>
+                              <option value="GOOD">GOOD</option>
+                              <option value="BAD">BAD</option>
+                              <option value="NOT BAD">NOT BAD</option>
+                              <option value="DAMAGED">DAMAGED</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Agreed Late Fee/Day (&#8377;)</label>
+                            <input type="number" className="form-input" value={item.lateFeePerDay} onChange={e => updateItem(index, 'lateFeePerDay', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ flex: '1 1 80px' }}>
-                        <label className="form-label">Per</label>
-                        <select className="form-select" value={item.rateType} onChange={e => updateItem(index, 'rateType', e.target.value)}>
-                          <option value="Hour">Hour</option><option value="Day">Day</option><option value="Week">Week</option><option value="Month">Month</option><option value="Fixed">Fixed</option>
-                        </select>
-                      </div>
-                      <div style={{ flex: '1 1 80px' }}>
-                        <label className="form-label">Duration</label>
-                        <input type="number" className="form-input" required value={item.rentalDuration} onChange={e => updateItem(index, 'rentalDuration', e.target.value)} />
-                      </div>
-                      <div style={{ flex: '1 1 80px' }}>
-                        <label className="form-label">Total</label>
-                        <div style={{ padding: '0.6rem', background: 'var(--bg-body)', borderRadius: '6px', fontWeight: 'bold' }}>&#8377;{item.total}</div>
-                      </div>
+
+                      {isLastInSection && (
+                        <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
+                              value={formData.combinedTotals[item.combinedSectionId] || ''}
+                              onChange={(e) => setFormData({ 
+                                ...formData, 
+                                combinedTotals: { ...formData.combinedTotals, [item.combinedSectionId]: e.target.value } 
+                              })}
+                              placeholder="0.00"
+                              required
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.65rem', marginTop: '0.65rem' }}>
-                      <div>
-                        <label className="form-label" style={{ fontSize: '0.7rem' }}>Item No(s)</label>
-                        <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
-                      </div>
-                      <div>
-                        <label className="form-label" style={{ fontSize: '0.7rem' }}>Checkout Condition</label>
-                        <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
-                          <option value="">-- Select --</option>
-                          <option value="GOOD">GOOD</option>
-                          <option value="BAD">BAD</option>
-                          <option value="NOT BAD">NOT BAD</option>
-                          <option value="DAMAGED">DAMAGED</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Agreed Late Fee/Day (&#8377;)</label>
-                        <input type="number" className="form-input" value={item.lateFeePerDay} onChange={e => updateItem(index, 'lateFeePerDay', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {items.some(item => item.isCombinedMode) && (
-                <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
-                      value={formData.combinedTotal || ''}
-                      onChange={(e) => setFormData({ ...formData, combinedTotal: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>

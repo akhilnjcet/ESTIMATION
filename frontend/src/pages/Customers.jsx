@@ -134,11 +134,11 @@ const Customers = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label">Customer Name</label>
-                <input type="text" className="form-input" required value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} placeholder="Acme Corp / John Doe" />
+                <input type="text" className="form-input" value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} placeholder="Acme Corp / John Doe" />
               </div>
               <div className="form-group">
                 <label className="form-label">Phone Number</label>
-                <input type="text" className="form-input" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
+                <input type="text" className="form-input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" />
               </div>
               <div className="form-group">
                 <label className="form-label">Email Address</label>
@@ -184,9 +184,9 @@ const Customers = () => {
                 <td style={{ fontWeight: '800' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem' }}>
-                      {customer.customerName.charAt(0).toUpperCase()}
+                      {(customer.customerName || '?').charAt(0).toUpperCase()}
                     </div>
-                    <span>{customer.customerName}</span>
+                    <span>{customer.customerName || 'Unnamed Customer'}</span>
                   </div>
                 </td>
                 <td style={{ color: 'var(--text-secondary)' }}>

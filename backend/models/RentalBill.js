@@ -18,7 +18,8 @@ const itemSchema = new mongoose.Schema({
   returnCondition: { type: String },
   itemLateCharge: { type: Number, default: 0 },
   itemLossCharge: { type: Number, default: 0 },
-  isCombinedMode: { type: Boolean, default: false }
+  isCombinedMode: { type: Boolean, default: false },
+  combinedSectionId: { type: String, default: null }
 });
 
 const rentalBillSchema = new mongoose.Schema({
@@ -26,7 +27,11 @@ const rentalBillSchema = new mongoose.Schema({
   billNumber: { type: String, required: true, unique: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   altContactNumber: { type: String },
-  combinedTotal: { type: Number, default: 0, min: 0 },
+  combinedTotals: {
+    type: Map,
+    of: Number,
+    default: {}
+  },
   items: [itemSchema],
   
   // Rental dates

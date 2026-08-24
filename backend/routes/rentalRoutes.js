@@ -22,7 +22,7 @@ router.post('/', protect, async (req, res) => {
 
     const { 
       customer, items, subTotal, taxAmount, discount, securityDeposit, advancePaid, 
-      damageCharge, lateCharge, otherCharges, totalAmount, balanceAmount, combinedTotal,
+      damageCharge, lateCharge, otherCharges, totalAmount, balanceAmount, combinedTotals,
       notes, terms, date, rentalStartDate, expectedReturnDate, actualReturnDate, status,
       conditionCheckout, conditionReturn,
       showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, 
@@ -72,7 +72,7 @@ router.post('/', protect, async (req, res) => {
       otherCharges: otherCharges || 0,
       totalAmount,
       balanceAmount,
-      combinedTotal: combinedTotal || 0,
+      combinedTotals: combinedTotals || {},
       notes,
       terms,
       date: date || new Date(),
@@ -111,7 +111,7 @@ router.put('/:id', protect, async (req, res) => {
   try {
     const { 
       customer, items, subTotal, taxAmount, discount, securityDeposit, advancePaid, 
-      damageCharge, lateCharge, otherCharges, totalAmount, balanceAmount, combinedTotal,
+      damageCharge, lateCharge, otherCharges, totalAmount, balanceAmount, combinedTotals,
       notes, terms, date, rentalStartDate, expectedReturnDate, actualReturnDate, status,
       conditionCheckout, conditionReturn,
       showTerms, showTax, showPaymentTerms, showSignature, showFooter, footerText, theme, 
@@ -136,7 +136,7 @@ router.put('/:id', protect, async (req, res) => {
       otherCharges,
       totalAmount,
       balanceAmount,
-      combinedTotal: combinedTotal !== undefined ? combinedTotal : 0,
+      combinedTotals: combinedTotals || {},
       notes,
       terms,
       rentalStartDate,
