@@ -78,6 +78,10 @@ const quotationSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  showItemPrices: {
+    type: Boolean,
+    default: true
+  },
   showPaymentTerms: {
     type: Boolean,
     default: true

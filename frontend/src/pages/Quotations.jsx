@@ -96,6 +96,8 @@ const Quotations = () => {
       showPaymentTerms: true,
       showSignature: true,
       showFooter: true,
+      showItemPrices: true,
+      lumpsumAmount: '',
       footerText: selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP',
       theme: 'classic',
       date: new Date().toISOString().split('T')[0],
@@ -117,6 +119,8 @@ const Quotations = () => {
       showPaymentTerms: q.showPaymentTerms !== undefined ? q.showPaymentTerms : true,
       showSignature: q.showSignature !== undefined ? q.showSignature : true,
       showFooter: q.showFooter !== undefined ? q.showFooter : true,
+      showItemPrices: q.showItemPrices !== undefined ? q.showItemPrices : true,
+      lumpsumAmount: q.showItemPrices === false ? (q.subTotal || 0) : '',
       footerText: q.footerText !== undefined ? q.footerText : (selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP'),
       theme: q.theme || 'classic',
       date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -156,9 +160,9 @@ const Quotations = () => {
   const removeItem = (index) => { setItems(items.filter((_, i) => i !== index)); };
 
   const getTotals = () => {
-    let subTotal = items.reduce((acc, item) => acc + item.total, 0);
+    let subTotal = formData.showItemPrices === false ? Number(formData.lumpsumAmount || 0) : items.reduce((acc, item) => acc + item.total, 0);
     let taxAmount = formData.showTax
-      ? items.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0)
+      ? (formData.showItemPrices === false ? 0 : items.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0))
       : 0;
     let totalAmount = subTotal + taxAmount;
     return { subTotal, taxAmount, totalAmount };
@@ -224,8 +228,8 @@ const Quotations = () => {
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem', borderRadius: '6px 0 0 6px' }}>#</th>
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem' }}>Item & Service</th>
                 <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty</th>
-                <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem' }}>Rate</th>
-                <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem', borderRadius: '0 6px 6px 0' }}>Amount</th>
+                {docData.showItemPrices !== false && <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem' }}>Rate</th>}
+                {docData.showItemPrices !== false && <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem', borderRadius: '0 6px 6px 0' }}>Amount</th>}
               </tr>
             </thead>
             <tbody>
@@ -234,8 +238,8 @@ const Quotations = () => {
                   <td style={{ padding: '0.65rem', fontSize: '0.775rem', color: '#64748B' }}>{String(idx + 1).padStart(2, '0')}</td>
                   <td style={{ padding: '0.65rem', fontSize: '0.825rem', fontWeight: '700', color: '#0F172A' }}>{item.productName || 'Item'}</td>
                   <td style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit || 'Pcs'}</td>
-                  <td style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>
-                  <td style={{ padding: '0.65rem', textAlign: 'right', fontWeight: '800', fontSize: '0.825rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
+                  {docData.showItemPrices !== false && <td style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>}
+                  {docData.showItemPrices !== false && <td style={{ padding: '0.65rem', textAlign: 'right', fontWeight: '800', fontSize: '0.825rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>}
                 </tr>
               ))}
             </tbody>
@@ -291,8 +295,8 @@ const Quotations = () => {
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>SR</th>
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>ITEM DESCRIPTION</th>
                 <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
-                <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>RATE</th>
-                <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>AMOUNT</th>
+                {docData.showItemPrices !== false && <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>RATE</th>}
+                {docData.showItemPrices !== false && <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>AMOUNT</th>}
               </tr>
             </thead>
             <tbody>
@@ -301,8 +305,8 @@ const Quotations = () => {
                   <td style={{ padding: '0.6rem', fontSize: '0.775rem', fontWeight: '700' }}>{idx + 1}</td>
                   <td style={{ padding: '0.6rem', fontSize: '0.825rem', fontWeight: '800', color: '#0F172A' }}>{item.productName || 'Item'}</td>
                   <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit || 'Pcs'}</td>
-                  <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>
-                  <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.825rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
+                  {docData.showItemPrices !== false && <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.825rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>}
+                  {docData.showItemPrices !== false && <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.825rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>}
                 </tr>
               ))}
             </tbody>
@@ -359,8 +363,8 @@ const Quotations = () => {
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Sr.</th>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Item Description</th>
               <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem' }}>Qty</th>
-              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Rate</th>
-              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Total</th>
+              {docData.showItemPrices !== false && <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Rate</th>}
+              {docData.showItemPrices !== false && <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Total</th>}
             </tr>
           </thead>
           <tbody>
@@ -372,8 +376,8 @@ const Quotations = () => {
                   {item.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{item.description}</div>}
                 </td>
                 <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
+                {docData.showItemPrices !== false && <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>&#8377;{(item.price || 0).toLocaleString()}</td>}
+                {docData.showItemPrices !== false && <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>}
               </tr>
             ))}
           </tbody>
@@ -628,7 +632,7 @@ const Quotations = () => {
                         <X size={15} />
                       </button>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.65rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: formData.showItemPrices !== false ? '2fr 1fr 1fr' : '2fr 1fr', gap: '0.65rem' }}>
                         <div>
                           <label className="form-label">Item / Service</label>
                           <input 
@@ -651,30 +655,48 @@ const Quotations = () => {
                             onChange={e => updateItem(index, 'quantity', e.target.value)} 
                           />
                         </div>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label className="form-label">Price (&#8377;)</label>
-                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={item.autoCalculate !== false} 
-                                onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
-                              />
-                              Per Pc
-                            </label>
+                        {formData.showItemPrices !== false && (
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label className="form-label">Price (&#8377;)</label>
+                              <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={item.autoCalculate !== false} 
+                                  onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                                />
+                                Per Pc
+                              </label>
+                            </div>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              required={formData.showItemPrices !== false} 
+                              value={item.price} 
+                              onChange={e => updateItem(index, 'price', e.target.value)} 
+                            />
                           </div>
-                          <input 
-                            type="number" 
-                            className="form-input" 
-                            required 
-                            value={item.price} 
-                            onChange={e => updateItem(index, 'price', e.target.value)} 
-                          />
-                        </div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
+                {formData.showItemPrices === false && (
+                  <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Lump Sum / Total Estimate Amount (&#8377;)</label>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
+                        value={formData.lumpsumAmount || ''}
+                        onChange={(e) => setFormData({ ...formData, lumpsumAmount: e.target.value })}
+                        placeholder="0.00"
+                        required={formData.showItemPrices === false}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Design & Tax Settings */}
@@ -698,6 +720,14 @@ const Quotations = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.showItemPrices !== false}
+                        onChange={(e) => setFormData({ ...formData, showItemPrices: e.target.checked })}
+                      />
+                      Show Price per Item in Table
+                    </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
