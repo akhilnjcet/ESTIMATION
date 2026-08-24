@@ -36,6 +36,10 @@ const itemSchema = new mongoose.Schema({
   isTotalOnly: {
     type: Boolean,
     default: false
+  },
+  isCombinedMode: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -50,6 +54,11 @@ const quotationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',
     required: true
+  },
+  combinedTotal: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   items: [itemSchema],
   subTotal: {

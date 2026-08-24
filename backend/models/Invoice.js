@@ -8,13 +8,15 @@ const itemSchema = new mongoose.Schema({
   unit: { type: String, enum: ['Units', 'Kg'], default: 'Units' },
   price: { type: Number, required: true, min: 0 },
   taxPercentage: { type: Number, default: 0 },
-  total: { type: Number, required: true, min: 0 }
+  total: { type: Number, required: true, min: 0 },
+  isCombinedMode: { type: Boolean, default: false }
 });
 
 const invoiceSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
   invoiceNumber: { type: String, required: true, unique: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+  combinedTotal: { type: Number, default: 0, min: 0 },
   items: [itemSchema],
   subTotal: { type: Number, required: true, min: 0 },
   taxAmount: { type: Number, required: true, min: 0 },

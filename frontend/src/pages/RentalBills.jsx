@@ -108,6 +108,7 @@ const RentalBills = () => {
       rentalStartDate: new Date().toISOString().slice(0, 16),
       expectedReturnDate: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
       actualReturnDate: '',
+      combinedTotal: '',
       securityDeposit: selectedProgram?.rentalDefaultSecurityDeposit || 0,
       advancePaid: 0,
       damageCharge: 0,
@@ -151,7 +152,7 @@ const RentalBills = () => {
       product: '', productName: '', description: '', price: 0, quantity: 1, 
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
-      itemNos: '', condition: 'Good', autoCalculate: true
+      itemNos: '', condition: 'Good', isCombinedMode: false
     }]);
   };
 
@@ -168,19 +169,24 @@ const RentalBills = () => {
       newItems[index][field] = value;
     }
     
-    const shouldCalculate = newItems[index].autoCalculate !== false;
-    newItems[index].total = shouldCalculate
-      ? Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1)
-      : Number(newItems[index].price);
+    const isCombinedMode = field === 'isCombinedMode' ? value : (newItems[index].isCombinedMode || false);
+    
+    if (isCombinedMode) {
+      newItems[index].price = 0;
+      newItems[index].total = 0;
+    } else {
+      newItems[index].total = Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1);
+    }
     setItems(newItems);
   };
 
   const removeItem = (index) => { setItems(items.filter((_, i) => i !== index)); };
 
   const getTotals = (currentFormData = formData, currentItems = items) => {
-    let subTotal = currentItems.reduce((acc, item) => acc + item.total, 0);
+    let individualTotal = currentItems.reduce((acc, item) => item.isCombinedMode ? acc : acc + item.total, 0);
+    let subTotal = individualTotal + Number(currentFormData.combinedTotal || 0);
     let taxAmount = currentFormData.showTax
-      ? currentItems.reduce((acc, item) => acc + (item.total * Number(item.taxPercentage) / 100), 0)
+      ? currentItems.reduce((acc, item) => item.isCombinedMode ? acc : acc + (item.total * Number(item.taxPercentage || 0) / 100), 0)
       : 0;
     
     let totalAmount = subTotal + taxAmount + Number(currentFormData.damageCharge || 0) + Number(currentFormData.lossCharge || 0) + Number(currentFormData.lateCharge || 0) + Number(currentFormData.otherCharges || 0) - Number(currentFormData.discount || 0);
@@ -431,11 +437,17 @@ const RentalBills = () => {
                   )}
                 </td>
                 <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>&#8377;{(item.price || 0).toLocaleString()} / {item.rateType}</td>
+                <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()} / ${item.rateType}`}</td>
                 <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.rentalDuration} {item.rateType}(s)</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>&#8377;{(item.total || 0).toLocaleString()}</td>
+                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
               </tr>
             ))}
+            {docData.combinedTotal > 0 && (
+              <tr style={{ background: '#f8fafc', borderTop: '2px solid #cbd5e1' }}>
+                <td colSpan="4" style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.9rem', color: '#475569' }}>Combined Items Total</td>
+                <td style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: '#0f172a' }}>&#8377;{(docData.combinedTotal || 0).toLocaleString()}</td>
+              </tr>
+            )}
           </tbody>
         </table>
 
@@ -680,17 +692,23 @@ const RentalBills = () => {
                       </div>
                       <div style={{ flex: '1 1 80px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <label className="form-label">Rate (&#8377;)</label>
+                          <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
                           <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                             <input 
                               type="checkbox" 
-                              checked={item.autoCalculate !== false} 
-                              onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                              checked={item.isCombinedMode || false} 
+                              onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
                             />
-                            Auto
+                            Combined
                           </label>
                         </div>
-                        <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                        {!item.isCombinedMode ? (
+                          <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                        ) : (
+                          <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            Included
+                          </div>
+                        )}
                       </div>
                       <div style={{ flex: '1 1 80px' }}>
                         <label className="form-label">Per</label>
@@ -730,6 +748,22 @@ const RentalBills = () => {
                   </div>
                 ))}
               </div>
+              {items.some(item => item.isCombinedMode) && (
+                <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
+                      value={formData.combinedTotal || ''}
+                      onChange={(e) => setFormData({ ...formData, combinedTotal: e.target.value })}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
