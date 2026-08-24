@@ -133,7 +133,7 @@ const Quotations = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0, isCombinedMode: false }]);
+    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0, isCombinedMode: false, autoCalculate: true }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -154,7 +154,10 @@ const Quotations = () => {
       newItems[index].price = 0;
       newItems[index].total = 0;
     } else {
-      newItems[index].total = Number(newItems[index].price) * Number(newItems[index].quantity);
+      const shouldCalculate = newItems[index].autoCalculate !== false;
+      newItems[index].total = shouldCalculate
+        ? Number(newItems[index].price) * Number(newItems[index].quantity)
+        : Number(newItems[index].price);
     }
     setItems(newItems);
   };
@@ -679,14 +682,26 @@ const Quotations = () => {
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <label className="form-label">{item.isCombinedMode ? 'Included' : 'Price / Pc (\u20B9)'}</label>
-                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={item.isCombinedMode || false} 
-                                onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
-                              />
-                              Combined Mode
-                            </label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              {!item.isCombinedMode && (
+                                <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={item.autoCalculate !== false} 
+                                    onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                                  />
+                                  Per Pc
+                                </label>
+                              )}
+                              <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={item.isCombinedMode || false} 
+                                  onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
+                                />
+                                Combined Mode
+                              </label>
+                            </div>
                           </div>
                           {!item.isCombinedMode ? (
                             <input 

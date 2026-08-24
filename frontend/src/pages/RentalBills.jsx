@@ -152,7 +152,7 @@ const RentalBills = () => {
       product: '', productName: '', description: '', price: 0, quantity: 1, 
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
-      itemNos: '', condition: 'Good', isCombinedMode: false
+      itemNos: '', condition: 'Good', isCombinedMode: false, autoCalculate: true
     }]);
   };
 
@@ -175,7 +175,10 @@ const RentalBills = () => {
       newItems[index].price = 0;
       newItems[index].total = 0;
     } else {
-      newItems[index].total = Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1);
+      const shouldCalculate = newItems[index].autoCalculate !== false;
+      newItems[index].total = shouldCalculate
+        ? Number(newItems[index].price) * Number(newItems[index].quantity) * (Number(newItems[index].rentalDuration) || 1)
+        : Number(newItems[index].price);
     }
     setItems(newItems);
   };
@@ -693,14 +696,26 @@ const RentalBills = () => {
                       <div style={{ flex: '1 1 80px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
-                          <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={item.isCombinedMode || false} 
-                              onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
-                            />
-                            Combined
-                          </label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {!item.isCombinedMode && (
+                              <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={item.autoCalculate !== false} 
+                                  onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
+                                />
+                                Auto
+                              </label>
+                            )}
+                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={item.isCombinedMode || false} 
+                                onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
+                              />
+                              Combined
+                            </label>
+                          </div>
                         </div>
                         {!item.isCombinedMode ? (
                           <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
