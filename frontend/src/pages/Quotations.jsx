@@ -632,7 +632,7 @@ const Quotations = () => {
                         <X size={15} />
                       </button>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: formData.showItemPrices !== false ? '2fr 1fr 1fr' : '2fr 1fr', gap: '0.65rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.65rem' }}>
                         <div>
                           <label className="form-label">Item / Service</label>
                           <input 
@@ -655,48 +655,30 @@ const Quotations = () => {
                             onChange={e => updateItem(index, 'quantity', e.target.value)} 
                           />
                         </div>
-                        {formData.showItemPrices !== false && (
-                          <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <label className="form-label">Price (&#8377;)</label>
-                              <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={item.autoCalculate !== false} 
-                                  onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
-                                />
-                                Per Pc
-                              </label>
-                            </div>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              required={formData.showItemPrices !== false} 
-                              value={item.price} 
-                              onChange={e => updateItem(index, 'price', e.target.value)} 
-                            />
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="form-label">{item.isTotalOnly ? 'Total Amount (\u20B9)' : 'Price / Pc (\u20B9)'}</label>
+                            <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={!item.isTotalOnly} 
+                                onChange={e => updateItem(index, 'isTotalOnly', !e.target.checked)} 
+                              />
+                              Per Pc
+                            </label>
                           </div>
-                        )}
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            required 
+                            value={item.price} 
+                            onChange={e => updateItem(index, 'price', e.target.value)} 
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                {formData.showItemPrices === false && (
-                  <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Lump Sum / Total Estimate Amount (&#8377;)</label>
-                      <input 
-                        type="number" 
-                        className="form-input" 
-                        style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
-                        value={formData.lumpsumAmount || ''}
-                        onChange={(e) => setFormData({ ...formData, lumpsumAmount: e.target.value })}
-                        placeholder="0.00"
-                        required={formData.showItemPrices === false}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Design & Tax Settings */}
@@ -720,14 +702,6 @@ const Quotations = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.showItemPrices !== false}
-                        onChange={(e) => setFormData({ ...formData, showItemPrices: e.target.checked })}
-                      />
-                      Show Price per Item in Table
-                    </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 

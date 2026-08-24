@@ -32,6 +32,10 @@ const itemSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0
+  },
+  isTotalOnly: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -75,10 +79,6 @@ const quotationSchema = new mongoose.Schema({
     default: true
   },
   showTax: {
-    type: Boolean,
-    default: true
-  },
-  showItemPrices: {
     type: Boolean,
     default: true
   },
