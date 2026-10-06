@@ -7,7 +7,7 @@ import IdCardPreview from '../components/IdCardPreview';
 const Staff = () => {
   const [staffList, setStaffList] = useState([]);
   const [formData, setFormData] = useState({
-    name: '', contactNumber: '', designation: '', expiryDate: '', isActive: true
+    memberId: '', name: '', contactNumber: '', designation: '', memberOf: '', expiryDate: '', isActive: true
   });
   const [editingId, setEditingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -41,16 +41,18 @@ const Staff = () => {
       resetForm();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error saving staff');
+      alert(err.response?.data?.message || 'Error saving staff member');
     }
   };
 
   const handleEdit = (staff) => {
     setEditingId(staff._id);
     setFormData({
+      memberId: staff.memberId || '',
       name: staff.name,
       contactNumber: staff.contactNumber,
       designation: staff.designation,
+      memberOf: staff.memberOf || '',
       expiryDate: staff.expiryDate ? new Date(staff.expiryDate).toISOString().split('T')[0] : '',
       isActive: staff.isActive
     });
@@ -68,7 +70,7 @@ const Staff = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', contactNumber: '', designation: '', memberOf: '', expiryDate: '', isActive: true });
+    setFormData({ memberId: '', name: '', contactNumber: '', designation: '', memberOf: '', expiryDate: '', isActive: true });
     setEditingId(null);
     setIsFormOpen(false);
   };
@@ -152,6 +154,16 @@ const Staff = () => {
             </div>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
+                <label className="form-label">Member ID No. (e.g. YUV-0001)</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. YUV-0001 (Auto-generated if left blank)" 
+                  value={formData.memberId || ''} 
+                  onChange={e => setFormData({...formData, memberId: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
                 <label className="form-label">Full Name</label>
                 <input type="text" className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               </div>
@@ -182,6 +194,7 @@ const Staff = () => {
           </div>
         </div>
       )}
+
 
       {/* Staff ID Card Preview Modal */}
       {previewStaff && (
