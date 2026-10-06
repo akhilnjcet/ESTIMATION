@@ -5,6 +5,7 @@ import {
   Activity, CheckCircle2, AlertTriangle, Globe, Clock, FileCheck, Layers, ToggleLeft
 } from 'lucide-react';
 import api from '../utils/api';
+import { downloadDataAsFile } from '../utils/downloadHelper';
 import { useProgram } from '../context/ProgramContext';
 import ModuleCustomization from './ModuleCustomization';
 
@@ -58,13 +59,8 @@ const AdminSettings = () => {
         version: 'v2.5.0 Enterprise'
       };
 
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `ERP-System-Backup-${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const filename = `ERP-System-Backup-${new Date().toISOString().split('T')[0]}.json`;
+      downloadDataAsFile(backupData, filename, 'application/json');
 
       showToast('System database backup downloaded successfully!');
     } catch (err) {

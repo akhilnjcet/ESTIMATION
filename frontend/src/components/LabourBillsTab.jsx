@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import html2pdf from 'html2pdf.js';
+import { downloadElementAsPdf } from '../utils/downloadHelper';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { 
@@ -355,21 +355,12 @@ const LabourBillsTab = ({ initialCategory = 'Labour' }) => {
     setTimeout(() => { window.print(); }, 500);
   };
 
-  const handleDownloadPdf = (docData) => {
+  const handleDownloadPdf = async (docData) => {
     const element = document.querySelector('.labour-preview-overlay .invoice-container') || document.querySelector('.invoice-container');
     if (!element) return;
     const isTransport = (docData?.billType || activeCategory) === 'Transport';
     const fileName = `${isTransport ? 'Transport' : 'Labour'}-Bill-${docData?.billNumber || 'DRAFT'}.pdf`;
-    
-    const opt = {
-      margin: [8, 8, 8, 8],
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    
-    html2pdf().set(opt).from(element).save();
+    await downloadElementAsPdf(element, fileName);
   };
 
 

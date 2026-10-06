@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import html2pdf from 'html2pdf.js';
+import { downloadElementAsPdf } from '../utils/downloadHelper';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { Edit2, Printer, Plus, X, Eye, Trash2, FileText, Search, CheckCircle2, Download, Settings } from 'lucide-react';
@@ -457,20 +457,11 @@ const Quotations = () => {
     setTimeout(() => { window.print(); }, 500);
   };
 
-  const handleDownloadPdf = (docData) => {
+  const handleDownloadPdf = async (docData) => {
     const element = document.querySelector('.modal-print-overlay .invoice-container') || document.querySelector('.invoice-container');
     if (!element) return;
     const fileName = `Quotation-${docData?.quotationNumber || 'DRAFT'}.pdf`;
-    
-    const opt = {
-      margin: [8, 8, 8, 8],
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    
-    html2pdf().set(opt).from(element).save();
+    await downloadElementAsPdf(element, fileName);
   };
 
   const handleToggleQuotationStatus = async (q) => {

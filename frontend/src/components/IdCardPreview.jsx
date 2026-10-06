@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import QRCode from 'react-qr-code';
 import { X, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { downloadCanvasAsImage } from '../utils/downloadHelper';
 
 const IdCardPreview = ({ data, program, onClose, type = 'member' }) => {
   const cardRef = useRef(null);
@@ -14,11 +15,8 @@ const IdCardPreview = ({ data, program, onClose, type = 'member' }) => {
         useCORS: true,
         backgroundColor: null
       });
-      const imgData = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = imgData;
-      link.download = `${type === 'member' ? 'Member' : 'Customer'}_ID_${data.memberId || data.customerId || data.name || data.customerName}.png`;
-      link.click();
+      const filename = `${type === 'member' ? 'Member' : 'Customer'}_ID_${data.memberId || data.customerId || data.name || data.customerName}.png`;
+      downloadCanvasAsImage(canvas, filename, 'image/png');
     } catch (err) {
       console.error('Error generating ID card image:', err);
       alert('Failed to download ID card.');

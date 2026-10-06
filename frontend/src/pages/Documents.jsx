@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
+import { downloadFromUrl } from '../utils/downloadHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, Upload, Trash2, Eye, Calendar, Link as LinkIcon,
@@ -131,11 +132,10 @@ const Documents = () => {
     if (url) window.open(url, '_blank');
     else showToast('No link available', 'danger');
   };
-  const handleDownload = (doc) => {
+  const handleDownload = async (doc) => {
     if (!doc.fileUrl || doc.fileType === 'Link') return;
-    const a = document.createElement('a');
-    a.href = doc.fileUrl; a.download = doc.fileName || doc.title || 'document';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    const filename = doc.fileName || doc.title || 'document';
+    await downloadFromUrl(doc.fileUrl, filename, (errMsg) => showToast(errMsg, 'danger'));
   };
 
   const getBadge = (doc) => {

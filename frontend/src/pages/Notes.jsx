@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { downloadElementAsPdf } from '../utils/downloadHelper';
 import { Download, Printer, FileText, TrendingUp, TrendingDown, Wallet, Plus, Edit2, Trash2, X } from 'lucide-react';
 
 const Notes = () => {
@@ -19,56 +20,52 @@ const Notes = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const totalIncome = notes.reduce((sum, n) => sum + Number(n.incomeAmount || 0), 0);
     const totalExpense = notes.reduce((sum, n) => sum + Number(n.expenseAmount || 0), 0);
     const balance = totalIncome - totalExpense;
 
-    const printWindow = window.open('', '_blank');
+    const container = document.createElement('div');
+    container.style.padding = '20px';
+    container.style.background = '#ffffff';
+    container.style.color = '#0f172a';
+    container.style.fontFamily = 'system-ui, sans-serif';
+
     const tableRows = notes.map(n => `
-      <tr>
-        <td>${new Date(n.date).toLocaleString()}</td>
-        <td>${n.description}</td>
-        <td style="text-align: right; color: #16a34a; font-weight: bold">${n.incomeAmount ? '₹ ' + n.incomeAmount.toLocaleString() : '-'}</td>
-        <td style="text-align: right; color: #dc2626; font-weight: bold">${n.expenseAmount ? '₹ ' + n.expenseAmount.toLocaleString() : '-'}</td>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 10px; font-size: 12px; color: #64748b;">${new Date(n.date).toLocaleString()}</td>
+        <td style="padding: 10px; font-size: 13px; font-weight: 600; color: #0f172a;">${n.description}</td>
+        <td style="padding: 10px; text-align: right; color: #16a34a; font-weight: bold; font-size: 13px;">${n.incomeAmount ? '₹ ' + n.incomeAmount.toLocaleString() : '-'}</td>
+        <td style="padding: 10px; text-align: right; color: #dc2626; font-weight: bold; font-size: 13px;">${n.expenseAmount ? '₹ ' + n.expenseAmount.toLocaleString() : '-'}</td>
       </tr>
     `).join('');
 
-    const html = `
-      <html>
-        <head>
-          <title>Quick Notes Statement</title>
-          <style>
-            body { font-family: system-ui, sans-serif; padding: 30px; color: #0f172a; }
-            .header { display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 15px; }
-            .summary { display: flex; gap: 15px; margin: 25px 0; }
-            .card { flex: 1; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: bold; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f8fafc; border-bottom: 2px solid #2563eb; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
-            td { border-bottom: 1px solid #f1f5f9; padding: 12px; font-size: 13px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div><h1 style="margin:0; color:#2563eb">Quick Notes Statement</h1><p style="margin:5px 0 0 0; color:#64748b">Krishna ERP Note Register</p></div>
-            <div style="text-align:right"><h2 style="margin:0">STATEMENT</h2><p style="margin:5px 0 0 0; color:#64748b">Generated: ${new Date().toLocaleDateString()}</p></div>
-          </div>
-          <div class="summary">
-            <div class="card" style="color:#16a34a">Income: ₹${totalIncome.toLocaleString()}</div>
-            <div class="card" style="color:#dc2626">Expense: ₹${totalExpense.toLocaleString()}</div>
-            <div class="card" style="background:#eff6ff; color:#2563eb">Net Balance: ₹${balance.toLocaleString()}</div>
-          </div>
-          <table>
-            <thead><tr><th>Date/Time</th><th>Description</th><th style="text-align:right">Income</th><th style="text-align:right">Expense</th></tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </body>
-      </html>
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px;">
+        <div><h1 style="margin:0; color:#2563eb; font-size: 20px;">Quick Notes Statement</h1><p style="margin:5px 0 0 0; color:#64748b; font-size: 12px;">ERP Note Register</p></div>
+        <div style="text-align:right"><h2 style="margin:0; font-size: 16px;">STATEMENT</h2><p style="margin:5px 0 0 0; color:#64748b; font-size: 11px;">Generated: ${new Date().toLocaleDateString('en-GB')}</p></div>
+      </div>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        <div style="flex: 1; padding: 12px; border: 1px solid #bbf7d0; background: #f0fdf4; border-radius: 10px; color:#16a34a; font-weight: bold;">Income: ₹${totalIncome.toLocaleString()}</div>
+        <div style="flex: 1; padding: 12px; border: 1px solid #fecaca; background: #fef2f2; border-radius: 10px; color:#dc2626; font-weight: bold;">Expense: ₹${totalExpense.toLocaleString()}</div>
+        <div style="flex: 1; padding: 12px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; color:#2563eb; font-weight: bold;">Net Balance: ₹${balance.toLocaleString()}</div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #2563eb;">
+            <th style="padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase;">Date/Time</th>
+            <th style="padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase;">Description</th>
+            <th style="padding: 10px; text-align: right; font-size: 11px; text-transform: uppercase;">Income</th>
+            <th style="padding: 10px; text-align: right; font-size: 11px; text-transform: uppercase;">Expense</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
     `;
 
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => { printWindow.print(); }, 500);
+    document.body.appendChild(container);
+    await downloadElementAsPdf(container, `Notes-Statement-${new Date().toISOString().split('T')[0]}.pdf`);
+    document.body.removeChild(container);
   };
 
   const handleSubmit = async (e) => {
