@@ -160,6 +160,7 @@ router.get('/combined', protect, async (req, res) => {
         .sort({ date: -1, createdAt: -1 })
         .limit(6)
         .populate('party', 'customerName')
+        .populate('partyMember', 'name memberId designation contactNumber')
         .populate('account', 'name type');
     } catch (txErr) {
       console.warn('Recent transactions populate fallback:', txErr.message);

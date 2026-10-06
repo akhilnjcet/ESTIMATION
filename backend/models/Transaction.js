@@ -40,6 +40,18 @@ const transactionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer'
   },
+  partyType: {
+    type: String,
+    enum: ['Member', 'Others'],
+    default: 'Others'
+  },
+  partyMember: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Staff'
+  },
+  partyName: {
+    type: String
+  },
   status: {
     type: String,
     enum: ['Cleared', 'Pending', 'Due', 'Approved'],

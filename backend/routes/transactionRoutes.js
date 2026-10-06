@@ -5,13 +5,15 @@ const Account = require('../models/Account');
 const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/transactions
-// @desc    Get transactions (filter by type, account, etc)
+// @desc    Get transactions (filter by type, partyMember, partyType, etc)
 router.get('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-    const { type, sortBy } = req.query;
+    const { type, sortBy, partyMember, partyType } = req.query;
     const filter = { programId: req.programId };
     if (type) filter.type = type;
+    if (partyMember) filter.partyMember = partyMember;
+    if (partyType) filter.partyType = partyType;
     
     let sortOptions = { date: -1, createdAt: -1 };
     if (sortBy === 'date_asc') sortOptions = { date: 1, createdAt: 1 };
@@ -21,6 +23,7 @@ router.get('/', protect, async (req, res) => {
     const transactions = await Transaction.find(filter)
       .populate('account', 'name type')
       .populate('party', 'customerName')
+      .populate('partyMember', 'name memberId designation contactNumber')
       .sort(sortOptions);
     res.json(transactions);
   } catch (error) {
@@ -34,10 +37,13 @@ router.post('/', protect, async (req, res) => {
   try {
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
     
-    const { type, amount, account, toAccount, category, description, date, party } = req.body;
+    const { type, amount, account, toAccount, category, description, date, party, partyType, partyMember, partyName } = req.body;
 
     const transaction = new Transaction({
       type, amount, account, toAccount, category, description, date, party,
+      partyType: partyType || 'Others',
+      partyMember: partyType === 'Member' ? (partyMember || null) : null,
+      partyName: partyName || '',
       programId: req.programId
     });
 
@@ -69,7 +75,11 @@ router.post('/', protect, async (req, res) => {
       await acc.save();
     }
 
-    res.status(201).json(transaction);
+    const populatedTx = await Transaction.findById(transaction._id)
+      .populate('account', 'name type')
+      .populate('partyMember', 'name memberId designation contactNumber');
+
+    res.status(201).json(populatedTx || transaction);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Server error' });
   }
@@ -80,7 +90,7 @@ router.put('/:id', protect, async (req, res) => {
     const oldTransaction = await Transaction.findById(req.params.id);
     if (!oldTransaction) return res.status(404).json({ message: 'Transaction not found' });
 
-    const { amount, account, type } = req.body;
+    const { amount, account, type, partyType, partyMember } = req.body;
     
     // If amount or account or type changed, we need to revert old balance and apply new
     if (amount !== undefined || account !== undefined || type !== undefined) {
@@ -105,11 +115,20 @@ router.put('/:id', protect, async (req, res) => {
       }
     }
 
+    const updatePayload = { ...req.body };
+    if (partyType === 'Member') {
+      updatePayload.partyMember = partyMember || null;
+    } else if (partyType === 'Others') {
+      updatePayload.partyMember = null;
+    }
+
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body, $inc: { editCount: 1 } },
+      { $set: updatePayload, $inc: { editCount: 1 } },
       { new: true }
-    );
+    )
+      .populate('account', 'name type')
+      .populate('partyMember', 'name memberId designation contactNumber');
 
     res.json(updatedTransaction);
   } catch (error) {

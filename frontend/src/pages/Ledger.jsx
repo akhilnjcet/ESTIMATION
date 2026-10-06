@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import { FileText, Printer, Filter, Wallet, Receipt, X, ArrowUpRight, ArrowDownRight, BookOpen, Search } from 'lucide-react';
+import { FileText, Printer, Wallet, X, BookOpen, Search, UserCheck, User } from 'lucide-react';
 
 const Ledger = () => {
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [memberFilter, setMemberFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('date_desc');
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedProgram } = useProgram();
@@ -16,12 +18,20 @@ const Ledger = () => {
   useEffect(() => {
     fetchTransactions();
     fetchAccounts();
-  }, [filter, sortBy]);
+    fetchStaff();
+  }, [filter, sortBy, selectedProgram]);
 
   const fetchAccounts = async () => {
     try {
       const { data } = await api.get('/accounts');
       setAccounts(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const { data } = await api.get('/staff');
+      setStaffList(data);
     } catch (err) { console.error(err); }
   };
 
@@ -36,11 +46,22 @@ const Ledger = () => {
     finally { setLoading(false); }
   };
 
-  const filteredTransactions = transactions.filter(t => 
-    t.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.account?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTransactions = transactions.filter(t => {
+    const matchesSearch = 
+      t.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.account?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.partyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.partyMember?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.partyMember?.memberId?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (memberFilter === 'ALL') return true;
+    if (memberFilter === 'MEMBERS_ONLY') return t.partyType === 'Member' || t.partyMember;
+    if (memberFilter === 'OTHERS_ONLY') return t.partyType === 'Others' && !t.partyMember;
+    return (t.partyMember?._id || t.partyMember) === memberFilter;
+  });
 
   const cashBalance = accounts.filter(a => a.type === 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
   const bankBalance = accounts.filter(a => a.type !== 'Cash').reduce((acc, curr) => acc + curr.balance, 0);
@@ -53,6 +74,7 @@ const Ledger = () => {
 
   const handlePrint = () => {
     const includeBalances = window.confirm('Include Cash on Hand and Bank Balance in this statement report?');
+    const selectedMemberObj = staffList.find(m => m._id === memberFilter);
     setPreviewData({
       transactions: filteredTransactions,
       totalOpeningBalance,
@@ -64,6 +86,13 @@ const Ledger = () => {
       cashOpeningBalance,
       bankOpeningBalance,
       includeBalances,
+      memberFilterName: memberFilter === 'ALL' 
+        ? 'All Parties & Members' 
+        : memberFilter === 'MEMBERS_ONLY' 
+        ? 'All Registered Members' 
+        : memberFilter === 'OTHERS_ONLY' 
+        ? 'External / Others' 
+        : selectedMemberObj ? `${selectedMemberObj.name} (${selectedMemberObj.memberId})` : 'Selected Member',
       date: new Date().toLocaleDateString('en-GB')
     });
   };
@@ -96,7 +125,10 @@ const Ledger = () => {
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem', borderTop: '2px solid #e2e8f0', paddingTop: '1rem' }}>
-            <h2 style={{ margin: 0, color: '#2563eb', fontSize: '22px', fontWeight: '900' }}>ACCOUNT STATEMENT</h2>
+            <div>
+              <h2 style={{ margin: 0, color: '#2563eb', fontSize: '22px', fontWeight: '900' }}>ACCOUNT STATEMENT</h2>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Filter: {data.memberFilterName}</span>
+            </div>
             <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}><b>Date:</b> {data.date}</p>
           </div>
         </div>
@@ -151,31 +183,41 @@ const Ledger = () => {
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Date</th>
-              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Details</th>
+              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Party (From / To)</th>
+              <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Category & Details</th>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Account</th>
-              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Debit (Out)</th>
-              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Credit (In)</th>
+              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Debit (-)</th>
+              <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Credit (+)</th>
             </tr>
           </thead>
           <tbody>
-            {data.transactions.map((t, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
-                  {new Date(t.date).toLocaleDateString('en-GB')}
-                </td>
-                <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
-                  <div style={{ fontWeight: '600', color: '#0f172a' }}>{t.category}</div>
-                  {t.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{t.description}</div>}
-                </td>
-                <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#475569' }}>{t.account?.name}</td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#dc2626', fontSize: '0.85rem' }}>
-                  {t.type === 'Expense' ? `₹${t.amount.toLocaleString()}` : '-'}
-                </td>
-                <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#16a34a', fontSize: '0.85rem' }}>
-                  {t.type === 'Income' ? `₹${t.amount.toLocaleString()}` : '-'}
-                </td>
-              </tr>
-            ))}
+            {data.transactions.map((t, idx) => {
+              const partyStr = t.partyMember 
+                ? `${t.partyMember.name} (${t.partyMember.memberId})` 
+                : (t.partyName || '-');
+
+              return (
+                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
+                    {new Date(t.date).toLocaleDateString('en-GB')}
+                  </td>
+                  <td style={{ padding: '0.6rem', fontSize: '0.825rem', fontWeight: '600', color: '#0f172a' }}>
+                    {partyStr}
+                  </td>
+                  <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
+                    <div style={{ fontWeight: '600', color: '#0f172a' }}>{t.category}</div>
+                    {t.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{t.description}</div>}
+                  </td>
+                  <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#475569' }}>{t.account?.name}</td>
+                  <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#dc2626', fontSize: '0.85rem' }}>
+                    {t.type === 'Expense' ? `₹${t.amount.toLocaleString()}` : '-'}
+                  </td>
+                  <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', color: '#16a34a', fontSize: '0.85rem' }}>
+                    {t.type === 'Income' ? `₹${t.amount.toLocaleString()}` : '-'}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -202,7 +244,7 @@ const Ledger = () => {
             <BookOpen size={28} style={{ color: 'var(--primary)' }} />
             Party & General Ledger
           </h1>
-          <p className="page-subtitle">Unified transaction history and statement reports</p>
+          <p className="page-subtitle">Unified transaction history and member statement reports</p>
         </div>
 
         <button className="btn-gradient" onClick={handlePrint}>
@@ -241,7 +283,7 @@ const Ledger = () => {
           </h2>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flex: '1 1 300px', justifyContent: 'flex-end' }}>
-            <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '160px' }}>
+            <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '150px' }}>
               <input 
                 type="text" 
                 className="form-input" 
@@ -255,9 +297,25 @@ const Ledger = () => {
 
             <select 
               className="form-select"
+              value={memberFilter}
+              onChange={(e) => setMemberFilter(e.target.value)}
+              style={{ flex: '1 1 150px', minWidth: '140px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+            >
+              <option value="ALL">All Parties</option>
+              <option value="MEMBERS_ONLY">All Registered Members</option>
+              <option value="OTHERS_ONLY">Others / External</option>
+              {staffList.length > 0 && <optgroup label="Specific Member">
+                {staffList.map(m => (
+                  <option key={m._id} value={m._id}>{m.name} ({m.memberId})</option>
+                ))}
+              </optgroup>}
+            </select>
+
+            <select 
+              className="form-select"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              style={{ flex: '1 1 120px', minWidth: '120px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+              style={{ flex: '1 1 110px', minWidth: '110px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
             >
               <option value="All">All Types</option>
               <option value="Income">Income Only</option>
@@ -283,6 +341,7 @@ const Ledger = () => {
             <thead>
               <tr>
                 <th style={{ whiteSpace: 'nowrap' }}>Date</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Party (From / To)</th>
                 <th style={{ minWidth: '180px' }}>Transaction Details</th>
                 <th style={{ whiteSpace: 'nowrap' }}>Payment Account</th>
                 <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Debit (-)</th>
@@ -290,29 +349,50 @@ const Ledger = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map(txn => (
-                <tr key={txn._id}>
-                  <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                    {new Date(txn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: '700' }}>{txn.category}</div>
-                    {txn.description && <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>{txn.description}</div>}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>{txn.account?.name || 'Account'}</span>
-                  </td>
-                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)', whiteSpace: 'nowrap' }}>
-                    {txn.type === 'Expense' ? `- ₹${txn.amount.toLocaleString()}` : '-'}
-                  </td>
-                  <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)', whiteSpace: 'nowrap' }}>
-                    {txn.type === 'Income' ? `+ ₹${txn.amount.toLocaleString()}` : '-'}
-                  </td>
-                </tr>
-              ))}
+              {filteredTransactions.map(txn => {
+                const isMember = txn.partyType === 'Member' || txn.partyMember;
+                const mObj = txn.partyMember;
+                const displayParty = mObj 
+                  ? `${mObj.name} (${mObj.memberId})` 
+                  : (txn.partyName || '-');
+
+                return (
+                  <tr key={txn._id}>
+                    <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {new Date(txn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </td>
+                    <td>
+                      {isMember ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#3b82f6', fontWeight: '600', fontSize: '0.825rem' }}>
+                          <UserCheck size={14} />
+                          <span>{displayParty}</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                          <User size={14} style={{ color: 'var(--text-muted)' }} />
+                          <span>{displayParty}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: '700' }}>{txn.category}</div>
+                      {txn.description && <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>{txn.description}</div>}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>{txn.account?.name || 'Account'}</span>
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--danger)', whiteSpace: 'nowrap' }}>
+                      {txn.type === 'Expense' ? `- ₹${txn.amount.toLocaleString()}` : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--success)', whiteSpace: 'nowrap' }}>
+                      {txn.type === 'Income' ? `+ ₹${txn.amount.toLocaleString()}` : '-'}
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredTransactions.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                     No matching ledger transactions found.
                   </td>
                 </tr>
@@ -335,7 +415,7 @@ const Ledger = () => {
             padding: '2rem 1rem',
             overflowY: 'auto',
             display: 'flex',
-            justifyContent: 'center',
+            justify: 'center',
             alignItems: 'flex-start'
           }}
         >
@@ -344,7 +424,7 @@ const Ledger = () => {
               className="no-print" 
               style={{ 
                 display: 'flex', 
-                justify: 'space-between', 
+                justifyContent: 'space-between', 
                 alignItems: 'center', 
                 marginBottom: '1.25rem',
                 background: 'rgba(15, 23, 42, 0.95)',
