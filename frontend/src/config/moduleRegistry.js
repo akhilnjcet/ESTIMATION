@@ -242,7 +242,7 @@ export const ALL_MODULES = [
     category: 'FINANCE & ACCOUNTS',
     categoryKey: 'finance',
     defaultEnabled: true,
-    adminOnly: true,
+    adminOnly: false,
   },
 ];
 
