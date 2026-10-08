@@ -505,11 +505,11 @@ const Expense = () => {
             padding: '2rem 1rem',
             overflowY: 'auto',
             display: 'flex',
-            justify: 'center',
+            justifyContent: 'center',
             alignItems: 'flex-start'
           }}
         >
-          <div className="printable" style={{ width: '100%', maxWidth: '900px', margin: '0 auto', background: '#fff', padding: '2rem', borderRadius: '16px', color: '#0f172a' }}>
+          <div className="printable" style={{ width: '100%', maxWidth: '900px', margin: '0 auto', background: '#fff', padding: '1rem', borderRadius: '16px', color: '#0f172a' }}>
             <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', background: '#0f172a', padding: '1rem 1.5rem', borderRadius: '12px', color: '#fff' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>Expense Register Statement</h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -518,7 +518,7 @@ const Expense = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', pb: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
               <div>
                 <h1 style={{ fontSize: '1.3rem', fontWeight: '800', margin: 0 }}>{selectedProgram?.name}</h1>
                 <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>{selectedProgram?.address}</p>
@@ -535,32 +535,34 @@ const Expense = () => {
               <span style={{ fontWeight: '900', color: '#dc2626', fontSize: '1.2rem' }}>₹ {previewData.totalExpenseSum.toLocaleString()}</span>
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '0.6rem', textAlign: 'left' }}>Date</th>
-                  <th style={{ padding: '0.6rem', textAlign: 'left' }}>Fund Handed Over To</th>
-                  <th style={{ padding: '0.6rem', textAlign: 'left' }}>Category</th>
-                  <th style={{ padding: '0.6rem', textAlign: 'left' }}>Account</th>
-                  <th style={{ padding: '0.6rem', textAlign: 'right' }}>Amount (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {previewData.expenses.map((exp, i) => {
-                  const mObj = exp.partyMember;
-                  const partyStr = mObj ? `${mObj.name} (${mObj.memberId})` : (exp.partyName || 'Others');
-                  return (
-                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '0.6rem' }}>{new Date(exp.date).toLocaleDateString('en-GB')}</td>
-                      <td style={{ padding: '0.6rem', fontWeight: '600' }}>{partyStr}</td>
-                      <td style={{ padding: '0.6rem' }}>{exp.category}</td>
-                      <td style={{ padding: '0.6rem' }}>{exp.account?.name}</td>
-                      <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '800', color: '#dc2626' }}>₹{Number(exp.amount).toLocaleString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem', minWidth: '500px' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={{ padding: '0.6rem', textAlign: 'left' }}>Date</th>
+                    <th style={{ padding: '0.6rem', textAlign: 'left' }}>Fund Handed Over To</th>
+                    <th style={{ padding: '0.6rem', textAlign: 'left' }}>Category</th>
+                    <th style={{ padding: '0.6rem', textAlign: 'left' }}>Account</th>
+                    <th style={{ padding: '0.6rem', textAlign: 'right' }}>Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewData.expenses.map((exp, i) => {
+                    const mObj = exp.partyMember;
+                    const partyStr = mObj ? `${mObj.name} (${mObj.memberId})` : (exp.partyName || 'Others');
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '0.6rem' }}>{new Date(exp.date).toLocaleDateString('en-GB')}</td>
+                        <td style={{ padding: '0.6rem', fontWeight: '600' }}>{partyStr}</td>
+                        <td style={{ padding: '0.6rem' }}>{exp.category}</td>
+                        <td style={{ padding: '0.6rem' }}>{exp.account?.name}</td>
+                        <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '800', color: '#dc2626' }}>₹{Number(exp.amount).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
