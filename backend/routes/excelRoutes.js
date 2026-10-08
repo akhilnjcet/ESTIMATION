@@ -204,7 +204,7 @@ router.post('/disconnect', protect, async (req, res) => {
 router.post('/reset-sync', protect, async (req, res) => {
   try {
     const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
-    const token = await getValidToken();
+    const token = await getValidToken(req.programId);
     const client = getGraphClient(token);
     
     const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
