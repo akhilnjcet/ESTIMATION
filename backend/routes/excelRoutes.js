@@ -200,7 +200,7 @@ router.post('/reset-sync', protect, async (req, res) => {
     await Transaction.updateMany({ programId: req.programId }, { excelSyncStatus: 'Pending' });
     
     // Trigger sync
-    await triggerPendingSyncs(req.programId);
+    await triggerPendingSyncs(req.programId, true);
     
     const authRecord = await OneDriveAuth.findOne({});
     if (authRecord) {

@@ -246,7 +246,7 @@ const syncTransactionToExcel = async (transactionId) => {
   }
 };
 
-const triggerPendingSyncs = async (programId = null) => {
+const triggerPendingSyncs = async (programId = null, isReset = false) => {
     const query = { excelSyncStatus: { $in: ['Pending', 'Failed'] } };
     if (programId) query.programId = programId;
 
@@ -314,6 +314,31 @@ const triggerPendingSyncs = async (programId = null) => {
             });
             return row;
         };
+
+        // If this is a full reset, inject Opening Balances first!
+        if (isReset) {
+            allAccounts.forEach(acc => {
+                if (acc.openingBalance && acc.openingBalance > 0) {
+                    const row = new Array(colNames.length).fill("");
+                    colNames.forEach((colName, index) => {
+                        if (colName.includes('account type')) row[index] = acc.type || '';
+                        else if (colName.includes('account') && !colName.includes('balance')) row[index] = acc.name;
+                        else if (colName.includes('date')) row[index] = formatDate(acc.date || new Date());
+                        else if (colName.includes('description')) row[index] = 'Opening Balance';
+                        else if (colName.includes('category')) row[index] = '[Balance]';
+                        else if (colName.includes('income') || colName.includes('in')) row[index] = acc.openingBalance;
+                        else if (colName.includes('expense') || colName.includes('out')) row[index] = "";
+                        else if (colName.includes('overall balance')) {
+                            row[index] = '=IF(ISBLANK(INDEX(B:B,ROW()))," - ",IFERROR(OFFSET(INDEX(I:I,ROW()),-1,0,1,1)+INDEX(F:F,ROW())-INDEX(G:G,ROW()),INDEX(F:F,ROW())-INDEX(G:G,ROW())))';
+                        }
+                        else if (colName.includes('balance')) {
+                            row[index] = '=SUMIF($A$3:INDEX(A:A,ROW()),INDEX(A:A,ROW()),$F$3:INDEX(F:F,ROW()))-SUMIF($A$3:INDEX(A:A,ROW()),INDEX(A:A,ROW()),$G$3:INDEX(G:G,ROW()))';
+                        }
+                    });
+                    rowsToAdd.push(row);
+                }
+            });
+        }
 
         for (const tx of pendingTxs) {
             if (tx.type === 'Income') {
