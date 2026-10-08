@@ -136,6 +136,33 @@ const ExcelSync = () => {
     }
   };
 
+  const handleUpdateFileName = async () => {
+    try {
+      setSyncing(true);
+      const res = await api.post('/excel/update-filename', { fileName: excelFileName });
+      setExcelFileName(res.data.fileName);
+      showNotification('success', 'Excel file preference saved!');
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to save preference');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleGenerateTemplate = async () => {
+    if (!window.confirm(`This will create a new file named '${excelFileName}' in your OneDrive. Continue?`)) return;
+    try {
+      setSyncing(true);
+      showNotification('success', 'Generating Excel template in your OneDrive... Please wait.');
+      await api.post('/excel/generate-template');
+      showNotification('success', 'Template created successfully! You can now Sync your data.');
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to generate template');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
   };
@@ -181,7 +208,7 @@ const ExcelSync = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                 <FileSpreadsheet size={40} color="#107C41" />
                 <div>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)' }}>backup.xlsx</h2>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)' }}>{excelFileName}</h2>
                   <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>OneDrive Synchronized Database</p>
                 </div>
               </div>
@@ -202,6 +229,30 @@ const ExcelSync = () => {
               <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                 <span style={{ fontWeight: '600', color: 'var(--text-color)' }}>Last Sync:</span> {formatDate(stats.lastSync)}
               </div>
+              
+              {stats.isConnected && (
+                  <div style={{ marginTop: '1.5rem', background: 'var(--surface-color)', padding: '1rem', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        value={excelFileName} 
+                        onChange={(e) => setExcelFileName(e.target.value)}
+                        className="form-input"
+                        placeholder="e.g. expenses.xlsx"
+                        style={{ flex: 1, padding: '0.5rem' }}
+                      />
+                      <button className="primary-button" onClick={handleUpdateFileName} disabled={syncing} style={{ padding: '0.5rem 1rem' }}>
+                        Save
+                      </button>
+                    </div>
+                    <button className="secondary-button" onClick={handleGenerateTemplate} disabled={syncing} style={{ width: '100%', borderColor: '#107C41', color: '#107C41' }}>
+                      Generate Excel Template
+                    </button>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-color)', opacity: 0.7, margin: 0 }}>
+                      If the file doesn't exist, enter your desired name and click Generate to create it in OneDrive.
+                    </p>
+                  </div>
+                )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: '200px' }}>

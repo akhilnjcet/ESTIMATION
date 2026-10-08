@@ -257,6 +257,85 @@ router.post('/reset-sync', protect, async (req, res) => {
   }
 });
 
+// Update Excel File Name
+router.post('/update-filename', protect, async (req, res) => {
+  try {
+    const { fileName } = req.body;
+    if (!fileName) return res.status(400).json({ message: 'File name is required' });
+    
+    // Auto-append .xlsx if missing
+    const finalName = fileName.toLowerCase().endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
+    
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    if (!authRecord) return res.status(404).json({ message: 'Not connected to OneDrive' });
+    
+    authRecord.excelFileName = finalName;
+    await authRecord.save();
+    
+    res.json({ message: 'Excel file preference updated', fileName: finalName });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Generate Excel Template
+router.post('/generate-template', protect, async (req, res) => {
+  try {
+    const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
+    const token = await getValidToken(req.programId);
+    const client = getGraphClient(token);
+    
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    if (!authRecord) return res.status(404).json({ message: 'Not connected to OneDrive' });
+    
+    const fileName = authRecord.excelFileName || 'backup.xlsx';
+    
+    // We create a very basic empty workbook by uploading a minimal valid Base64 encoded empty xlsx
+    // This is a minimal valid Excel file in base64
+    const emptyXlsxBase64 = "UEsDBBQABgAIAAAAIQBLm8vA5wAAAEQCAAATAAgCW0NvbnRlbnRfVHlwZXNdLnhtbCCiBAIooAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACslE1rwkAQhu+C/yHM2WIUIogotUivRQQF/QCTbLqbsJuQXRt/faO2tKVNeyhUehiGfWbe+8wkk8Wq1QYxOa+NLGQ+8rGQSiulaCHLn81tNo2xoBJKKxtAyRYUWSw+PibzowHk2PjGQpYl8Y0YF1wOqERs3AEpU89ZKKmUeN1wX+A+n8v4UqHCElG4wO1JPIzju1yO3k9pB1+b2L4UaL0jD8K0P1GzYVwVwD00h3i9x4O02m0M0wX5b3L8fT2s/16M3pD5y371iOqO9Q61mDk6/Z3hE6I/K29a/Wf7D1BLAQItABQABgAIAAAAIQBLm8vA5wAAAEQCAAATAAAAAAAAAAAAAAAAAAAAAABbQ29udGVudF9UeXBlc10ueG1sUEsFBgAAAAABAAEANgAAAHcAAAAAAA==";
+    const buffer = Buffer.from(emptyXlsxBase64, 'base64');
+    
+    // Upload it
+    const uploadRes = await client.api(`/me/drive/root:/Documents/${fileName}:/content`)
+      .put(buffer);
+      
+    // Wait a brief moment for OneDrive search index
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Find the file id
+    const fileId = uploadRes.id;
+    
+    // Create Worksheet
+    const sheetRes = await client.api(`/me/drive/items/${fileId}/workbook/worksheets`).post({
+      name: "Transactions"
+    });
+    
+    // Create Table
+    // Account | Date | Description | ACCOUNT TYPE | Category | ✓ | Income Money IN | Expense Money OUT | Account Balance | Overall Balance
+    const tableRes = await client.api(`/me/drive/items/${fileId}/workbook/worksheets/${sheetRes.id}/tables/add`).post({
+      address: "A1:J1",
+      hasHeaders: true
+    });
+    
+    // Add columns
+    const columns = [
+      "Account", "Date", "Description", "ACCOUNT TYPE", "Category", "✓", 
+      "Income Money IN", "Expense Money OUT", "Account Balance", "Overall Balance"
+    ];
+    
+    // A1 to J1 is 10 columns, the table already has 10 generic columns. We just need to rename them.
+    // Graph API lets us update the header row:
+    await client.api(`/me/drive/items/${fileId}/workbook/tables/${tableRes.id}/headerRowRange`).patch({
+      values: [columns]
+    });
+    
+    res.json({ message: 'Template successfully created in your OneDrive!' });
+  } catch (error) {
+    console.error('Template Generate Error:', error);
+    res.status(500).json({ message: 'Failed to generate template: ' + error.message });
+  }
+});
+
 // Get File Link
 router.get('/file-link', protect, async (req, res) => {
     const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
