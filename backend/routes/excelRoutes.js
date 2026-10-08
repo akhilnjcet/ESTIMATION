@@ -263,6 +263,7 @@ router.get('/file-link', protect, async (req, res) => {
     const fileName = 'backup.xlsx';
 
     let webUrl = null;
+    let downloadUrl = null;
 
     // Strategy 1: Try exact paths directly
     const pathsToTry = [
@@ -272,8 +273,9 @@ router.get('/file-link', protect, async (req, res) => {
 
     for (const path of pathsToTry) {
       try {
-        const res = await client.api(path).get();
-        webUrl = res.webUrl;
+        const fileRes = await client.api(path).get();
+        webUrl = fileRes.webUrl;
+        downloadUrl = fileRes['@microsoft.graph.downloadUrl'];
         console.log(`File found at exact path: ${path}`);
         break; // Stop if found
       } catch (err) {
@@ -297,6 +299,7 @@ router.get('/file-link', protect, async (req, res) => {
             const exactMatch = excelFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
             const found = exactMatch || excelFiles[0];
             webUrl = found.webUrl;
+            downloadUrl = found['@microsoft.graph.downloadUrl'];
             console.log(`Found Excel file via search: ${found.name}`);
           }
         }
@@ -311,7 +314,7 @@ router.get('/file-link', protect, async (req, res) => {
       });
     }
 
-    res.json({ webUrl });
+    res.json({ webUrl, downloadUrl });
   } catch (error) {
     console.error('File link error:', error.message);
     res.status(500).json({ message: error.message });

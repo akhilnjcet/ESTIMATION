@@ -122,9 +122,18 @@ const ExcelSync = () => {
   };
 
   const handleDownload = async () => {
-      // Direct file download graph api endpoint is complex to wire up without token to frontend.
-      // Easiest is to direct them to open in onedrive where they can download.
-      handleOpenExcel();
+    try {
+      const res = await api.get('/excel/file-link');
+      if (res.data.downloadUrl) {
+        // Direct download URL provided by Microsoft Graph
+        window.location.href = res.data.downloadUrl;
+      } else if (res.data.webUrl) {
+        // Fallback to opening in web view
+        window.open(res.data.webUrl, '_blank');
+      }
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to get file link. Is OneDrive connected?');
+    }
   };
 
   const formatCurrency = (amount) => {
