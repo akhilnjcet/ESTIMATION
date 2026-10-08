@@ -71,7 +71,12 @@ app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./r
 app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));
 app.use('/api/rentals', protect, restrictToView, verifyProgramAccess, require('./routes/rentalRoutes'));
 app.use('/api/staff', protect, restrictToView, verifyProgramAccess, require('./routes/staffRoutes'));
-app.use('/api/excel', protect, restrictToView, verifyProgramAccess, require('./routes/excelRoutes'));
+// Microsoft OAuth Callback - MUST be public (no protect middleware)
+// Microsoft redirects here after user logs in, so there is no JWT token
+const excelRoutes = require('./routes/excelRoutes');
+app.use('/api/excel/callback', excelRoutes);
+// All other Excel routes are protected
+app.use('/api/excel', protect, restrictToView, verifyProgramAccess, excelRoutes);
 
 
 
