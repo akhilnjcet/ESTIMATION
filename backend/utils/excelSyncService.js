@@ -238,15 +238,69 @@ const syncTransactionToExcel = async (transactionId) => {
   }
 };
 
-const triggerPendingSyncs = async () => {
-    // Find all pending/failed transactions and try to sync them
-    const pendingTxs = await Transaction.find({ excelSyncStatus: { $in: ['Pending', 'Failed'] } });
-    for (const tx of pendingTxs) {
-        try {
-            await syncTransactionToExcel(tx._id);
-        } catch (e) {
-            console.error(`Failed to sync pending transaction ${tx._id}:`, e);
+const triggerPendingSyncs = async (programId = null) => {
+    const query = { excelSyncStatus: { $in: ['Pending', 'Failed'] } };
+    if (programId) query.programId = programId;
+
+    const pendingTxs = await Transaction.find(query).populate('account').populate('toAccount').sort({ date: 1 });
+    if (pendingTxs.length === 0) return;
+
+    try {
+        const token = await getValidToken();
+        const client = getGraphClient(token);
+        const fileName = 'backup.xlsx';
+        const searchRes = await findExcelFile(client, fileName);
+        const fileId = searchRes.id;
+        
+        const worksheets = await client.api(`/me/drive/items/${fileId}/workbook/worksheets`).get();
+        const sheetId = worksheets.value[0].id;
+        
+        const tables = await client.api(`/me/drive/items/${fileId}/workbook/worksheets/${sheetId}/tables`).get();
+        if (!tables.value || tables.value.length === 0) throw new Error('No table found');
+        const tableId = tables.value[0].id;
+
+        let rowsToAdd = [];
+        const formatDate = (date) => new Date(date).toLocaleDateString('en-US');
+        
+        // Optimize: load all accounts once to calculate overall balances per program
+        const allAccounts = await Account.find(programId ? { programId } : {});
+        const overallBalances = {};
+        allAccounts.forEach(acc => {
+           if (!overallBalances[acc.programId]) overallBalances[acc.programId] = 0;
+           overallBalances[acc.programId] += (acc.balance || 0);
+        });
+
+        for (const tx of pendingTxs) {
+            const overallBalance = overallBalances[tx.programId] || 0;
+            if (tx.type === 'Income') {
+                rowsToAdd.push([tx.account.name, formatDate(tx.date), tx.description || '', tx.category || '', tx.amount, "", tx.account.balance, overallBalance]);
+            } else if (tx.type === 'Expense') {
+                rowsToAdd.push([tx.account.name, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount, tx.account.balance, overallBalance]);
+            } else if (tx.type === 'Transfer') {
+                rowsToAdd.push([tx.account.name, formatDate(tx.date), `Transfer to ${tx.toAccount.name}: ${tx.description || ''}`, 'Transfer', "", tx.amount, tx.account.balance, overallBalance]);
+                rowsToAdd.push([tx.toAccount.name, formatDate(tx.date), `Transfer from ${tx.account.name}: ${tx.description || ''}`, 'Transfer', tx.amount, "", tx.toAccount.balance, overallBalance]);
+            }
         }
+
+        // Batch upload
+        // Graph API can handle large payloads, but we should chunk if > 500 rows. For 57 it's perfectly fine.
+        const chunkSize = 500;
+        for (let i = 0; i < rowsToAdd.length; i += chunkSize) {
+            const chunk = rowsToAdd.slice(i, i + chunkSize);
+            await client.api(`/me/drive/items/${fileId}/workbook/tables/${tableId}/rows/add`).post({ values: chunk });
+        }
+
+        // Mark all as synced
+        const txIds = pendingTxs.map(t => t._id);
+        await Transaction.updateMany(
+            { _id: { $in: txIds } },
+            { $set: { excelSyncStatus: 'Synced', excelSyncTime: new Date(), excelRowId: 'synced-batch' } }
+        );
+
+    } catch (e) {
+        console.error('Batch sync failed:', e);
+        const txIds = pendingTxs.map(t => t._id);
+        await Transaction.updateMany({ _id: { $in: txIds } }, { $set: { excelSyncStatus: 'Failed' } });
     }
 };
 

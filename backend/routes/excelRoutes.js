@@ -130,7 +130,7 @@ router.get('/status', protect, async (req, res) => {
 // Trigger Manual Sync
 router.post('/sync-now', protect, async (req, res) => {
   try {
-    await triggerPendingSyncs();
+    await triggerPendingSyncs(req.programId);
     
     const authRecord = await OneDriveAuth.findOne({});
     if (authRecord) {
@@ -188,7 +188,7 @@ router.post('/reset-sync', protect, async (req, res) => {
     await Transaction.updateMany({ programId: req.programId }, { excelSyncStatus: 'Pending' });
     
     // Trigger sync
-    await triggerPendingSyncs();
+    await triggerPendingSyncs(req.programId);
     
     const authRecord = await OneDriveAuth.findOne({});
     if (authRecord) {
