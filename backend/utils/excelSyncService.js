@@ -94,18 +94,30 @@ const getValidToken = async () => {
 };
 
 
+const findExcelFile = async (client, fileName) => {
+  try {
+    const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
+    return rootRes;
+  } catch (rootErr) {
+    console.log(`File not found at root, trying search...`);
+    try {
+      const searchRes = await client.api(`/me/drive/root/search(q='${fileName}')`).get();
+      if (searchRes.value && searchRes.value.length > 0) {
+        return searchRes.value.find(f => f.name === fileName) || searchRes.value[0];
+      }
+    } catch (searchErr) {
+      console.error('Drive search failed:', searchErr.message);
+    }
+  }
+  throw new Error(`Could not find '${fileName}' in your OneDrive. Please make sure the file exists.`);
+};
+
 const syncTransactionToExcel = async (transactionId) => {
   try {
     const tx = await Transaction.findById(transactionId).populate('account').populate('toAccount');
     if (!tx) throw new Error('Transaction not found');
     
     // Format data for Excel
-    // Account, Date, Description, Category, Income Money IN, Expense Money OUT, Account Balance, Overall Balance
-    // Balances are taken directly from DB assuming they are up-to-date, or we calculate them.
-    // The prompt says: "Calculate separately for each account", but our MongoDB Account models already track balance.
-    // So we can use the account.balance for Account Balance.
-    // For Overall Balance, we can sum all account balances.
-    
     const allAccounts = await Account.find({ programId: tx.programId });
     const overallBalance = allAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
 
@@ -114,10 +126,7 @@ const syncTransactionToExcel = async (transactionId) => {
 
     const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
     
-    // We assume the file is at the root and has a Table1 on Sheet1
-    // A robust way is to just use a range append if table doesn't exist, but Table add row is standard.
-    // Let's first try to find the drive item id
-    const searchRes = await client.api(`/me/drive/root:/${fileName}`).get();
+    const searchRes = await findExcelFile(client, fileName);
     const fileId = searchRes.id;
     
     // Get worksheets to find the first one
