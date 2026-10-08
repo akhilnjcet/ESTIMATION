@@ -9,7 +9,8 @@ const oneDriveAuthSchema = new mongoose.Schema({
   accountId: { type: String },
   accountUsername: { type: String },
   lastSyncTime: { type: Date },
-  connectedAt: { type: Date, default: Date.now }
+  connectedAt: { type: Date, default: Date.now },
+  tokenCache: { type: String, default: '' }
 });
 
 module.exports = mongoose.model('OneDriveAuth', oneDriveAuthSchema);

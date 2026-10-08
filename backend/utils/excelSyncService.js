@@ -66,6 +66,11 @@ const getValidToken = async () => {
   // Try to refresh using MSAL silent flow with stored account
   if (pca && authRecord.accountId) {
     try {
+      // Deserialize the cache from database so Vercel serverless function knows about it
+      if (authRecord.tokenCache) {
+        pca.getTokenCache().deserialize(authRecord.tokenCache);
+      }
+      
       const accounts = await pca.getTokenCache().getAllAccounts();
       const account = accounts.find(a => a.homeAccountId === authRecord.accountId) || accounts[0];
       
@@ -75,6 +80,9 @@ const getValidToken = async () => {
           scopes: ['Files.ReadWrite.All', 'offline_access'],
         };
         const response = await pca.acquireTokenSilent(silentRequest);
+        
+        // Re-serialize cache if it changed
+        authRecord.tokenCache = pca.getTokenCache().serialize();
         authRecord.accessToken = response.accessToken;
         authRecord.expiresOn = response.expiresOn;
         await authRecord.save();

@@ -109,6 +109,10 @@ app.get('/api/excel/callback', async (req, res) => {
     authRecord.accountId = response.account?.homeAccountId || '';
     authRecord.accountUsername = response.account?.username || '';
     authRecord.connectedAt = new Date();
+    
+    // Save the MSAL Token Cache to the database so serverless functions can use it!
+    authRecord.tokenCache = pca.getTokenCache().serialize();
+    
     await authRecord.save();
 
     console.log('OneDrive connected for:', response.account?.username);
