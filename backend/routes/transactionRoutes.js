@@ -134,9 +134,6 @@ router.put('/:id', protect, async (req, res) => {
       .populate('account', 'name type')
       .populate('partyMember', 'name memberId designation contactNumber');
       
-    // Trigger Excel sync in background for updates (Note: it may append a new row instead of updating, for simplicity based on prompt)
-    syncTransactionToExcel(updatedTransaction._id).catch(e => console.error("Background sync failed:", e));
-
     res.json(updatedTransaction);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Server error' });

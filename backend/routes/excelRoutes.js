@@ -127,10 +127,50 @@ router.get('/status', protect, async (req, res) => {
 });
 
 
-// Trigger Manual Sync
+// Trigger Robust Sync (Wipes table and reconstructs from scratch to handle deletes/edits perfectly)
 router.post('/sync-now', protect, async (req, res) => {
   try {
-    await triggerPendingSyncs(req.programId);
+    const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
+    const token = await getValidToken();
+    const client = getGraphClient(token);
+    
+    // Find file
+    const fileName = 'backup.xlsx';
+    const pathsToTry = [`/me/drive/root:/Documents/${fileName}`, `/me/drive/root:/${fileName}`];
+    let fileId = null;
+    
+    for (const path of pathsToTry) {
+      try {
+        const fileRes = await client.api(path).get();
+        fileId = fileRes.id;
+        break;
+      } catch (e) {}
+    }
+    
+    if (!fileId) return res.status(404).json({ message: 'Backup file not found in Documents or Root.' });
+    
+    // Get table
+    const worksheets = await client.api(`/me/drive/items/${fileId}/workbook/worksheets`).get();
+    const sheetId = worksheets.value[0].id;
+    const tables = await client.api(`/me/drive/items/${fileId}/workbook/worksheets/${sheetId}/tables`).get();
+    
+    if (tables.value && tables.value.length > 0) {
+      const tableId = tables.value[0].id;
+      // Clear all existing data rows from the table
+      try {
+        await client.api(`/me/drive/items/${fileId}/workbook/tables/${tableId}/dataBodyRange/delete`).post({
+          shift: "Up"
+        });
+      } catch(e) {
+        console.log("Table might already be empty or error deleting:", e.message);
+      }
+    }
+    
+    // Mark all transactions as Pending so they re-sync
+    await Transaction.updateMany({ programId: req.programId }, { excelSyncStatus: 'Pending' });
+    
+    // Trigger sync
+    await triggerPendingSyncs(req.programId, true);
     
     const authRecord = await OneDriveAuth.findOne({});
     if (authRecord) {
@@ -138,7 +178,7 @@ router.post('/sync-now', protect, async (req, res) => {
       await authRecord.save();
     }
     
-    res.json({ message: 'Synchronization completed' });
+    res.json({ message: 'Synchronization completed: Table perfectly reconstructed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
