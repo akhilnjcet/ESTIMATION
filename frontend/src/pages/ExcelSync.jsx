@@ -138,7 +138,7 @@ const ExcelSync = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                 <FileSpreadsheet size={40} color="#107C41" />
                 <div>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)' }}>income-expense-worksheet.xlsx</h2>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)' }}>backup.xlsx</h2>
                   <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>OneDrive Synchronized Database</p>
                 </div>
               </div>

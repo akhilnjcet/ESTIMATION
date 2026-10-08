@@ -112,7 +112,7 @@ const syncTransactionToExcel = async (transactionId) => {
     const token = await getValidToken();
     const client = getGraphClient(token);
 
-    const fileName = 'income-expense-worksheet.xlsx';
+    const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
     
     // We assume the file is at the root and has a Table1 on Sheet1
     // A robust way is to just use a range append if table doesn't exist, but Table add row is standard.
