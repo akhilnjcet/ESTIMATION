@@ -104,8 +104,10 @@ app.get('/api/excel/callback', async (req, res) => {
     let authRecord = await OneDriveAuth.findOne({});
     if (!authRecord) authRecord = new OneDriveAuth();
     authRecord.accessToken = response.accessToken;
-    authRecord.refreshToken = response.refreshToken || '';
+    authRecord.refreshToken = response.refreshToken || ''; // MSAL may not expose refresh token directly
     authRecord.expiresOn = response.expiresOn;
+    authRecord.accountId = response.account?.homeAccountId || '';
+    authRecord.accountUsername = response.account?.username || '';
     authRecord.connectedAt = new Date();
     await authRecord.save();
 

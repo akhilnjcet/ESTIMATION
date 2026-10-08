@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 
 const oneDriveAuthSchema = new mongoose.Schema({
   accessToken: { type: String, required: true },
-  refreshToken: { type: String, required: true },
+  // refreshToken is NOT required - MSAL Node manages token refresh internally
+  // Microsoft may not always return a refresh token in the response object
+  refreshToken: { type: String, default: '' },
   expiresOn: { type: Date, required: true },
-  accountId: { type: String }, // optional, for tracking user
+  accountId: { type: String },
+  accountUsername: { type: String },
   lastSyncTime: { type: Date },
   connectedAt: { type: Date, default: Date.now }
 });

@@ -57,12 +57,42 @@ const refreshAccessToken = async (authRecord) => {
 const getValidToken = async () => {
   let authRecord = await OneDriveAuth.findOne({});
   if (!authRecord) throw new Error('No OneDrive authentication found. Please connect in settings.');
-  
-  if (new Date() >= authRecord.expiresOn) {
+
+  // If token is still valid, use it
+  if (new Date() < new Date(authRecord.expiresOn)) {
+    return authRecord.accessToken;
+  }
+
+  // Try to refresh using MSAL silent flow with stored account
+  if (pca && authRecord.accountId) {
+    try {
+      const accounts = await pca.getTokenCache().getAllAccounts();
+      const account = accounts.find(a => a.homeAccountId === authRecord.accountId) || accounts[0];
+      
+      if (account) {
+        const silentRequest = {
+          account,
+          scopes: ['Files.ReadWrite.All', 'offline_access'],
+        };
+        const response = await pca.acquireTokenSilent(silentRequest);
+        authRecord.accessToken = response.accessToken;
+        authRecord.expiresOn = response.expiresOn;
+        await authRecord.save();
+        return response.accessToken;
+      }
+    } catch (silentError) {
+      console.warn('Silent token refresh failed:', silentError.message);
+    }
+  }
+
+  // If silent refresh failed and we have a refresh token, try that
+  if (authRecord.refreshToken) {
     return await refreshAccessToken(authRecord);
   }
-  return authRecord.accessToken;
+
+  throw new Error('Token expired and could not be refreshed. Please reconnect OneDrive.');
 };
+
 
 const syncTransactionToExcel = async (transactionId) => {
   try {
