@@ -23,6 +23,10 @@ router.get('/auth-url', protect, async (req, res) => {
       return res.status(500).json({ message: 'Microsoft MSAL client not initialized. Check your MS_CLIENT_ID and MS_CLIENT_SECRET environment variables.' });
     }
 
+    if (!req.programId) {
+      return res.status(400).json({ message: 'No active business/program selected. Please select one before connecting.' });
+    }
+
     const authCodeUrlParameters = {
       scopes: ['Files.ReadWrite.All', 'offline_access'],
       redirectUri: process.env.MS_REDIRECT_URI,
