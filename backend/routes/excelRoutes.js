@@ -88,24 +88,29 @@ router.get('/callback', async (req, res) => {
 // Get Sync Status
 router.get('/status', protect, async (req, res) => {
   try {
-    if (!req.programId) return res.status(400).json({ message: 'No program selected' });
-
     const authRecord = await OneDriveAuth.findOne({});
-    const isConnected = !!(authRecord && authRecord.refreshToken);
+    // Connected if we have a valid access token (refresh token may not always be stored)
+    const isConnected = !!(authRecord && authRecord.accessToken);
 
-    const transactions = await Transaction.find({ programId: req.programId });
-    const totalTransactions = transactions.length;
-    const totalIncome = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpense = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+    // Use programId from middleware, fall back gracefully
+    const programId = req.programId;
     
-    const allAccounts = await Account.find({ programId: req.programId });
-    const overallBalance = allAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    let totalTransactions = 0, totalIncome = 0, totalExpense = 0, overallBalance = 0, history = [];
     
-    // Recent sync history
-    const history = await Transaction.find({ programId: req.programId, excelSyncStatus: { $ne: 'Pending' } })
-      .sort({ excelSyncTime: -1 })
-      .limit(10)
-      .select('date description amount type excelSyncStatus excelSyncTime');
+    if (programId) {
+      const transactions = await Transaction.find({ programId });
+      totalTransactions = transactions.length;
+      totalIncome = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+      totalExpense = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+      
+      const allAccounts = await Account.find({ programId });
+      overallBalance = allAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+      
+      history = await Transaction.find({ programId, excelSyncStatus: { $ne: 'Pending' } })
+        .sort({ excelSyncTime: -1 })
+        .limit(10)
+        .select('date description amount type excelSyncStatus excelSyncTime');
+    }
 
     res.json({
       isConnected,
@@ -120,6 +125,7 @@ router.get('/status', protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // Trigger Manual Sync
 router.post('/sync-now', protect, async (req, res) => {
