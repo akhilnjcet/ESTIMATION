@@ -71,6 +71,7 @@ app.use('/api/notes', protect, restrictToView, verifyProgramAccess, require('./r
 app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require('./routes/documentRoutes'));
 app.use('/api/rentals', protect, restrictToView, verifyProgramAccess, require('./routes/rentalRoutes'));
 app.use('/api/staff', protect, restrictToView, verifyProgramAccess, require('./routes/staffRoutes'));
+app.use('/api/excel', protect, restrictToView, verifyProgramAccess, require('./routes/excelRoutes'));
 
 
 

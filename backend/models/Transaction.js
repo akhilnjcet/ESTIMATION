@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema({
   programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
+  transactionId: {
+    type: String,
+    unique: true
+  },
   type: {
     type: String,
     enum: ['Income', 'Expense', 'Transfer'],
@@ -60,6 +64,17 @@ const transactionSchema = new mongoose.Schema({
   editCount: {
     type: Number,
     default: 0
+  },
+  excelSyncStatus: {
+    type: String,
+    enum: ['Synced', 'Pending', 'Failed'],
+    default: 'Pending'
+  },
+  excelSyncTime: {
+    type: Date
+  },
+  excelRowId: {
+    type: String
   },
   createdAt: {
     type: Date,

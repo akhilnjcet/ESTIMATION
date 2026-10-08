@@ -3,6 +3,7 @@ const router = express.Router();
 const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const { protect } = require('../middleware/authMiddleware');
+const { syncTransactionToExcel } = require('../utils/excelSyncService');
 
 // @route   GET /api/transactions
 // @desc    Get transactions (filter by type, partyMember, partyType, etc)
@@ -78,6 +79,9 @@ router.post('/', protect, async (req, res) => {
     const populatedTx = await Transaction.findById(transaction._id)
       .populate('account', 'name type')
       .populate('partyMember', 'name memberId designation contactNumber');
+      
+    // Trigger Excel sync in background
+    syncTransactionToExcel(transaction._id).catch(e => console.error("Background sync failed:", e));
 
     res.status(201).json(populatedTx || transaction);
   } catch (error) {
@@ -129,6 +133,9 @@ router.put('/:id', protect, async (req, res) => {
     )
       .populate('account', 'name type')
       .populate('partyMember', 'name memberId designation contactNumber');
+      
+    // Trigger Excel sync in background for updates (Note: it may append a new row instead of updating, for simplicity based on prompt)
+    syncTransactionToExcel(updatedTransaction._id).catch(e => console.error("Background sync failed:", e));
 
     res.json(updatedTransaction);
   } catch (error) {

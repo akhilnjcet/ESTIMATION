@@ -26,6 +26,7 @@ import UserAccess from './pages/UserAccess';
 import AdminSettings from './pages/AdminSettings';
 import Documents from './pages/Documents';
 import Staff from './pages/Staff';
+import ExcelSync from './pages/ExcelSync';
 import { ShieldAlert, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -248,6 +249,7 @@ function App() {
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
               <Route path="/rental-bills"    element={<PrivateRoute><RentalBills /></PrivateRoute>} />
               <Route path="/staff"           element={<PrivateRoute><Staff /></PrivateRoute>} />
+              <Route path="/excel-sync"      element={<PrivateRoute><AdminOnlyRoute><ExcelSync /></AdminOnlyRoute></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

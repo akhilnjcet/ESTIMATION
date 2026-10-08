@@ -233,6 +233,17 @@ export const ALL_MODULES = [
     defaultEnabled: true,
     adminOnly: true,
   },
+  {
+    id: 'excel-sync',
+    path: '/excel-sync',
+    label: 'Excel Sync',
+    description: 'Sync income/expense transactions to OneDrive Excel',
+    iconName: 'FileText',
+    category: 'ADMINISTRATION',
+    categoryKey: 'admin',
+    defaultEnabled: true,
+    adminOnly: true,
+  },
 ];
 
 /** Returns the storage key for a given programId */
