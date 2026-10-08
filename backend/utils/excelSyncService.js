@@ -14,6 +14,14 @@ const msalConfig = {
   }
 };
 
+// Safe Server-Side Logging
+console.log("=== Microsoft OAuth Configuration ===");
+console.log("Authority:", msalConfig.auth.authority);
+console.log("Client ID:", msalConfig.auth.clientId === 'dummy_client_id' ? 'Missing (Using Dummy)' : 'Loaded from ENV');
+console.log("Redirect URI:", process.env.MS_REDIRECT_URI || 'Missing in ENV');
+console.log("Requested Scopes: ['Files.ReadWrite.All', 'offline_access']");
+console.log("=====================================");
+
 let pca;
 try {
     pca = new ConfidentialClientApplication(msalConfig);
