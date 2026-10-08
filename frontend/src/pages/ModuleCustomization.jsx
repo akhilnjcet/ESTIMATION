@@ -591,7 +591,7 @@ const ModuleCustomization = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const canEdit = true; // allow all users to customize their view
+  const canEdit = role !== 'viewer'; // Viewers cannot edit module settings for the program
 
   // Build per-category ordered module lists
   const getModulesForCategory = useCallback(
