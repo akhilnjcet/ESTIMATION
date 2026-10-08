@@ -275,15 +275,17 @@ const triggerPendingSyncs = async (programId = null) => {
             const accountName = tx.account ? tx.account.name : 'Unknown Account';
             const accountBalance = tx.account ? tx.account.balance : 0;
             
+            // The template has a hidden column E. So the array needs 9 elements:
+            // A(0)=Account, B(1)=Date, C(2)=Desc, D(3)=Category, E(4)=Hidden/Blank, F(5)=Income, G(6)=Expense, H(7)=AccBal, I(8)=OverallBal
             if (tx.type === 'Income') {
-                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', tx.amount || 0, "", accountBalance, overallBalance]);
+                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount || 0, "", accountBalance, overallBalance]);
             } else if (tx.type === 'Expense') {
-                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount || 0, accountBalance, overallBalance]);
+                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", "", tx.amount || 0, accountBalance, overallBalance]);
             } else if (tx.type === 'Transfer') {
                 const toAccountName = tx.toAccount ? tx.toAccount.name : 'Unknown Account';
                 const toAccountBalance = tx.toAccount ? tx.toAccount.balance : 0;
-                rowsToAdd.push([accountName, formatDate(tx.date), `Transfer to ${toAccountName}: ${tx.description || ''}`, 'Transfer', "", tx.amount || 0, accountBalance, overallBalance]);
-                rowsToAdd.push([toAccountName, formatDate(tx.date), `Transfer from ${accountName}: ${tx.description || ''}`, 'Transfer', tx.amount || 0, "", toAccountBalance, overallBalance]);
+                rowsToAdd.push([accountName, formatDate(tx.date), `Transfer to ${toAccountName}: ${tx.description || ''}`, 'Transfer', "", "", tx.amount || 0, accountBalance, overallBalance]);
+                rowsToAdd.push([toAccountName, formatDate(tx.date), `Transfer from ${accountName}: ${tx.description || ''}`, 'Transfer', "", tx.amount || 0, "", toAccountBalance, overallBalance]);
             }
         }
 
