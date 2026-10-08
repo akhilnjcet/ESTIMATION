@@ -259,6 +259,9 @@ const triggerPendingSyncs = async (programId = null) => {
         if (!tables.value || tables.value.length === 0) throw new Error('No table found');
         const tableId = tables.value[0].id;
 
+        const columnsRes = await client.api(`/me/drive/items/${fileId}/workbook/tables/${tableId}/columns`).get();
+        const colNames = columnsRes.value.map(c => c.name.trim().toLowerCase());
+        
         let rowsToAdd = [];
         const formatDate = (date) => new Date(date).toLocaleDateString('en-US');
         
@@ -270,22 +273,43 @@ const triggerPendingSyncs = async (programId = null) => {
            overallBalances[acc.programId] += (acc.balance || 0);
         });
 
-        for (const tx of pendingTxs) {
+        const buildRow = (tx, isIncome, isExpense, isTransferFrom, isTransferTo) => {
             const overallBalance = overallBalances[tx.programId] || 0;
-            const accountName = tx.account ? tx.account.name : 'Unknown Account';
-            const accountBalance = tx.account ? tx.account.balance : 0;
+            const account = isTransferTo ? tx.toAccount : tx.account;
+            const accountName = account ? account.name : 'Unknown Account';
+            const accountBalance = account ? account.balance : 0;
             
-            // The template has a hidden column E. So the array needs 9 elements:
-            // A(0)=Account, B(1)=Date, C(2)=Desc, D(3)=Category, E(4)=Hidden/Blank, F(5)=Income, G(6)=Expense, H(7)=AccBal, I(8)=OverallBal
+            const row = new Array(colNames.length).fill("");
+            
+            colNames.forEach((colName, index) => {
+                if (colName.includes('account') && !colName.includes('balance')) row[index] = accountName;
+                else if (colName.includes('date')) row[index] = formatDate(tx.date);
+                else if (colName.includes('description')) {
+                    if (isTransferFrom) row[index] = `Transfer to ${tx.toAccount?.name || 'Unknown'}: ${tx.description || ''}`;
+                    else if (isTransferTo) row[index] = `Transfer from ${tx.account?.name || 'Unknown'}: ${tx.description || ''}`;
+                    else row[index] = tx.description || '';
+                }
+                else if (colName.includes('category')) row[index] = (isTransferFrom || isTransferTo) ? 'Transfer' : (tx.category || '');
+                else if (colName.includes('income') || colName.includes('in')) {
+                    if (isIncome || isTransferTo) row[index] = tx.amount || 0;
+                }
+                else if (colName.includes('expense') || colName.includes('out')) {
+                    if (isExpense || isTransferFrom) row[index] = tx.amount || 0;
+                }
+                else if (colName.includes('overall balance')) row[index] = overallBalance;
+                else if (colName.includes('balance')) row[index] = accountBalance;
+            });
+            return row;
+        };
+
+        for (const tx of pendingTxs) {
             if (tx.type === 'Income') {
-                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount || 0, "", accountBalance, overallBalance]);
+                rowsToAdd.push(buildRow(tx, true, false, false, false));
             } else if (tx.type === 'Expense') {
-                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", "", tx.amount || 0, accountBalance, overallBalance]);
+                rowsToAdd.push(buildRow(tx, false, true, false, false));
             } else if (tx.type === 'Transfer') {
-                const toAccountName = tx.toAccount ? tx.toAccount.name : 'Unknown Account';
-                const toAccountBalance = tx.toAccount ? tx.toAccount.balance : 0;
-                rowsToAdd.push([accountName, formatDate(tx.date), `Transfer to ${toAccountName}: ${tx.description || ''}`, 'Transfer', "", "", tx.amount || 0, accountBalance, overallBalance]);
-                rowsToAdd.push([toAccountName, formatDate(tx.date), `Transfer from ${accountName}: ${tx.description || ''}`, 'Transfer', "", tx.amount || 0, "", toAccountBalance, overallBalance]);
+                rowsToAdd.push(buildRow(tx, false, false, true, false)); // From
+                rowsToAdd.push(buildRow(tx, false, false, false, true)); // To
             }
         }
 
