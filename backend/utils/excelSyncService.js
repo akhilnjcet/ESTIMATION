@@ -296,8 +296,12 @@ const triggerPendingSyncs = async (programId = null) => {
                 else if (colName.includes('expense') || colName.includes('out')) {
                     if (isExpense || isTransferFrom) row[index] = tx.amount || 0;
                 }
-                else if (colName.includes('overall balance')) row[index] = overallBalance;
-                else if (colName.includes('balance')) row[index] = accountBalance;
+                else if (colName.includes('overall balance')) {
+                    row[index] = '=IF(ISBLANK(INDEX(B:B,ROW()))," - ",IFERROR(OFFSET(INDEX(I:I,ROW()),-1,0,1,1)+INDEX(F:F,ROW())-INDEX(G:G,ROW()),INDEX(F:F,ROW())-INDEX(G:G,ROW())))';
+                }
+                else if (colName.includes('balance')) {
+                    row[index] = '=SUMIF($A$3:INDEX(A:A,ROW()),INDEX(A:A,ROW()),$F$3:INDEX(F:F,ROW()))-SUMIF($A$3:INDEX(A:A,ROW()),INDEX(A:A,ROW()),$G$3:INDEX(G:G,ROW()))';
+                }
             });
             return row;
         };
