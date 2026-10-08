@@ -146,15 +146,45 @@ router.post('/sync-now', protect, async (req, res) => {
 
 // Get File Link
 router.get('/file-link', protect, async (req, res) => {
+  try {
+    const token = await getValidToken();
+    const client = getGraphClient(token);
+    const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
+
+    let webUrl = null;
+
+    // Strategy 1: Try root path directly
     try {
-        const token = await getValidToken();
-        const client = getGraphClient(token);
-        const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
-        const searchRes = await client.api(`/me/drive/root:/${fileName}`).get();
-        res.json({ webUrl: searchRes.webUrl });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+      const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
+      webUrl = rootRes.webUrl;
+    } catch (rootErr) {
+      console.log(`File not found at root, trying search... (${rootErr.message})`);
+
+      // Strategy 2: Search across entire OneDrive
+      try {
+        const searchRes = await client.api(`/me/drive/root/search(q='${fileName}')`).get();
+        if (searchRes.value && searchRes.value.length > 0) {
+          const found = searchRes.value.find(f => f.name === fileName) || searchRes.value[0];
+          webUrl = found.webUrl;
+          console.log(`Found file via search: ${found.name} at ${found.webUrl}`);
+        }
+      } catch (searchErr) {
+        console.error('Drive search also failed:', searchErr.message);
+      }
     }
+
+    if (!webUrl) {
+      return res.status(404).json({ 
+        message: `Could not find '${fileName}' in your OneDrive. Please make sure the file exists and is named exactly '${fileName}'.`
+      });
+    }
+
+    res.json({ webUrl });
+  } catch (error) {
+    console.error('File link error:', error.message);
+    res.status(500).json({ message: error.message });
+  }
 });
+
 
 module.exports = router;
