@@ -249,7 +249,7 @@ function App() {
               <Route path="/bill-upload"     element={<PrivateRoute><Documents /></PrivateRoute>} />
               <Route path="/rental-bills"    element={<PrivateRoute><RentalBills /></PrivateRoute>} />
               <Route path="/staff"           element={<PrivateRoute><Staff /></PrivateRoute>} />
-              <Route path="/excel-sync"      element={<PrivateRoute><AdminOnlyRoute><ExcelSync /></AdminOnlyRoute></PrivateRoute>} />
+              <Route path="/excel-sync"      element={<PrivateRoute><ExcelSync /></PrivateRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
