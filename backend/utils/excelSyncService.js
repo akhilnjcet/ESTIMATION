@@ -290,7 +290,8 @@ const triggerPendingSyncs = async (programId = null) => {
             const row = new Array(colNames.length).fill("");
             
             colNames.forEach((colName, index) => {
-                if (colName.includes('account') && !colName.includes('balance')) row[index] = accountName;
+                if (colName.includes('account type')) row[index] = account ? account.type : '';
+                else if (colName.includes('account') && !colName.includes('balance')) row[index] = accountName;
                 else if (colName.includes('date')) row[index] = formatDate(tx.date);
                 else if (colName.includes('description')) {
                     if (isTransferFrom) row[index] = `Transfer to ${tx.toAccount?.name || 'Unknown'}: ${tx.description || ''}`;
