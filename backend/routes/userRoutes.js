@@ -43,6 +43,10 @@ router.post('/', protect, async (req, res) => {
     const userExists = await User.findOne({ email: cleanEmail });
     if (userExists) return res.status(400).json({ message: 'A user with this email/username already exists' });
 
+    if (req.user.role === 'viewer') {
+      return res.status(403).json({ message: 'Viewers are not authorized to create users' });
+    }
+
     // Restrict role for non-admins
     if (req.user.role !== 'admin') {
       role = 'viewer'; // Force viewer role

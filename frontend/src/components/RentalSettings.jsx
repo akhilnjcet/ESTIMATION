@@ -42,6 +42,9 @@ const RentalSettings = () => {
     }
   };
 
+  const role = localStorage.getItem('role') || 'admin';
+  const isViewer = role === 'viewer';
+
   if (!selectedProgram) return <div style={{ padding: '2rem' }}>Please select a program first.</div>;
 
   return (
@@ -49,6 +52,16 @@ const RentalSettings = () => {
       <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
         Rental Billing Settings ({selectedProgram.name})
       </h2>
+      
+      {isViewer && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1.25rem',
+          background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+          borderRadius: '12px', fontSize: '0.85rem', color: '#F59E0B', fontWeight: '600', marginBottom: '1.5rem'
+        }}>
+          You have view-only access. Contact your administrator to modify rental settings.
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
@@ -60,6 +73,7 @@ const RentalSettings = () => {
               value={formData.rentalPrefix} 
               onChange={e => setFormData({...formData, rentalPrefix: e.target.value})} 
               placeholder="e.g. RENT-" 
+              disabled={isViewer}
             />
             <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
               Used for auto-generating rental bill numbers.
@@ -73,6 +87,7 @@ const RentalSettings = () => {
               className="form-input" 
               value={formData.rentalDefaultSecurityDeposit} 
               onChange={e => setFormData({...formData, rentalDefaultSecurityDeposit: Number(e.target.value)})} 
+              disabled={isViewer}
             />
           </div>
 
@@ -83,6 +98,7 @@ const RentalSettings = () => {
               className="form-input" 
               value={formData.rentalDefaultLateFee} 
               onChange={e => setFormData({...formData, rentalDefaultLateFee: Number(e.target.value)})} 
+              disabled={isViewer}
             />
           </div>
           
@@ -92,6 +108,7 @@ const RentalSettings = () => {
                   type="checkbox" 
                   checked={formData.showRentalTermsByDefault}
                   onChange={(e) => setFormData({ ...formData, showRentalTermsByDefault: e.target.checked })}
+                  disabled={isViewer}
                 />
                 Show Terms in Print by Default
               </label>
@@ -107,13 +124,14 @@ const RentalSettings = () => {
             onChange={e => setFormData({...formData, rentalDefaultTerms: e.target.value})} 
             placeholder="Enter the default terms and conditions for rental bills..." 
             style={{ fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.5' }}
+            disabled={isViewer}
           />
           <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
             These terms will automatically appear at the bottom of every new rental bill you create.
           </small>
         </div>
 
-        <button type="submit" className="btn-gradient" disabled={saving} style={{ padding: '0.85rem 2rem' }}>
+        <button type="submit" className="btn-gradient" disabled={saving || isViewer} style={{ padding: '0.85rem 2rem' }}>
           <Save size={18} style={{ marginRight: '8px' }} />
           {saving ? 'Saving...' : 'Save Rental Settings'}
         </button>

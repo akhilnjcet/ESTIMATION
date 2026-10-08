@@ -198,6 +198,7 @@ export const ALL_MODULES = [
     categoryKey: 'admin',
     defaultEnabled: true,
     adminOnly: false,
+    noViewer: true,
   },
   {
     id: 'settings',
