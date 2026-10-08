@@ -309,6 +309,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       <div
         style={{
           padding: '0.85rem 1rem',
+          paddingBottom: role === 'viewer' ? '4.5rem' : '0.85rem',
           borderTop: '1px solid var(--glass-border)',
           background: 'var(--sidebar-footer-bg)',
         }}
