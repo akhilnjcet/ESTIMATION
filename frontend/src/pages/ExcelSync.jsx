@@ -83,7 +83,7 @@ const ExcelSync = () => {
         window.open(res.data.webUrl, '_blank');
       }
     } catch (error) {
-      showNotification('error', 'Failed to get file link. Is OneDrive connected?');
+      showNotification('error', error.response?.data?.message || 'Failed to get file link. Is OneDrive connected?');
     }
   };
 

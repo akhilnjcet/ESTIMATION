@@ -149,7 +149,7 @@ router.get('/file-link', protect, async (req, res) => {
   try {
     const token = await getValidToken();
     const client = getGraphClient(token);
-    const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
+    const fileName = 'backup.xlsx';
 
     let webUrl = null;
 

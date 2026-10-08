@@ -124,8 +124,7 @@ const syncTransactionToExcel = async (transactionId) => {
     const token = await getValidToken();
     const client = getGraphClient(token);
 
-    const fileName = process.env.EXCEL_FILE_NAME || 'backup.xlsx';
-    
+    const fileName = 'backup.xlsx';
     const searchRes = await findExcelFile(client, fileName);
     const fileId = searchRes.id;
     
