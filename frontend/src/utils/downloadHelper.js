@@ -12,15 +12,31 @@ export const downloadBlob = (blob, filename = 'download') => {
       throw new Error('Invalid blob object provided for download');
     }
 
-    const url = URL.createObjectURL(blob);
+    // IE/Edge fallback
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+      return;
+    }
+
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
     a.download = filename;
+    a.target = '_blank'; // Fixes blob download blocking on some mobile browsers (Samsung Internet/Safari)
+    a.rel = 'noopener noreferrer';
 
     // Mobile browsers (Samsung Internet, Mobile Safari/Chrome) require the anchor in DOM
     document.body.appendChild(a);
-    a.click();
+    
+    // Fallback for click trigger across environments
+    if (typeof a.click === 'function') {
+      a.click();
+    } else {
+      const evt = document.createEvent('MouseEvents');
+      evt.initMouseEvent('click', true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+      a.dispatchEvent(evt);
+    }
 
     // Delay removal & URL revocation so background download stream completes on Samsung Internet & Safari
     setTimeout(() => {
