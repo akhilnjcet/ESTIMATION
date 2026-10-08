@@ -16,6 +16,7 @@ router.get('/auth-url', protect, async (req, res) => {
     const authUrl = await pca.getAuthCodeUrl(authCodeUrlParameters);
     res.json({ url: authUrl });
   } catch (error) {
+    console.error("Auth URL Generation Error:", error);
     res.status(500).json({ message: error.message });
   }
 });
