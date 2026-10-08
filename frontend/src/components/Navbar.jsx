@@ -20,6 +20,7 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
 
   return (
     <header 
+      className="navbar-container"
       style={{
         position: 'sticky',
         top: 0,
@@ -50,7 +51,7 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
           <Menu size={20} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.825rem', fontWeight: '500' }}>
+        <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.825rem', fontWeight: '500' }}>
           <Clock size={15} style={{ color: 'var(--primary)' }} />
           <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{formattedTime}</span>
           <span className="navbar-date-text" style={{ opacity: 0.4 }}>|</span>
@@ -81,7 +82,7 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
         <span style={{ color: 'var(--text-muted)', fontSize: '0.825rem', flex: 1 }}>
           Quick Search...
         </span>
-        <div style={{
+        <div className="hide-on-mobile" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.2rem',
@@ -147,7 +148,7 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
           }}>
             {user.name ? user.name.charAt(0).toUpperCase() : <User size={16} />}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.1' }}>
+          <div className="hide-on-mobile" style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.1' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)' }}>
               {user.name || 'Krishna Admin'}
             </span>

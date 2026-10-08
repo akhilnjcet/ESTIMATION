@@ -478,6 +478,13 @@ select option {
     max-width: 100% !important;
     overflow-x: auto !important;
   }
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .navbar-container {
+    padding: 0.5rem 1rem !important;
+    gap: 0.5rem !important;
+  }
 }
 
 /* Status Badges */
