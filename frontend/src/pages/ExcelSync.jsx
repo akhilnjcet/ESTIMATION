@@ -7,6 +7,7 @@ const ExcelSync = () => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [excelFileName, setExcelFileName] = useState('backup.xlsx');
   const [stats, setStats] = useState({
     isConnected: false,
     lastSync: null,
@@ -22,6 +23,9 @@ const ExcelSync = () => {
       setLoading(true);
       const res = await api.get('/excel/status');
       setStats(res.data);
+      if (res.data.excelFileName) {
+        setExcelFileName(res.data.excelFileName);
+      }
     } catch (error) {
       showNotification('error', error.response?.data?.message || 'Failed to fetch status');
     } finally {
