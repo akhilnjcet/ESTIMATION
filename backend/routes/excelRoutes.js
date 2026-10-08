@@ -21,11 +21,21 @@ router.get('/auth-url', protect, async (req, res) => {
   }
 });
 
-// Handle Auth Callback (usually called by frontend after redirect)
-router.post('/callback', protect, async (req, res) => {
+// Handle Auth Callback - PUBLIC route, called by Microsoft after login
+// Microsoft redirects here with ?code=... as a GET request
+router.get('/callback', async (req, res) => {
   try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ message: 'Code is required' });
+    const { code, error, error_description } = req.query;
+
+    if (error) {
+      console.error('Microsoft OAuth Error:', error, error_description);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://krishnabilling-akhilnjcets-projects.vercel.app';
+      return res.redirect(`${frontendUrl}/excel-sync?error=${encodeURIComponent(error_description || error)}`);
+    }
+
+    if (!code) {
+      return res.redirect(`${process.env.FRONTEND_URL || 'https://krishnabilling-akhilnjcets-projects.vercel.app'}/excel-sync?error=No+authorization+code+received`);
+    }
 
     const tokenRequest = {
       code,
@@ -39,18 +49,26 @@ router.post('/callback', protect, async (req, res) => {
     if (!authRecord) {
       authRecord = new OneDriveAuth();
     }
-    
+
     authRecord.accessToken = response.accessToken;
     authRecord.refreshToken = response.refreshToken || '';
     authRecord.expiresOn = response.expiresOn;
     authRecord.connectedAt = new Date();
     await authRecord.save();
 
-    res.json({ message: 'Connected to OneDrive successfully' });
+    console.log('OneDrive connected successfully for account:', response.account?.username);
+
+    // Redirect back to the frontend Excel Sync page with success
+    const frontendUrl = process.env.FRONTEND_URL || 'https://krishnabilling-akhilnjcets-projects.vercel.app';
+    res.redirect(`${frontendUrl}/excel-sync?connected=true`);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('OAuth Callback Error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://krishnabilling-akhilnjcets-projects.vercel.app';
+    res.redirect(`${frontendUrl}/excel-sync?error=${encodeURIComponent(error.message)}`);
   }
 });
+
 
 // Get Sync Status
 router.get('/status', protect, async (req, res) => {

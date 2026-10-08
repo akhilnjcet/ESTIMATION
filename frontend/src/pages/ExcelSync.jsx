@@ -30,6 +30,20 @@ const ExcelSync = () => {
   };
 
   useEffect(() => {
+    // Handle OAuth callback redirect params
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    const error = params.get('error');
+
+    if (connected === 'true') {
+      showNotification('success', '✅ OneDrive connected successfully!');
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (error) {
+      showNotification('error', `OneDrive connection failed: ${error}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     fetchStatus();
   }, []);
 
