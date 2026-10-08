@@ -94,9 +94,7 @@ router.get('/status', protect, async (req, res) => {
     // Connected if we have a valid access token
     const isConnected = !!(authRecord && authRecord.accessToken);
 
-    // Use programId from middleware, fall back gracefully
-    const programId = req.programId;
-    
+
     let totalTransactions = 0, totalIncome = 0, totalExpense = 0, overallBalance = 0, history = [];
     
     if (programId) {
