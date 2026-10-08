@@ -272,13 +272,18 @@ const triggerPendingSyncs = async (programId = null) => {
 
         for (const tx of pendingTxs) {
             const overallBalance = overallBalances[tx.programId] || 0;
+            const accountName = tx.account ? tx.account.name : 'Unknown Account';
+            const accountBalance = tx.account ? tx.account.balance : 0;
+            
             if (tx.type === 'Income') {
-                rowsToAdd.push([tx.account.name, formatDate(tx.date), tx.description || '', tx.category || '', tx.amount, "", tx.account.balance, overallBalance]);
+                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', tx.amount || 0, "", accountBalance, overallBalance]);
             } else if (tx.type === 'Expense') {
-                rowsToAdd.push([tx.account.name, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount, tx.account.balance, overallBalance]);
+                rowsToAdd.push([accountName, formatDate(tx.date), tx.description || '', tx.category || '', "", tx.amount || 0, accountBalance, overallBalance]);
             } else if (tx.type === 'Transfer') {
-                rowsToAdd.push([tx.account.name, formatDate(tx.date), `Transfer to ${tx.toAccount.name}: ${tx.description || ''}`, 'Transfer', "", tx.amount, tx.account.balance, overallBalance]);
-                rowsToAdd.push([tx.toAccount.name, formatDate(tx.date), `Transfer from ${tx.account.name}: ${tx.description || ''}`, 'Transfer', tx.amount, "", tx.toAccount.balance, overallBalance]);
+                const toAccountName = tx.toAccount ? tx.toAccount.name : 'Unknown Account';
+                const toAccountBalance = tx.toAccount ? tx.toAccount.balance : 0;
+                rowsToAdd.push([accountName, formatDate(tx.date), `Transfer to ${toAccountName}: ${tx.description || ''}`, 'Transfer', "", tx.amount || 0, accountBalance, overallBalance]);
+                rowsToAdd.push([toAccountName, formatDate(tx.date), `Transfer from ${accountName}: ${tx.description || ''}`, 'Transfer', tx.amount || 0, "", toAccountBalance, overallBalance]);
             }
         }
 
