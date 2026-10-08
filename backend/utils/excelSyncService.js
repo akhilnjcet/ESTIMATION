@@ -155,10 +155,13 @@ const syncTransactionToExcel = async (transactionId) => {
     const allAccounts = await Account.find({ programId: tx.programId });
     const overallBalance = allAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
 
-    const token = await getValidToken();
+    const authRecord = await OneDriveAuth.findOne({ programId: tx.programId });
+    if (!authRecord) throw new Error('OneDrive not connected');
+
+    const token = await getValidToken(tx.programId);
     const client = getGraphClient(token);
 
-    const fileName = 'backup.xlsx';
+    const fileName = authRecord.excelFileName || 'backup.xlsx';
     const searchRes = await findExcelFile(client, fileName);
     const fileId = searchRes.id;
     
@@ -255,9 +258,13 @@ const triggerPendingSyncs = async (programId = null, isReset = false) => {
     if (pendingTxs.length === 0) return;
 
     try {
-        const token = await getValidToken();
+        if (!programId) throw new Error('programId is required for triggerPendingSyncs');
+        const authRecord = await OneDriveAuth.findOne({ programId });
+        if (!authRecord) throw new Error('OneDrive not connected');
+
+        const token = await getValidToken(programId);
         const client = getGraphClient(token);
-        const fileName = 'backup.xlsx';
+        const fileName = authRecord.excelFileName || 'backup.xlsx';
         const searchRes = await findExcelFile(client, fileName);
         const fileId = searchRes.id;
         
