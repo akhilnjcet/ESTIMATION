@@ -95,38 +95,46 @@ const getValidToken = async () => {
 
 
 const findExcelFile = async (client, fileName) => {
-  // Strategy 1: Try root path directly
-  try {
-    const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
-    return rootRes;
-  } catch (rootErr) {
-    console.log(`File not found at root (${rootErr.message}), trying search...`);
-    
-    // Strategy 2: Search across entire OneDrive, but ONLY return Excel files
-    try {
-      // Search for the base name without extension to be safe
-      const baseName = fileName.replace('.xlsx', '');
-      const searchRes = await client.api(`/me/drive/root/search(q='${baseName}')`).get();
-      
-      if (searchRes.value && searchRes.value.length > 0) {
-        // Filter out screenshots/images by enforcing it must be a file and have xlsx extension
-        const excelFiles = searchRes.value.filter(f => 
-          f.file && (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls'))
-        );
+  // Strategy 1: Try exact paths directly (instant, no search index needed)
+  const pathsToTry = [
+    `/me/drive/root:/Documents/${fileName}`, // User's actual location
+    `/me/drive/root:/${fileName}`            // Fallback to root
+  ];
 
-        if (excelFiles.length > 0) {
-          // Prefer exact match, otherwise just take the first valid Excel file
-          const exactMatch = excelFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
-          const found = exactMatch || excelFiles[0];
-          console.log(`Found Excel file via search: ${found.name}`);
-          return found;
-        }
-      }
-    } catch (searchErr) {
-      console.error('Drive search failed:', searchErr.message);
+  for (const path of pathsToTry) {
+    try {
+      const res = await client.api(path).get();
+      console.log(`File found at exact path: ${path}`);
+      return res;
+    } catch (err) {
+      // Ignore and try next path
     }
   }
-  throw new Error(`Could not find an Excel file named '${fileName}' in your OneDrive. Please make sure you created the Excel file.`);
+
+  console.log(`File not found at exact paths, trying search...`);
+  
+  // Strategy 2: Search across entire OneDrive, but ONLY return Excel files
+  try {
+    const baseName = fileName.replace('.xlsx', '');
+    const searchRes = await client.api(`/me/drive/root/search(q='${baseName}')`).get();
+    
+    if (searchRes.value && searchRes.value.length > 0) {
+      const excelFiles = searchRes.value.filter(f => 
+        f.file && (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls'))
+      );
+
+      if (excelFiles.length > 0) {
+        const exactMatch = excelFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+        const found = exactMatch || excelFiles[0];
+        console.log(`Found Excel file via search: ${found.name}`);
+        return found;
+      }
+    }
+  } catch (searchErr) {
+    console.error('Drive search failed:', searchErr.message);
+  }
+  
+  throw new Error(`Could not find an Excel file named '${fileName}' in your OneDrive (checked Documents folder and Root).`);
 };
 
 const syncTransactionToExcel = async (transactionId) => {

@@ -153,13 +153,25 @@ router.get('/file-link', protect, async (req, res) => {
 
     let webUrl = null;
 
-    // Strategy 1: Try root path directly
-    try {
-      const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
-      webUrl = rootRes.webUrl;
-    } catch (rootErr) {
-      console.log(`File not found at root (${rootErr.message}), trying search...`);
+    // Strategy 1: Try exact paths directly
+    const pathsToTry = [
+      `/me/drive/root:/Documents/${fileName}`, // User's actual location
+      `/me/drive/root:/${fileName}`            // Fallback to root
+    ];
 
+    for (const path of pathsToTry) {
+      try {
+        const res = await client.api(path).get();
+        webUrl = res.webUrl;
+        console.log(`File found at exact path: ${path}`);
+        break; // Stop if found
+      } catch (err) {
+        // Ignore and try next path
+      }
+    }
+
+    if (!webUrl) {
+      console.log(`File not found at exact paths, trying search...`);
       // Strategy 2: Search across entire OneDrive, but ONLY return Excel files
       try {
         const baseName = fileName.replace('.xlsx', '');
@@ -184,7 +196,7 @@ router.get('/file-link', protect, async (req, res) => {
 
     if (!webUrl) {
       return res.status(404).json({ 
-        message: `Could not find an Excel file named '${fileName}' in your OneDrive. Please make sure you created the Excel file.`
+        message: `Could not find an Excel file named '${fileName}' in your OneDrive (checked Documents folder and Root).`
       });
     }
 
