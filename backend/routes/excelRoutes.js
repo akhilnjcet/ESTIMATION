@@ -242,10 +242,10 @@ router.post('/reset-sync', protect, async (req, res) => {
     // Trigger sync
     await triggerPendingSyncs(req.programId, true);
     
-    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
-    if (authRecord) {
-      authRecord.lastSyncTime = new Date();
-      await authRecord.save();
+    const finalAuthRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    if (finalAuthRecord) {
+      finalAuthRecord.lastSyncTime = new Date();
+      await finalAuthRecord.save();
     }
     
     res.json({ message: 'Successfully reset Excel sheet and synced all data!' });
@@ -336,6 +336,7 @@ router.post('/generate-template', protect, async (req, res) => {
 
 // Get File Link
 router.get('/file-link', protect, async (req, res) => {
+  try {
     const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
     if (!authRecord) return res.status(404).json({ message: 'OneDrive not connected' });
     
