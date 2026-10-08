@@ -77,7 +77,7 @@ const ExcelSync = () => {
   };
 
   const handleResetSync = async () => {
-    if (!window.confirm('This will wipe all existing data in the Excel sheet and re-sync all 57+ transactions from scratch. Continue?')) {
+    if (!window.confirm('This will wipe all existing data in the Excel sheet and re-sync all transactions from scratch. Continue?')) {
       return;
     }
     
@@ -89,6 +89,22 @@ const ExcelSync = () => {
       fetchStatus();
     } catch (error) {
       showNotification('error', error.response?.data?.message || 'Reset & Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!window.confirm('Are you sure you want to disconnect OneDrive? You will need to log in again.')) {
+      return;
+    }
+    try {
+      setSyncing(true);
+      await api.post('/excel/disconnect');
+      showNotification('success', 'Disconnected from OneDrive.');
+      fetchStatus();
+    } catch (error) {
+      showNotification('error', 'Failed to disconnect');
     } finally {
       setSyncing(false);
     }
@@ -197,6 +213,9 @@ const ExcelSync = () => {
                    </button>
                    <button className="secondary-button" onClick={handleDownload} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                      <Download size={18} /> Download Excel
+                   </button>
+                   <button className="secondary-button" onClick={handleDisconnect} disabled={syncing} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                     <CloudOff size={18} /> Disconnect
                    </button>
                  </>
                )}

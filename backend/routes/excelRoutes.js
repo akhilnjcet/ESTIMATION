@@ -144,6 +144,18 @@ router.post('/sync-now', protect, async (req, res) => {
   }
 });
 
+// Disconnect OneDrive
+router.post('/disconnect', protect, async (req, res) => {
+  try {
+    const OneDriveAuth = require('../models/OneDriveAuth');
+    await OneDriveAuth.deleteMany({});
+    res.json({ message: 'Successfully disconnected from OneDrive' });
+  } catch (error) {
+    console.error('Disconnect Error:', error);
+    res.status(500).json({ message: 'Failed to disconnect from OneDrive' });
+  }
+});
+
 // Reset and Sync All
 router.post('/reset-sync', protect, async (req, res) => {
   try {
