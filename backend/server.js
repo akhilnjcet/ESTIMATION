@@ -72,12 +72,55 @@ app.use('/api/documents', protect, restrictToView, verifyProgramAccess, require(
 app.use('/api/rentals', protect, restrictToView, verifyProgramAccess, require('./routes/rentalRoutes'));
 app.use('/api/staff', protect, restrictToView, verifyProgramAccess, require('./routes/staffRoutes'));
 // Microsoft OAuth Callback - MUST be public (no protect middleware)
-// Microsoft redirects here after user logs in, so there is no JWT token
-const excelRoutes = require('./routes/excelRoutes');
-app.use('/api/excel/callback', excelRoutes);
-// All other Excel routes are protected
-app.use('/api/excel', protect, restrictToView, verifyProgramAccess, excelRoutes);
+// Microsoft redirects here after login with ?code=... and there is NO JWT token
+app.get('/api/excel/callback', async (req, res) => {
+  try {
+    const { code, error, error_description } = req.query;
+    const frontendUrl = 'https://krishnabilling-akhilnjcets-projects.vercel.app';
 
+    if (error) {
+      console.error('Microsoft OAuth Error:', error, error_description);
+      return res.redirect(`${frontendUrl}/excel-sync?error=${encodeURIComponent(error_description || error)}`);
+    }
+    if (!code) {
+      return res.redirect(`${frontendUrl}/excel-sync?error=No+authorization+code+received`);
+    }
+
+    const { pca } = require('./utils/excelSyncService');
+    const OneDriveAuth = require('./models/OneDriveAuth');
+
+    if (!pca) {
+      return res.redirect(`${frontendUrl}/excel-sync?error=MSAL+client+not+initialized.+Check+environment+variables.`);
+    }
+
+    const tokenRequest = {
+      code,
+      scopes: ['Files.ReadWrite.All', 'offline_access'],
+      redirectUri: process.env.MS_REDIRECT_URI,
+    };
+
+    const response = await pca.acquireTokenByCode(tokenRequest);
+
+    let authRecord = await OneDriveAuth.findOne({});
+    if (!authRecord) authRecord = new OneDriveAuth();
+    authRecord.accessToken = response.accessToken;
+    authRecord.refreshToken = response.refreshToken || '';
+    authRecord.expiresOn = response.expiresOn;
+    authRecord.connectedAt = new Date();
+    await authRecord.save();
+
+    console.log('OneDrive connected for:', response.account?.username);
+    res.redirect(`${frontendUrl}/excel-sync?connected=true`);
+
+  } catch (err) {
+    console.error('OAuth Callback Error:', err);
+    const frontendUrl = 'https://krishnabilling-akhilnjcets-projects.vercel.app';
+    res.redirect(`${frontendUrl}/excel-sync?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+// All other Excel routes are protected
+app.use('/api/excel', protect, restrictToView, verifyProgramAccess, require('./routes/excelRoutes'));
 
 
 // Database connection
