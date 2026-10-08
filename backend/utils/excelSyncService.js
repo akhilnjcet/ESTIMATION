@@ -306,6 +306,8 @@ const triggerPendingSyncs = async (programId = null) => {
         console.error('Batch sync failed:', e);
         const txIds = pendingTxs.map(t => t._id);
         await Transaction.updateMany({ _id: { $in: txIds } }, { $set: { excelSyncStatus: 'Failed' } });
+        // Throw the error so the frontend can display exactly what went wrong
+        throw new Error(e.response?.data?.error?.message || e.message || 'Batch sync failed');
     }
 };
 
