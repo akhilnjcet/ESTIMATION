@@ -75,7 +75,7 @@ app.use('/api/staff', protect, restrictToView, verifyProgramAccess, require('./r
 // Microsoft redirects here after login with ?code=... and there is NO JWT token
 app.get('/api/excel/callback', async (req, res) => {
   try {
-    const { code, error, error_description } = req.query;
+    const { code, error, error_description, state } = req.query;
     const frontendUrl = 'https://krishnabilling-akhilnjcets-projects.vercel.app';
 
     if (error) {
@@ -101,8 +101,18 @@ app.get('/api/excel/callback', async (req, res) => {
 
     const response = await pca.acquireTokenByCode(tokenRequest);
 
-    let authRecord = await OneDriveAuth.findOne({});
-    if (!authRecord) authRecord = new OneDriveAuth();
+    let authRecord;
+    if (state) {
+      authRecord = await OneDriveAuth.findOne({ programId: state });
+      if (!authRecord) {
+        authRecord = new OneDriveAuth({ programId: state });
+      }
+    } else {
+      // Fallback for older auth flows (though it shouldn't happen)
+      authRecord = await OneDriveAuth.findOne({});
+      if (!authRecord) return res.redirect(`${frontendUrl}/excel-sync?error=Program+ID+Missing`);
+    }
+    
     authRecord.accessToken = response.accessToken;
     authRecord.refreshToken = response.refreshToken || ''; // MSAL may not expose refresh token directly
     authRecord.expiresOn = response.expiresOn;

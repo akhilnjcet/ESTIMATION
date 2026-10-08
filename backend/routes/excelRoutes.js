@@ -26,6 +26,7 @@ router.get('/auth-url', protect, async (req, res) => {
     const authCodeUrlParameters = {
       scopes: ['Files.ReadWrite.All', 'offline_access'],
       redirectUri: process.env.MS_REDIRECT_URI,
+      state: req.programId.toString()
     };
     const authUrl = await pca.getAuthCodeUrl(authCodeUrlParameters);
     res.json({ url: authUrl });
@@ -88,8 +89,9 @@ router.get('/callback', async (req, res) => {
 // Get Sync Status
 router.get('/status', protect, async (req, res) => {
   try {
-    const authRecord = await OneDriveAuth.findOne({});
-    // Connected if we have a valid access token (refresh token may not always be stored)
+    const programId = req.programId;
+    const authRecord = await OneDriveAuth.findOne({ programId });
+    // Connected if we have a valid access token
     const isConnected = !!(authRecord && authRecord.accessToken);
 
     // Use programId from middleware, fall back gracefully
@@ -131,11 +133,11 @@ router.get('/status', protect, async (req, res) => {
 router.post('/sync-now', protect, async (req, res) => {
   try {
     const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
-    const token = await getValidToken();
+    const token = await getValidToken(req.programId);
     const client = getGraphClient(token);
     
-    // Find file
-    const fileName = 'backup.xlsx';
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    const fileName = authRecord ? authRecord.excelFileName : 'backup.xlsx';
     const pathsToTry = [`/me/drive/root:/Documents/${fileName}`, `/me/drive/root:/${fileName}`];
     let fileId = null;
     
@@ -172,10 +174,10 @@ router.post('/sync-now', protect, async (req, res) => {
     // Trigger sync
     await triggerPendingSyncs(req.programId, true);
     
-    const authRecord = await OneDriveAuth.findOne({});
-    if (authRecord) {
-      authRecord.lastSyncTime = new Date();
-      await authRecord.save();
+    const finalAuthRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    if (finalAuthRecord) {
+      finalAuthRecord.lastSyncTime = new Date();
+      await finalAuthRecord.save();
     }
     
     res.json({ message: 'Synchronization completed: Table perfectly reconstructed' });
@@ -188,7 +190,7 @@ router.post('/sync-now', protect, async (req, res) => {
 router.post('/disconnect', protect, async (req, res) => {
   try {
     const OneDriveAuth = require('../models/OneDriveAuth');
-    await OneDriveAuth.deleteMany({});
+    await OneDriveAuth.findOneAndDelete({ programId: req.programId });
     res.json({ message: 'Successfully disconnected from OneDrive' });
   } catch (error) {
     console.error('Disconnect Error:', error);
@@ -203,8 +205,8 @@ router.post('/reset-sync', protect, async (req, res) => {
     const token = await getValidToken();
     const client = getGraphClient(token);
     
-    // Find file
-    const fileName = 'backup.xlsx';
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    const fileName = authRecord ? authRecord.excelFileName : 'backup.xlsx';
     const pathsToTry = [`/me/drive/root:/Documents/${fileName}`, `/me/drive/root:/${fileName}`];
     let fileId = null;
     
@@ -242,7 +244,7 @@ router.post('/reset-sync', protect, async (req, res) => {
     // Trigger sync
     await triggerPendingSyncs(req.programId, true);
     
-    const authRecord = await OneDriveAuth.findOne({});
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
     if (authRecord) {
       authRecord.lastSyncTime = new Date();
       await authRecord.save();
@@ -257,10 +259,13 @@ router.post('/reset-sync', protect, async (req, res) => {
 
 // Get File Link
 router.get('/file-link', protect, async (req, res) => {
-  try {
-    const token = await getValidToken();
+    const authRecord = await OneDriveAuth.findOne({ programId: req.programId });
+    if (!authRecord) return res.status(404).json({ message: 'OneDrive not connected' });
+    
+    const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
+    const token = await getValidToken(req.programId);
     const client = getGraphClient(token);
-    const fileName = 'backup.xlsx';
+    const fileName = authRecord.excelFileName;
 
     let webUrl = null;
     let downloadUrl = null;

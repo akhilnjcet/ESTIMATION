@@ -54,8 +54,9 @@ const refreshAccessToken = async (authRecord) => {
   }
 };
 
-const getValidToken = async () => {
-  let authRecord = await OneDriveAuth.findOne({});
+const getValidToken = async (programId) => {
+  if (!programId) throw new Error('Program ID is required for multi-tenant auth');
+  let authRecord = await OneDriveAuth.findOne({ programId });
   if (!authRecord) throw new Error('No OneDrive authentication found. Please connect in settings.');
 
   // If token is still valid, use it
