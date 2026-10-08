@@ -76,6 +76,24 @@ const ExcelSync = () => {
     }
   };
 
+  const handleResetSync = async () => {
+    if (!window.confirm('This will wipe all existing data in the Excel sheet and re-sync all 57+ transactions from scratch. Continue?')) {
+      return;
+    }
+    
+    try {
+      setSyncing(true);
+      showNotification('success', 'Wiping template data and syncing everything... This may take a minute.');
+      await api.post('/excel/reset-sync');
+      showNotification('success', 'Excel sheet successfully wiped and fully updated!');
+      fetchStatus();
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Reset & Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleOpenExcel = async () => {
     try {
       const res = await api.get('/excel/file-link');
@@ -170,6 +188,9 @@ const ExcelSync = () => {
                  <>
                    <button className="primary-button" onClick={handleSyncNow} disabled={syncing} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                      <RefreshCw size={18} className={syncing ? "spin" : ""} /> {syncing ? 'Syncing...' : 'Sync Now'}
+                   </button>
+                   <button className="secondary-button" onClick={handleResetSync} disabled={syncing} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', borderColor: '#ffcdd2', color: '#d32f2f' }} title="Wipe template data and re-sync everything">
+                     <RefreshCw size={18} className={syncing ? "spin" : ""} /> Reset & Sync All
                    </button>
                    <button className="secondary-button" onClick={handleOpenExcel} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                      <ExternalLink size={18} /> Open Excel

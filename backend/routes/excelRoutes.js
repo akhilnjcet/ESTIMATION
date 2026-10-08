@@ -144,6 +144,65 @@ router.post('/sync-now', protect, async (req, res) => {
   }
 });
 
+// Reset and Sync All
+router.post('/reset-sync', protect, async (req, res) => {
+  try {
+    const { getValidToken, getGraphClient } = require('../utils/excelSyncService');
+    const token = await getValidToken();
+    const client = getGraphClient(token);
+    
+    // Find file
+    const fileName = 'backup.xlsx';
+    const pathsToTry = [`/me/drive/root:/Documents/${fileName}`, `/me/drive/root:/${fileName}`];
+    let fileId = null;
+    
+    for (const path of pathsToTry) {
+      try {
+        const fileRes = await client.api(path).get();
+        fileId = fileRes.id;
+        break;
+      } catch (e) {}
+    }
+    
+    if (!fileId) return res.status(404).json({ message: 'Backup file not found in Documents or Root.' });
+    
+    // Get table
+    const worksheets = await client.api(`/me/drive/items/${fileId}/workbook/worksheets`).get();
+    const sheetId = worksheets.value[0].id;
+    const tables = await client.api(`/me/drive/items/${fileId}/workbook/worksheets/${sheetId}/tables`).get();
+    
+    if (tables.value && tables.value.length > 0) {
+      const tableId = tables.value[0].id;
+      // Clear all existing data rows from the table
+      try {
+        await client.api(`/me/drive/items/${fileId}/workbook/tables/${tableId}/dataBodyRange/delete`).post({
+          shift: "Up"
+        });
+      } catch(e) {
+        // If table is already empty or error, it's fine, we continue
+        console.log("Table might already be empty or error deleting:", e.message);
+      }
+    }
+    
+    // Mark all transactions as Pending so they re-sync
+    await Transaction.updateMany({ programId: req.programId }, { excelSyncStatus: 'Pending' });
+    
+    // Trigger sync
+    await triggerPendingSyncs();
+    
+    const authRecord = await OneDriveAuth.findOne({});
+    if (authRecord) {
+      authRecord.lastSyncTime = new Date();
+      await authRecord.save();
+    }
+    
+    res.json({ message: 'Successfully reset Excel sheet and synced all data!' });
+  } catch (error) {
+    console.error('Reset Sync Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get File Link
 router.get('/file-link', protect, async (req, res) => {
   try {
