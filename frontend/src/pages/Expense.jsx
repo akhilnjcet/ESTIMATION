@@ -543,6 +543,7 @@ const Expense = () => {
                     <th style={{ padding: '0.6rem', textAlign: 'left' }}>Fund Handed Over To</th>
                     <th style={{ padding: '0.6rem', textAlign: 'left' }}>Category</th>
                     <th style={{ padding: '0.6rem', textAlign: 'left' }}>Account</th>
+                    <th style={{ padding: '0.6rem', textAlign: 'left' }}>Description</th>
                     <th style={{ padding: '0.6rem', textAlign: 'right' }}>Amount (₹)</th>
                   </tr>
                 </thead>
@@ -556,6 +557,7 @@ const Expense = () => {
                         <td style={{ padding: '0.6rem', fontWeight: '600' }}>{partyStr}</td>
                         <td style={{ padding: '0.6rem' }}>{exp.category}</td>
                         <td style={{ padding: '0.6rem' }}>{exp.account?.name}</td>
+                        <td style={{ padding: '0.6rem', color: '#64748b' }}>{exp.description || '-'}</td>
                         <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '800', color: '#dc2626' }}>₹{Number(exp.amount).toLocaleString()}</td>
                       </tr>
                     );
