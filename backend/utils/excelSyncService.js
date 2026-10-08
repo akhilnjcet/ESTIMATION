@@ -95,21 +95,38 @@ const getValidToken = async () => {
 
 
 const findExcelFile = async (client, fileName) => {
+  // Strategy 1: Try root path directly
   try {
     const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
     return rootRes;
   } catch (rootErr) {
-    console.log(`File not found at root, trying search...`);
+    console.log(`File not found at root (${rootErr.message}), trying search...`);
+    
+    // Strategy 2: Search across entire OneDrive, but ONLY return Excel files
     try {
-      const searchRes = await client.api(`/me/drive/root/search(q='${fileName}')`).get();
+      // Search for the base name without extension to be safe
+      const baseName = fileName.replace('.xlsx', '');
+      const searchRes = await client.api(`/me/drive/root/search(q='${baseName}')`).get();
+      
       if (searchRes.value && searchRes.value.length > 0) {
-        return searchRes.value.find(f => f.name === fileName) || searchRes.value[0];
+        // Filter out screenshots/images by enforcing it must be a file and have xlsx extension
+        const excelFiles = searchRes.value.filter(f => 
+          f.file && (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls'))
+        );
+
+        if (excelFiles.length > 0) {
+          // Prefer exact match, otherwise just take the first valid Excel file
+          const exactMatch = excelFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+          const found = exactMatch || excelFiles[0];
+          console.log(`Found Excel file via search: ${found.name}`);
+          return found;
+        }
       }
     } catch (searchErr) {
       console.error('Drive search failed:', searchErr.message);
     }
   }
-  throw new Error(`Could not find '${fileName}' in your OneDrive. Please make sure the file exists.`);
+  throw new Error(`Could not find an Excel file named '${fileName}' in your OneDrive. Please make sure you created the Excel file.`);
 };
 
 const syncTransactionToExcel = async (transactionId) => {

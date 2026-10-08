@@ -158,24 +158,33 @@ router.get('/file-link', protect, async (req, res) => {
       const rootRes = await client.api(`/me/drive/root:/${fileName}`).get();
       webUrl = rootRes.webUrl;
     } catch (rootErr) {
-      console.log(`File not found at root, trying search... (${rootErr.message})`);
+      console.log(`File not found at root (${rootErr.message}), trying search...`);
 
-      // Strategy 2: Search across entire OneDrive
+      // Strategy 2: Search across entire OneDrive, but ONLY return Excel files
       try {
-        const searchRes = await client.api(`/me/drive/root/search(q='${fileName}')`).get();
+        const baseName = fileName.replace('.xlsx', '');
+        const searchRes = await client.api(`/me/drive/root/search(q='${baseName}')`).get();
+        
         if (searchRes.value && searchRes.value.length > 0) {
-          const found = searchRes.value.find(f => f.name === fileName) || searchRes.value[0];
-          webUrl = found.webUrl;
-          console.log(`Found file via search: ${found.name} at ${found.webUrl}`);
+          const excelFiles = searchRes.value.filter(f => 
+            f.file && (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls'))
+          );
+
+          if (excelFiles.length > 0) {
+            const exactMatch = excelFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+            const found = exactMatch || excelFiles[0];
+            webUrl = found.webUrl;
+            console.log(`Found Excel file via search: ${found.name}`);
+          }
         }
       } catch (searchErr) {
-        console.error('Drive search also failed:', searchErr.message);
+        console.error('Drive search failed:', searchErr.message);
       }
     }
 
     if (!webUrl) {
       return res.status(404).json({ 
-        message: `Could not find '${fileName}' in your OneDrive. Please make sure the file exists and is named exactly '${fileName}'.`
+        message: `Could not find an Excel file named '${fileName}' in your OneDrive. Please make sure you created the Excel file.`
       });
     }
 
