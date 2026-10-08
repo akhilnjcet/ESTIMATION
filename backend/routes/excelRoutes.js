@@ -9,6 +9,20 @@ const Account = require('../models/Account');
 // Generate Auth URL
 router.get('/auth-url', protect, async (req, res) => {
   try {
+    // Check if Microsoft credentials are configured
+    if (!process.env.MS_CLIENT_ID || process.env.MS_CLIENT_ID === 'dummy_client_id') {
+      return res.status(500).json({ message: 'Microsoft Client ID not configured. Please add MS_CLIENT_ID to environment variables.' });
+    }
+    if (!process.env.MS_CLIENT_SECRET || process.env.MS_CLIENT_SECRET === 'dummy_client_secret') {
+      return res.status(500).json({ message: 'Microsoft Client Secret not configured. Please add MS_CLIENT_SECRET to environment variables.' });
+    }
+    if (!process.env.MS_REDIRECT_URI) {
+      return res.status(500).json({ message: 'Microsoft Redirect URI not configured. Please add MS_REDIRECT_URI to environment variables.' });
+    }
+    if (!pca) {
+      return res.status(500).json({ message: 'Microsoft MSAL client not initialized. Check your MS_CLIENT_ID and MS_CLIENT_SECRET environment variables.' });
+    }
+
     const authCodeUrlParameters = {
       scopes: ['Files.ReadWrite.All', 'offline_access'],
       redirectUri: process.env.MS_REDIRECT_URI,
@@ -17,9 +31,10 @@ router.get('/auth-url', protect, async (req, res) => {
     res.json({ url: authUrl });
   } catch (error) {
     console.error("Auth URL Generation Error:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Failed to generate OneDrive login URL: ${error.message}` });
   }
 });
+
 
 // Handle Auth Callback - PUBLIC route, called by Microsoft after login
 // Microsoft redirects here with ?code=... as a GET request
