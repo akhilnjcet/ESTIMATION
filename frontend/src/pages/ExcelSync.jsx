@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileSpreadsheet, RefreshCw, Download, ExternalLink, Activity, Cloud, CloudOff, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import axios from 'axios';
-// Removed non-existent components
+import api from '../utils/api';
 
 const ExcelSync = () => {
   const [loading, setLoading] = useState(true);
@@ -21,7 +20,7 @@ const ExcelSync = () => {
   const fetchStatus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/excel/status');
+      const res = await api.get('/excel/status');
       setStats(res.data);
     } catch (error) {
       showNotification('error', error.response?.data?.message || 'Failed to fetch status');
@@ -41,7 +40,7 @@ const ExcelSync = () => {
 
   const handleConnect = async () => {
     try {
-      const res = await axios.get('/api/excel/auth-url');
+      const res = await api.get('/excel/auth-url');
       if (res.data.url) {
         window.location.href = res.data.url;
       }
@@ -53,7 +52,7 @@ const ExcelSync = () => {
   const handleSyncNow = async () => {
     try {
       setSyncing(true);
-      await axios.post('/api/excel/sync-now');
+      await api.post('/excel/sync-now');
       showNotification('success', 'Synchronization completed');
       fetchStatus();
     } catch (error) {
@@ -65,7 +64,7 @@ const ExcelSync = () => {
 
   const handleOpenExcel = async () => {
     try {
-      const res = await axios.get('/api/excel/file-link');
+      const res = await api.get('/excel/file-link');
       if (res.data.webUrl) {
         window.open(res.data.webUrl, '_blank');
       }
