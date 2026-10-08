@@ -311,8 +311,8 @@ const ExcelSync = () => {
             </button>
           </div>
           
-          <div className="table-responsive">
-            <table className="custom-table">
+          <div className="table-container" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+            <table className="table-glass">
               <thead>
                 <tr>
                   <th>Date</th>
