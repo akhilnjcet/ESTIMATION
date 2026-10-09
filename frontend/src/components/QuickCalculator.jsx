@@ -113,7 +113,8 @@ const QuickCalculator = () => {
 
   // Drag handlers
   const handlePointerDown = (e) => {
-    if (e.target.closest('.calc-btn') || e.target.closest('.calc-controls')) return;
+    // Only prevent drag if they are clicking a button
+    if (e.target.closest('button')) return;
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - position.x,
