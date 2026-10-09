@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Sun, Moon, Bell, Menu, Shield, User, Clock, Command
 } from 'lucide-react';
+import QuickCalculator from './QuickCalculator';
 import { useTheme } from '../context/ThemeContext';
 
 const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
@@ -100,6 +101,8 @@ const Navbar = ({ toggleSidebar, onOpenCommandPalette }) => {
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        <QuickCalculator />
+
         <button 
           onClick={toggleTheme}
           className="btn-icon"
