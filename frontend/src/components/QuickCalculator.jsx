@@ -173,31 +173,31 @@ const QuickCalculator = () => {
           left: position.x,
           width: '280px',
           maxWidth: 'calc(100vw - 20px)',
-          background: 'rgba(20, 20, 20, 0.85)',
+          background: 'rgba(30, 30, 30, 0.3)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '24px',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           padding: '1.2rem',
           zIndex: 1050,
           flexDirection: 'column',
           gap: '1rem',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           touchAction: 'none', // prevent scrolling while dragging
           cursor: isDragging ? 'grabbing' : 'grab'
         }}
       >
         {/* Header Controls */}
         <div className="calc-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
-          <button className="btn-icon" onClick={() => setShowHistory(!showHistory)} style={{ padding: '0.4rem', color: showHistory ? '#fff' : 'var(--text-secondary)' }} title="History">
-            <RotateCcw size={16} />
+          <button onClick={() => setShowHistory(!showHistory)} style={{ background: 'transparent', border: 'none', padding: '0.4rem', color: showHistory ? '#fff' : 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex' }} title="History">
+            <RotateCcw size={18} />
           </button>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn-icon" onClick={() => setIsOpen(false)} style={{ padding: '0.4rem', color: 'var(--text-secondary)' }} title="Minimize">
-              <Minus size={16} />
+            <button onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', padding: '0.4rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex' }} title="Minimize">
+              <Minus size={18} />
             </button>
-            <button className="btn-icon" onClick={() => setIsOpen(false)} style={{ padding: '0.4rem', color: 'var(--text-secondary)' }} title="Close">
-              <X size={16} />
+            <button onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', padding: '0.4rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex' }} title="Close">
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -215,7 +215,16 @@ const QuickCalculator = () => {
           <div style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.6)', minHeight: '24px', letterSpacing: '1px' }}>
             {equation}
           </div>
-          <div style={{ fontSize: '3rem', fontWeight: '400', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.1' }}>
+          <div style={{ 
+            fontSize: display.length > 13 ? '1.4rem' : display.length > 9 ? '2.1rem' : '3rem', 
+            fontWeight: '400', 
+            color: '#fff', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            whiteSpace: 'nowrap', 
+            lineHeight: '1.1',
+            transition: 'font-size 0.1s ease-in-out'
+          }}>
             {display}
           </div>
         </div>
