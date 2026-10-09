@@ -173,7 +173,7 @@ const QuickCalculator = () => {
           left: position.x,
           width: '280px',
           maxWidth: 'calc(100vw - 20px)',
-          background: 'rgba(30, 30, 30, 0.1)',
+          background: 'rgba(30, 30, 30, 0.95)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '24px',
           boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
