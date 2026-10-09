@@ -5,6 +5,9 @@ const QuickCalculator = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
   
   // Dragging state
   const [position, setPosition] = useState({ x: 20, y: 80 }); // default position
@@ -35,6 +38,11 @@ const QuickCalculator = () => {
       const result = eval(finalEquation);
       // format result to avoid long decimals
       const formattedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+      
+      if (equation.trim() !== '') {
+        setHistory(prev => [...prev, { eq: equation + display, res: formattedResult }]);
+      }
+      
       setDisplay(String(formattedResult));
       setEquation('');
     } catch (e) {
@@ -68,16 +76,40 @@ const QuickCalculator = () => {
     }
   };
 
-  // Close on Escape
+  // Keyboard Support & Close on Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === 'Escape') {
+        if (showHistory) setShowHistory(false);
+        else setIsOpen(false);
+      }
+      
+      if (!isOpen || showHistory) return;
+
+      const key = e.key;
+      if (/[0-9.]/.test(key)) {
+        handleNum(key);
+      } else if (key === '+' || key === '-') {
+        handleOp(key);
+      } else if (key === '*' || key === 'x') {
+        handleOp('×');
+      } else if (key === '/') {
+        handleOp('÷');
+      } else if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        handleCalc();
+      } else if (key === 'Backspace') {
+        handleBackspace();
+      } else if (key.toLowerCase() === 'c') {
+        handleClear();
+      }
     };
+    
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, display, equation, showHistory]);
 
   // Drag handlers
   const handlePointerDown = (e) => {
@@ -92,10 +124,17 @@ const QuickCalculator = () => {
 
   const handlePointerMove = (e) => {
     if (isDragging) {
-      setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
-      });
+      let newX = e.clientX - dragOffset.x;
+      let newY = e.clientY - dragOffset.y;
+      
+      // Keep within screen bounds
+      if (calculatorRef.current) {
+        const rect = calculatorRef.current.getBoundingClientRect();
+        newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+        newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+      }
+      
+      setPosition({ x: newX, y: newY });
     }
   };
 
@@ -133,6 +172,7 @@ const QuickCalculator = () => {
           top: position.y,
           left: position.x,
           width: '280px',
+          maxWidth: 'calc(100vw - 20px)',
           background: 'rgba(20, 20, 20, 0.85)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '24px',
@@ -149,7 +189,7 @@ const QuickCalculator = () => {
       >
         {/* Header Controls */}
         <div className="calc-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
-          <button className="btn-icon" style={{ padding: '0.4rem', color: 'var(--text-secondary)' }} title="History">
+          <button className="btn-icon" onClick={() => setShowHistory(!showHistory)} style={{ padding: '0.4rem', color: showHistory ? '#fff' : 'var(--text-secondary)' }} title="History">
             <RotateCcw size={16} />
           </button>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -180,13 +220,33 @@ const QuickCalculator = () => {
           </div>
         </div>
 
-        {/* Keypad */}
-        <div className="calc-btn" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '10px',
-          cursor: 'default'
-        }}>
+        {/* Keypad or History */}
+        {showHistory ? (
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', minHeight: '320px', paddingRight: '4px' }}>
+            {history.length === 0 ? (
+              <div style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: '2rem' }}>No history yet</div>
+            ) : (
+              history.map((item, i) => (
+                <div key={i} style={{ textAlign: 'right', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} 
+                     onClick={() => { setDisplay(String(item.res)); setShowHistory(false); setEquation(''); }}
+                     onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                     onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>{item.eq}</div>
+                  <div style={{ fontSize: '1.2rem', color: '#fff' }}>= {item.res}</div>
+                </div>
+              ))
+            )}
+            {history.length > 0 && (
+              <button onClick={() => setHistory([])} style={{ marginTop: 'auto', background: 'rgba(239, 68, 68, 0.15)', color: '#ff4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '12px', cursor: 'pointer', fontWeight: '500' }}>Clear History</button>
+            )}
+          </div>
+        ) : (
+          <div className="calc-btn" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '10px',
+            cursor: 'default'
+          }}>
           {/* Row 1 */}
           <CalcBtn icon={<Delete size={20} />} onClick={handleBackspace} type="secondary" />
           <CalcBtn val="AC" onClick={handleClear} type="secondary" />
@@ -217,6 +277,7 @@ const QuickCalculator = () => {
           <CalcBtn val="." onClick={() => handleNum('.')} />
           <CalcBtn val="=" onClick={handleCalc} type="operator" />
         </div>
+        )}
       </div>
     </>
   );
