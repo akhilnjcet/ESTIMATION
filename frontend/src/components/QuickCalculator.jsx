@@ -173,7 +173,7 @@ const QuickCalculator = () => {
           left: position.x,
           width: '280px',
           maxWidth: 'calc(100vw - 20px)',
-          background: 'rgba(30, 30, 30, 0.3)',
+          background: 'rgba(30, 30, 30, 0.1)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '24px',
           boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
@@ -216,14 +216,13 @@ const QuickCalculator = () => {
             {equation}
           </div>
           <div style={{ 
-            fontSize: display.length > 13 ? '1.4rem' : display.length > 9 ? '2.1rem' : '3rem', 
+            fontSize: display.length > 15 ? '1.2rem' : display.length > 11 ? '1.6rem' : display.length > 8 ? '2.1rem' : '3rem', 
             fontWeight: '400', 
             color: '#fff', 
             overflow: 'hidden', 
             textOverflow: 'ellipsis', 
             whiteSpace: 'nowrap', 
-            lineHeight: '1.1',
-            transition: 'font-size 0.1s ease-in-out'
+            lineHeight: '1.1'
           }}>
             {display}
           </div>
