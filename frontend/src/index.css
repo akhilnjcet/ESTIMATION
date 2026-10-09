@@ -438,6 +438,10 @@ select option {
     grid-column: span 12 / span 12 !important;
     width: 100% !important;
   }
+}
+
+/* Ensure mobile elements stay hidden even in landscape mode on large phones */
+@media screen and (max-width: 1024px), screen and (max-height: 500px) and (orientation: landscape) {
   .hide-on-mobile {
     display: none !important;
   }
