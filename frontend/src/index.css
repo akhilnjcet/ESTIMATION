@@ -438,6 +438,9 @@ select option {
     grid-column: span 12 / span 12 !important;
     width: 100% !important;
   }
+  .hide-on-mobile {
+    display: none !important;
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -477,9 +480,6 @@ select option {
     padding: 1rem !important;
     max-width: 100% !important;
     overflow-x: auto !important;
-  }
-  .hide-on-mobile {
-    display: none !important;
   }
   .navbar-container {
     padding: 0.5rem 1rem !important;
