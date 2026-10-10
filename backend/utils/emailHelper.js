@@ -70,7 +70,7 @@ const sendOtpEmail = async (email, otp) => {
           <p>If you did not make this request, you can safely ignore this email. Your password will remain unchanged.</p>
           <p>For security, please <strong>do not share this OTP</strong> with anyone.</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-          <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">This is an automated security transmission.<br/>Powered by Krishna IT Solutions</p>
+          <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">This is an automated security transmission.<br/>Powered by Zingronix IT Solutions</p>
         </div>
       `
     };

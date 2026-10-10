@@ -231,7 +231,7 @@ const seedDefaultData = async () => {
     let program = await Program.findOne({ owner: admin._id });
     if (!program) {
       program = await Program.create({
-        name: 'Krishna Smart Solutions', owner: admin._id,
+        name: 'Zingronix IT Solutions', owner: admin._id,
         address: '123 Stadium Road', phone: '9999999999', email: 'admin@krishna.com'
       });
       console.log('Default program created');

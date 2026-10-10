@@ -160,7 +160,7 @@ const LivePreview = ({ enabledModules, menuOrder, favoriteModules }) => {
                 color: '#FFF',
               }}
             >
-              Krishna Smart Solutions
+              Zingronix One
             </div>
             <div
               style={{
@@ -170,7 +170,7 @@ const LivePreview = ({ enabledModules, menuOrder, favoriteModules }) => {
                 letterSpacing: '0.02em',
               }}
             >
-              Powered by Krishna IT Solution
+              Powered by Zingronix IT Solutions
             </div>
             <div
               style={{

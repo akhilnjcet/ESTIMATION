@@ -150,7 +150,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   lineHeight: '1.2',
                 }}
               >
-                Krishna Smart Solutions
+                Zingronix One
               </h1>
               <div
                 style={{
@@ -162,7 +162,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   marginTop: '0.15rem'
                 }}
               >
-                Powered by Krishna IT Solution
+                Powered by Zingronix IT Solutions
               </div>
               <div
                 style={{
@@ -332,7 +332,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   display: 'block',
                 }}
               >
-                Powered by Krishna IT Solution
+                Powered by Zingronix IT Solutions
               </span>
               <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
                 A Krishna Group Concern
