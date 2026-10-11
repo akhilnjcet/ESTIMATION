@@ -130,7 +130,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <div style={{ position: 'relative' }}>
               <img
                 src={logo}
-                alt="Krishna Logo"
+                alt="Zingronix Logo"
                 style={{
                   width: '50px',
                   height: '50px',

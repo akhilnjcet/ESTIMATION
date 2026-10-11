@@ -158,7 +158,7 @@ const Login = () => {
           <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
             <img 
               src={logo} 
-              alt="Krishna Logo" 
+              alt="Zingronix Logo" 
               style={{ 
                 width: '100px', 
                 height: '100px', 
