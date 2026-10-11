@@ -7,7 +7,7 @@ import {
   LogOut, UserCheck, FileCode, StickyNote, ChevronLeft, Star, Shield, CalendarRange, BadgeCheck
 } from 'lucide-react';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo.png';
 import { useModules } from '../context/ModuleContext';
 import { ALL_MODULES, MODULE_CATEGORIES } from '../config/moduleRegistry';
 

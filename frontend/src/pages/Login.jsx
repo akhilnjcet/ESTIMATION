@@ -4,7 +4,7 @@ import { Mail, Lock, User as UserIcon, ArrowRight, Sparkles } from 'lucide-react
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo.png';
 
 const Login = () => {
   const navigate = useNavigate();

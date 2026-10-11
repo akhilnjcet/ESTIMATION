@@ -33,6 +33,7 @@ async function run() {
     await removeBlackBackground('C:\\Users\\AKHIL\\Downloads\\LOGO.jpeg', 'd:\\AKHIL\\ESTIMATION\\frontend\\public\\logo.png');
     // For the assets folder, just copy the new transparent one over
     const fs = require('fs');
+    fs.copyFileSync('d:\\AKHIL\\ESTIMATION\\frontend\\public\\logo.png', 'd:\\AKHIL\\ESTIMATION\\frontend\\src\\assets\\logo.png');
     fs.copyFileSync('d:\\AKHIL\\ESTIMATION\\frontend\\public\\logo.png', 'd:\\AKHIL\\ESTIMATION\\frontend\\src\\assets\\logo.jpg');
     console.log('Copied to src/assets as well.');
 }
