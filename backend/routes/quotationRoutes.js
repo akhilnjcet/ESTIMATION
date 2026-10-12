@@ -103,6 +103,7 @@ router.put('/:id', protect, async (req, res) => {
       taxAmount,
       discount,
       totalAmount,
+      combinedTotals: combinedTotals || {},
       notes,
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,

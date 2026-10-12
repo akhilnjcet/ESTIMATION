@@ -6,11 +6,12 @@ const itemSchema = new mongoose.Schema({
   description: String,
   quantity: { type: Number, required: true },
   unit: { type: String, enum: ['Units', 'Kg'], default: 'Units' },
-  price: { type: Number, required: true, min: 0 },
+  price: { type: Number, default: 0, min: 0 },
   taxPercentage: { type: Number, default: 0 },
-  total: { type: Number, required: true, min: 0 },
+  total: { type: Number, default: 0, min: 0 },
   isCombinedMode: { type: Boolean, default: false },
-  combinedSectionId: { type: String, default: null }
+  combinedSectionId: { type: String, default: null },
+  isNewSectionStart: { type: Boolean, default: false }
 });
 
 const invoiceSchema = new mongoose.Schema({
@@ -18,8 +19,7 @@ const invoiceSchema = new mongoose.Schema({
   invoiceNumber: { type: String, required: true, unique: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   combinedTotals: {
-    type: Map,
-    of: Number,
+    type: mongoose.Schema.Types.Mixed,
     default: {}
   },
   items: [itemSchema],

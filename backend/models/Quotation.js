@@ -21,7 +21,7 @@ const itemSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true,
+    default: 0,
     min: 0
   },
   taxPercentage: {
@@ -30,7 +30,7 @@ const itemSchema = new mongoose.Schema({
   },
   total: {
     type: Number,
-    required: true,
+    default: 0,
     min: 0
   },
   isTotalOnly: {
@@ -44,6 +44,10 @@ const itemSchema = new mongoose.Schema({
   combinedSectionId: {
     type: String,
     default: null
+  },
+  isNewSectionStart: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -60,8 +64,7 @@ const quotationSchema = new mongoose.Schema({
     required: true
   },
   combinedTotals: {
-    type: Map,
-    of: Number,
+    type: mongoose.Schema.Types.Mixed,
     default: {}
   },
   items: [itemSchema],

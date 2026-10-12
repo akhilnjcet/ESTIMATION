@@ -12,12 +12,12 @@ const RentalBills = () => {
   const [members, setMembers] = useState([]);
   const { selectedProgram } = useProgram();
   const [activeView, setActiveView] = useState('list'); // 'list', 'new', 'return'
-  const [previewData, setPreviewData] = useState(null); 
+  const [previewData, setPreviewData] = useState(null);
   const [previewTheme, setPreviewTheme] = useState('classic');
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [mobileTab, setMobileTab] = useState('editor'); // 'editor' | 'preview'
-  
+
   // State for new rental
   const [formData, setFormData] = useState({});
   const [items, setItems] = useState([]);
@@ -77,7 +77,7 @@ const RentalBills = () => {
     fetchMembers();
   }, [selectedProgram]);
 
-  const filteredRentals = rentals.filter(r => 
+  const filteredRentals = rentals.filter(r =>
     r.billNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.customer?.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -92,9 +92,9 @@ const RentalBills = () => {
   };
 
   const resetForm = () => {
-    setFormData({ 
-      customer: '', 
-      notes: '', 
+    setFormData({
+      customer: '',
+      notes: '',
       altContactNumber: '',
       terms: selectedProgram?.rentalDefaultTerms || '',
       showTerms: selectedProgram?.showRentalTermsByDefault !== undefined ? selectedProgram.showRentalTermsByDefault : true,
@@ -125,7 +125,7 @@ const RentalBills = () => {
     setEditingId(null);
     setActiveView('list');
     setMobileTab('editor');
-    
+
     // Reset return form too
     setReturnCustomer('');
     setReturnRentalId('');
@@ -157,8 +157,8 @@ const RentalBills = () => {
     if (items.length > 0 && items[items.length - 1].isCombinedMode) {
       prevSectionId = items[items.length - 1].combinedSectionId;
     }
-    setItems([...items, { 
-      product: '', productName: '', description: '', price: 0, quantity: 1, 
+    setItems([...items, {
+      product: '', productName: '', description: '', price: 0, quantity: 1,
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
       itemNos: '', condition: 'Good', isCombinedMode: false, autoCalculate: true, combinedSectionId: null
@@ -167,8 +167,8 @@ const RentalBills = () => {
 
   const addNewCombinedSection = () => {
     const newSectionId = `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setItems([...items, { 
-      product: '', productName: '', description: '', price: 0, quantity: 1, 
+    setItems([...items, {
+      product: '', productName: '', description: '', price: 0, quantity: 1,
       unit: 'Units', rateType: 'Day', rentalDuration: 1, taxPercentage: 0, total: 0,
       lateFeePerDay: selectedProgram?.rentalDefaultLateFee || 0,
       itemNos: '', condition: 'Good', isCombinedMode: true, autoCalculate: true, combinedSectionId: newSectionId
@@ -187,9 +187,9 @@ const RentalBills = () => {
     } else {
       newItems[index][field] = value;
     }
-    
+
     const isCombinedMode = field === 'isCombinedMode' ? value : (newItems[index].isCombinedMode || false);
-    
+
     if (isCombinedMode) {
       newItems[index].price = 0;
       newItems[index].total = 0;
@@ -222,7 +222,7 @@ const RentalBills = () => {
     let taxAmount = currentFormData.showTax
       ? currentItems.reduce((acc, item) => item.isCombinedMode ? acc : acc + (item.total * Number(item.taxPercentage || 0) / 100), 0)
       : 0;
-    
+
     let totalAmount = subTotal + taxAmount + Number(currentFormData.damageCharge || 0) + Number(currentFormData.lossCharge || 0) + Number(currentFormData.lateCharge || 0) + Number(currentFormData.otherCharges || 0) - Number(currentFormData.discount || 0);
     let balanceAmount = totalAmount - Number(currentFormData.advancePaid || 0);
 
@@ -232,10 +232,10 @@ const RentalBills = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return alert('Please add at least one item');
-    
+
     const { subTotal, taxAmount, totalAmount, balanceAmount } = getTotals();
     const payload = { ...formData, items, subTotal, taxAmount, totalAmount, balanceAmount };
-    
+
     try {
       if (editingId) {
         await api.put(`/rentals/${editingId}`, payload);
@@ -248,7 +248,7 @@ const RentalBills = () => {
   };
 
   // --- RETURN WORKFLOW ---
-  
+
   const handleReturnCustomerChange = (customerId) => {
     setReturnCustomer(customerId);
     setReturnRentalId('');
@@ -263,22 +263,22 @@ const RentalBills = () => {
         // Load existing return data for editing
         let actualReturnDate = r.actualReturnDate;
         if (actualReturnDate) {
-           const d = new Date(actualReturnDate);
-           if (!isNaN(d.getTime())) {
-               actualReturnDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-           }
+          const d = new Date(actualReturnDate);
+          if (!isNaN(d.getTime())) {
+            actualReturnDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+          }
         }
         setReturnFormData({ ...r, actualReturnDate });
       } else {
         const now = new Date();
         const expected = new Date(r.expectedReturnDate);
-        
+
         let delayedDays = 0;
         if (now > expected) {
           const diffTime = Math.abs(now - expected);
-          delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
-        
+
         const initializedItems = (r.items || []).map(item => ({
           ...item,
           isReturned: true,
@@ -309,13 +309,13 @@ const RentalBills = () => {
   const handleReturnDateChange = (dateString) => {
     const actual = new Date(dateString);
     const expected = new Date(returnFormData.expectedReturnDate);
-    
+
     let delayedDays = 0;
     if (actual > expected) {
       const diffTime = Math.abs(actual - expected);
-      delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      delayedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
-    
+
     const initializedItems = (returnFormData.items || []).map(item => ({
       ...item,
       itemLateCharge: delayedDays * (Number(item.lateFeePerDay) || selectedProgram?.rentalDefaultLateFee || 0)
@@ -335,19 +335,19 @@ const RentalBills = () => {
   const handleReturnItemChange = (index, field, value) => {
     const updatedItems = [...returnFormData.items];
     if (field === 'isReturned') {
-        updatedItems[index].isReturned = value;
-        if (!value && !['LOSS', 'DAMAGED', 'STILL RENTING'].includes(updatedItems[index].returnCondition)) {
-           updatedItems[index].returnCondition = 'STILL RENTING';
-        }
+      updatedItems[index].isReturned = value;
+      if (!value && !['LOSS', 'DAMAGED', 'STILL RENTING'].includes(updatedItems[index].returnCondition)) {
+        updatedItems[index].returnCondition = 'STILL RENTING';
+      }
     } else {
-        updatedItems[index][field] = value;
+      updatedItems[index][field] = value;
     }
-    
+
     const allReturned = updatedItems.every(i => i.isReturned);
     const newStatus = allReturned ? 'Returned Completely' : 'Partially Returned';
     const sumItemLateFees = updatedItems.reduce((sum, item) => sum + (Number(item.itemLateCharge) || 0), 0);
     const sumItemLossFees = updatedItems.reduce((sum, item) => sum + (Number(item.itemLossCharge) || 0), 0);
-    
+
     setReturnFormData(prev => ({
       ...prev,
       items: updatedItems,
@@ -361,22 +361,22 @@ const RentalBills = () => {
   const handleReturnSubmit = async (e) => {
     e.preventDefault();
     if (!returnRentalId) return alert('Please select a rental bill');
-    
+
     try {
       const { subTotal, taxAmount, totalAmount, balanceAmount } = getTotals(returnFormData, returnFormData.items);
-      const payload = { 
-        ...returnFormData, 
-        subTotal, 
-        taxAmount, 
-        totalAmount, 
-        balanceAmount, 
-        customer: returnFormData.customer?._id || returnFormData.customer 
+      const payload = {
+        ...returnFormData,
+        subTotal,
+        taxAmount,
+        totalAmount,
+        balanceAmount,
+        customer: returnFormData.customer?._id || returnFormData.customer
       };
       await api.put(`/rentals/${returnRentalId}`, payload);
       resetForm();
       fetchRentals();
       alert('Equipment marked as returned. The Return Bill has been generated.');
-    } catch(err) {
+    } catch (err) {
       alert('Failed to save: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -404,7 +404,7 @@ const RentalBills = () => {
               {selectedProgram?.phone && <p className="company-phone" style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Ph: {selectedProgram.phone}</p>}
             </div>
           </div>
-          
+
           <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '15px' }}>
             <div>
               <h2 style={{ margin: 0, color: '#0f172a', fontSize: '24px', fontWeight: '900', letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -430,7 +430,7 @@ const RentalBills = () => {
             <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>Ph: {docData.customer?.contactNumber || docData.customer?.phone}</p>
             {docData.altContactNumber && <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>Alt Ph: {docData.altContactNumber}</p>}
           </div>
-          
+
           <div style={{ textAlign: 'right', background: '#F8FAFC', padding: '10px', borderRadius: '8px' }}>
             <h3 style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', color: '#94a3b8', marginBottom: '4px' }}>Rental Period:</h3>
             <p style={{ margin: 0, fontSize: '12px', color: '#0f172a' }}><b>Start:</b> {docData.rentalStartDate ? new Date(docData.rentalStartDate).toLocaleString('en-GB') : '-'}</p>
@@ -550,7 +550,7 @@ const RentalBills = () => {
                 <span>- &#8377;{Number(docData.advancePaid).toLocaleString()}</span>
               </div>
             )}
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)', borderTop: '2px solid #3b82f6', paddingTop: '0.5rem' }}>
               <span>Balance Payable</span>
               <span>&#8377;{((Number(docData.subTotal) || 0) + (docData.showTax !== false ? (Number(docData.taxAmount) || 0) : 0) + (isReturned ? (Number(docData.damageCharge) || 0) + (Number(docData.lossCharge) || 0) + (Number(docData.lateCharge) || 0) : 0) + (Number(docData.otherCharges) || 0) - (Number(docData.advancePaid) || 0)).toLocaleString()}</span>
@@ -565,7 +565,7 @@ const RentalBills = () => {
             <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{docData.terms}</div>
           </div>
         )}
-        
+
         {isReturned && !docData.showTermsOnReturn && (
           <div style={{ marginTop: '3rem', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>
             THANK YOU, VISIT AGAIN!
@@ -603,7 +603,7 @@ const RentalBills = () => {
         <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
           <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <button className="btn-secondary-glass" onClick={() => setPreviewData(null)}><X size={18} /> Close</button>
-            
+
             <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.06)', padding: '0.35rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
               {['classic', 'modern', 'executive'].map(t => (
                 <button
@@ -644,12 +644,12 @@ const RentalBills = () => {
           <h1 className="page-title"><CalendarRange size={26} style={{ color: 'var(--primary)' }} /> Rental Billing</h1>
           <p className="page-subtitle">Manage equipment rentals, deposits, and returns</p>
         </div>
-        
+
         {activeView === 'list' ? (
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '260px' }}>
-              <input 
-                type="text" className="form-input" placeholder="Search rental bill..." 
+              <input
+                type="text" className="form-input" placeholder="Search rental bill..."
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ paddingLeft: '2.5rem' }}
               />
@@ -725,223 +725,223 @@ const RentalBills = () => {
           <div className="grid-12">
             <div className={`glass-panel col-span-6 ${mobileTab !== 'editor' ? 'hide-on-mobile' : ''}`} style={{ padding: '1.75rem' }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-              <div className="form-group">
-                <label className="form-label">Customer</label>
-                <select className="form-select" required value={formData.customer} onChange={e => {
-                  const custId = e.target.value;
-                  const selectedCust = customers.find(c => c._id === custId);
-                  setFormData({...formData, customer: custId, receivedBy: selectedCust?.customerName || ''});
-                }}>
-                  <option value="">Select party...</option>
-                  {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Alt Contact No. (Optional)</label>
-                <input type="text" className="form-input" placeholder="Alternative Phone" value={formData.altContactNumber || ''} onChange={e => setFormData({...formData, altContactNumber: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Rental Start Date/Time</label>
-                <input type="datetime-local" className="form-input" required value={formData.rentalStartDate} onChange={e => setFormData({...formData, rentalStartDate: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Expected Return</label>
-                <input type="datetime-local" className="form-input" required value={formData.expectedReturnDate} onChange={e => setFormData({...formData, expectedReturnDate: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Equipment Received By</label>
-                <input type="text" className="form-input" placeholder="Customer Name..." value={formData.receivedBy || ''} onChange={e => setFormData({...formData, receivedBy: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Issued By</label>
-                <select className="form-select" value={formData.issuedBy || ''} onChange={e => setFormData({...formData, issuedBy: e.target.value})}>
-                  <option value="">Select Member...</option>
-                  {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <span className="form-label">Equipment Items</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" className="btn-secondary-glass" onClick={addNewCombinedSection} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
-                    + New Combined Section
-                  </button>
-                  <button type="button" className="btn-secondary-glass" onClick={addItem} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
-                    + Add Equipment
-                  </button>
+              <form onSubmit={handleSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Customer</label>
+                    <select className="form-select" required value={formData.customer} onChange={e => {
+                      const custId = e.target.value;
+                      const selectedCust = customers.find(c => c._id === custId);
+                      setFormData({ ...formData, customer: custId, receivedBy: selectedCust?.customerName || '' });
+                    }}>
+                      <option value="">Select party...</option>
+                      {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Alt Contact No. (Optional)</label>
+                    <input type="text" className="form-input" placeholder="Alternative Phone" value={formData.altContactNumber || ''} onChange={e => setFormData({ ...formData, altContactNumber: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Rental Start Date/Time</label>
+                    <input type="datetime-local" className="form-input" required value={formData.rentalStartDate} onChange={e => setFormData({ ...formData, rentalStartDate: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Expected Return</label>
+                    <input type="datetime-local" className="form-input" required value={formData.expectedReturnDate} onChange={e => setFormData({ ...formData, expectedReturnDate: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Equipment Received By</label>
+                    <input type="text" className="form-input" placeholder="Customer Name..." value={formData.receivedBy || ''} onChange={e => setFormData({ ...formData, receivedBy: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Issued By</label>
+                    <select className="form-select" value={formData.issuedBy || ''} onChange={e => setFormData({ ...formData, issuedBy: e.target.value })}>
+                      <option value="">Select Member...</option>
+                      {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                {items.map((item, index) => {
-                  const isLastInSection = item.isCombinedMode && (index === items.length - 1 || items[index + 1].combinedSectionId !== item.combinedSectionId);
-                  
-                  return (
-                    <div key={index}>
-                      <div className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
-                        <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={15} /></button>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
-                          <div style={{ flex: '2 1 150px' }}>
-                            <label className="form-label">Equipment</label>
-                            <input type="text" className="form-input" required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" />
-                          </div>
-                          <div style={{ flex: '1 1 80px' }}>
-                            <label className="form-label">Qty</label>
-                            <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
-                          </div>
-                          <div style={{ flex: '1 1 80px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                {!item.isCombinedMode && (
-                                  <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={item.autoCalculate !== false} 
-                                      onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
-                                    />
-                                    Auto
-                                  </label>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span className="form-label">Equipment Items</span>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn-secondary-glass" onClick={addNewCombinedSection} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                        + New Combined Section
+                      </button>
+                      <button type="button" className="btn-secondary-glass" onClick={addItem} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                        + Add Equipment
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {items.map((item, index) => {
+                      const isLastInSection = item.isCombinedMode && (index === items.length - 1 || items[index + 1].combinedSectionId !== item.combinedSectionId);
+
+                      return (
+                        <div key={index}>
+                          <div className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
+                            <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={15} /></button>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+                              <div style={{ flex: '2 1 150px' }}>
+                                <label className="form-label">Equipment</label>
+                                <input type="text" className="form-input" required value={item.productName} onChange={e => updateItem(index, 'product', e.target.value)} list="product-list" />
+                              </div>
+                              <div style={{ flex: '1 1 80px' }}>
+                                <label className="form-label">Qty</label>
+                                <input type="number" className="form-input" required value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
+                              </div>
+                              <div style={{ flex: '1 1 80px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <label className="form-label">{item.isCombinedMode ? 'Included' : 'Rate (\u20B9)'}</label>
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    {!item.isCombinedMode && (
+                                      <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={item.autoCalculate !== false}
+                                          onChange={e => updateItem(index, 'autoCalculate', e.target.checked)}
+                                        />
+                                        Auto
+                                      </label>
+                                    )}
+                                    <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={item.isCombinedMode || false}
+                                        onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)}
+                                      />
+                                      Combined
+                                    </label>
+                                  </div>
+                                </div>
+                                {!item.isCombinedMode ? (
+                                  <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
+                                ) : (
+                                  <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    Included
+                                  </div>
                                 )}
-                                <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                  <input 
-                                    type="checkbox" 
-                                    checked={item.isCombinedMode || false} 
-                                    onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
-                                  />
-                                  Combined
-                                </label>
+                              </div>
+                              <div style={{ flex: '1 1 80px' }}>
+                                <label className="form-label">Per</label>
+                                <select className="form-select" value={item.rateType} onChange={e => updateItem(index, 'rateType', e.target.value)}>
+                                  <option value="Hour">Hour</option><option value="Day">Day</option><option value="Week">Week</option><option value="Month">Month</option><option value="Fixed">Fixed</option>
+                                </select>
+                              </div>
+                              <div style={{ flex: '1 1 80px' }}>
+                                <label className="form-label">Duration</label>
+                                <input type="number" className="form-input" required value={item.rentalDuration} onChange={e => updateItem(index, 'rentalDuration', e.target.value)} />
+                              </div>
+                              <div style={{ flex: '1 1 80px' }}>
+                                <label className="form-label">Total</label>
+                                <div style={{ padding: '0.6rem', background: 'var(--bg-body)', borderRadius: '6px', fontWeight: 'bold' }}>&#8377;{item.total}</div>
                               </div>
                             </div>
-                            {!item.isCombinedMode ? (
-                              <input type="number" className="form-input" required value={item.price} onChange={e => updateItem(index, 'price', e.target.value)} />
-                            ) : (
-                              <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                Included
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.65rem', marginTop: '0.65rem' }}>
+                              <div>
+                                <label className="form-label" style={{ fontSize: '0.7rem' }}>Item No(s)</label>
+                                <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
                               </div>
-                            )}
+                              <div>
+                                <label className="form-label" style={{ fontSize: '0.7rem' }}>Checkout Condition</label>
+                                <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
+                                  <option value="">-- Select --</option>
+                                  <option value="GOOD">GOOD</option>
+                                  <option value="BAD">BAD</option>
+                                  <option value="NOT BAD">NOT BAD</option>
+                                  <option value="DAMAGED">DAMAGED</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Agreed Late Fee/Day (&#8377;)</label>
+                                <input type="number" className="form-input" value={item.lateFeePerDay} onChange={e => updateItem(index, 'lateFeePerDay', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ flex: '1 1 80px' }}>
-                            <label className="form-label">Per</label>
-                            <select className="form-select" value={item.rateType} onChange={e => updateItem(index, 'rateType', e.target.value)}>
-                              <option value="Hour">Hour</option><option value="Day">Day</option><option value="Week">Week</option><option value="Month">Month</option><option value="Fixed">Fixed</option>
-                            </select>
-                          </div>
-                          <div style={{ flex: '1 1 80px' }}>
-                            <label className="form-label">Duration</label>
-                            <input type="number" className="form-input" required value={item.rentalDuration} onChange={e => updateItem(index, 'rentalDuration', e.target.value)} />
-                          </div>
-                          <div style={{ flex: '1 1 80px' }}>
-                            <label className="form-label">Total</label>
-                            <div style={{ padding: '0.6rem', background: 'var(--bg-body)', borderRadius: '6px', fontWeight: 'bold' }}>&#8377;{item.total}</div>
-                          </div>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.65rem', marginTop: '0.65rem' }}>
-                          <div>
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Item No(s)</label>
-                            <input type="text" className="form-input" value={item.itemNos || ''} onChange={e => updateItem(index, 'itemNos', e.target.value)} placeholder="e.g. SN-1234" style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
-                          </div>
-                          <div>
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Checkout Condition</label>
-                            <select className="form-select" value={item.condition || ''} onChange={e => updateItem(index, 'condition', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }}>
-                              <option value="">-- Select --</option>
-                              <option value="GOOD">GOOD</option>
-                              <option value="BAD">BAD</option>
-                              <option value="NOT BAD">NOT BAD</option>
-                              <option value="DAMAGED">DAMAGED</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="form-label" style={{ fontSize: '0.7rem', color: '#F59E0B' }}>Agreed Late Fee/Day (&#8377;)</label>
-                            <input type="number" className="form-input" value={item.lateFeePerDay} onChange={e => updateItem(index, 'lateFeePerDay', e.target.value)} style={{ fontSize: '0.8rem', padding: '0.4rem' }} />
-                          </div>
-                        </div>
-                      </div>
 
-                      {isLastInSection && (
-                        <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
-                              value={formData.combinedTotals[item.combinedSectionId] || ''}
-                              onChange={(e) => setFormData({ 
-                                ...formData, 
-                                combinedTotals: { ...formData.combinedTotals, [item.combinedSectionId]: e.target.value } 
-                              })}
-                              placeholder="0.00"
-                              required
-                            />
-                          </div>
+                          {isLastInSection && (
+                            <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
+                                  value={formData.combinedTotals[item.combinedSectionId] || ''}
+                                  onChange={(e) => setFormData({
+                                    ...formData,
+                                    combinedTotals: { ...formData.combinedTotals, [item.combinedSectionId]: e.target.value }
+                                  })}
+                                  placeholder="0.00"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group"><label className="form-label">Checkout Condition</label><input type="text" className="form-input" value={formData.conditionCheckout} onChange={e => setFormData({...formData, conditionCheckout: e.target.value})} /></div>
-                <div className="form-group"><label className="form-label">Advance Paid (&#8377;)</label><input type="number" className="form-input" value={formData.advancePaid} onChange={e => setFormData({...formData, advancePaid: e.target.value})} /></div>
-                <div className="form-group"><label className="form-label">Security Deposit (&#8377;)</label><input type="number" className="form-input" value={formData.securityDeposit} onChange={e => setFormData({...formData, securityDeposit: e.target.value})} /></div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Sub Total:</span> <b>&#8377;{getTotals().subTotal}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 'bold' }}><span>Balance Payable:</span> <b>&#8377;{getTotals().balanceAmount}</b></div>
-              </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="form-group"><label className="form-label">Checkout Condition</label><input type="text" className="form-input" value={formData.conditionCheckout} onChange={e => setFormData({ ...formData, conditionCheckout: e.target.value })} /></div>
+                    <div className="form-group"><label className="form-label">Advance Paid (&#8377;)</label><input type="number" className="form-input" value={formData.advancePaid} onChange={e => setFormData({ ...formData, advancePaid: e.target.value })} /></div>
+                    <div className="form-group"><label className="form-label">Security Deposit (&#8377;)</label><input type="number" className="form-input" value={formData.securityDeposit} onChange={e => setFormData({ ...formData, securityDeposit: e.target.value })} /></div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Sub Total:</span> <b>&#8377;{getTotals().subTotal}</b></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 'bold' }}><span>Balance Payable:</span> <b>&#8377;{getTotals().balanceAmount}</b></div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button type="submit" className="btn-gradient" style={{ width: '100%' }}>Save Rental Bill</button>
+                  <button
+                    type="button"
+                    className="btn-secondary-glass hide-on-desktop"
+                    onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
+                  >
+                    <Eye size={16} /> View Live Bill Preview (&#8377;{getTotals().balanceAmount})
+                  </button>
+                </div>
+              </form>
             </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button type="submit" className="btn-gradient" style={{ width: '100%' }}>Save Rental Bill</button>
-              <button
-                type="button"
-                className="btn-secondary-glass hide-on-desktop"
-                onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
-              >
-                <Eye size={16} /> View Live Bill Preview (&#8377;{getTotals().balanceAmount})
-              </button>
-            </div>
-          </form>
-        </div>
-        
-        {/* Live PDF Preview Side */}
-        <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
-          <div className="rental-preview-card">
-            <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Bill Preview</b>
-                <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Real-time updates</span>
-                <button
-                  type="button"
-                  className="btn-secondary-glass hide-on-desktop"
-                  onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                  style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <Edit2 size={13} /> Edit
-                </button>
-              </div>
-            </div>
-            <div className="rental-preview-scroll">
-              <div className="rental-preview-content">
-                {renderPreviewDocument({ ...formData, customer: customers.find(c => c._id === formData.customer) || {}, items: items, subTotal: getTotals().subTotal, taxAmount: getTotals().taxAmount, balanceAmount: getTotals().balanceAmount, totalAmount: getTotals().totalAmount }, previewTheme)}
+            {/* Live PDF Preview Side */}
+            <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
+              <div className="rental-preview-card">
+                <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Bill Preview</b>
+                    <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Real-time updates</span>
+                    <button
+                      type="button"
+                      className="btn-secondary-glass hide-on-desktop"
+                      onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                  </div>
+                </div>
+                <div className="rental-preview-scroll">
+                  <div className="rental-preview-content">
+                    {renderPreviewDocument({ ...formData, customer: customers.find(c => c._id === formData.customer) || {}, items: items, subTotal: getTotals().subTotal, taxAmount: getTotals().taxAmount, balanceAmount: getTotals().balanceAmount, totalAmount: getTotals().totalAmount }, previewTheme)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    )}
+      )}
 
       {activeView === 'return' && (
         <div>
@@ -1000,66 +1000,66 @@ const RentalBills = () => {
               <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <RefreshCcw size={20} /> Create Return Bill
               </h2>
-            
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label className="form-label">1. Select Customer</label>
-              <select className="form-select" value={returnCustomer} onChange={e => handleReturnCustomerChange(e.target.value)}>
-                <option value="">-- Choose Customer --</option>
-                {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
-              </select>
-            </div>
 
-            {returnCustomer && (
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">2. Select Rental Bill</label>
-                <select className="form-select" value={returnRentalId} onChange={e => handleReturnRentalSelect(e.target.value)}>
-                  <option value="">-- Choose Rental Bill --</option>
-                  {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).map(r => (
-                    <option key={r._id} value={r._id}>
-                      Bill #{r.billNumber} ({r.status === 'Active' ? 'Active' : 'Returned'})
-                    </option>
-                  ))}
+                <label className="form-label">1. Select Customer</label>
+                <select className="form-select" value={returnCustomer} onChange={e => handleReturnCustomerChange(e.target.value)}>
+                  <option value="">-- Choose Customer --</option>
+                  {customers.map(c => <option key={c._id} value={c._id}>{c.customerName}</option>)}
                 </select>
-                {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).length === 0 && (
-                  <small style={{ color: 'var(--danger)', display: 'block', marginTop: '4px' }}>No active or returned rentals found for this customer.</small>
-                )}
               </div>
-            )}
 
-            {returnRentalId && returnFormData && (
-              <form onSubmit={handleReturnSubmit} style={{ marginTop: '1.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ color: 'var(--text-muted)' }}>Expected Return Date</label>
-                    <input type="text" className="form-input" disabled value={new Date(returnFormData.expectedReturnDate).toLocaleString()} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Actual Return Date/Time</label>
-                    <input type="datetime-local" className="form-input" required value={returnFormData.actualReturnDate} onChange={e => handleReturnDateChange(e.target.value)} />
-                  </div>
+              {returnCustomer && (
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label">2. Select Rental Bill</label>
+                  <select className="form-select" value={returnRentalId} onChange={e => handleReturnRentalSelect(e.target.value)}>
+                    <option value="">-- Choose Rental Bill --</option>
+                    {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).map(r => (
+                      <option key={r._id} value={r._id}>
+                        Bill #{r.billNumber} ({r.status === 'Active' ? 'Active' : 'Returned'})
+                      </option>
+                    ))}
+                  </select>
+                  {rentals.filter(r => r.customer?._id === returnCustomer && ['Active', 'Returned', 'Partially Returned', 'Returned Completely'].includes(r.status)).length === 0 && (
+                    <small style={{ color: 'var(--danger)', display: 'block', marginTop: '4px' }}>No active or returned rentals found for this customer.</small>
+                  )}
                 </div>
+              )}
 
-                {returnFormData.delayedDays > 0 && (
-                  <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', color: '#EF4444', fontSize: '0.9rem' }}>
-                    <b>Delay Detected:</b> Equipment returned {returnFormData.delayedDays} day(s) late. Late fee auto-calculated.
+              {returnRentalId && returnFormData && (
+                <form onSubmit={handleReturnSubmit} style={{ marginTop: '1.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: 'var(--text-muted)' }}>Expected Return Date</label>
+                      <input type="text" className="form-input" disabled value={new Date(returnFormData.expectedReturnDate).toLocaleString()} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Actual Return Date/Time</label>
+                      <input type="datetime-local" className="form-input" required value={returnFormData.actualReturnDate} onChange={e => handleReturnDateChange(e.target.value)} />
+                    </div>
                   </div>
-                )}
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Item Return Checklist</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {(returnFormData.items || []).map((item, index) => (
-                      <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-                        <div style={{ flex: '0 0 auto' }}>
-                           <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                        </div>
-                        <div style={{ flex: '2 1 120px' }}>
-                           <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{item.productName}</div>
-                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.quantity} Qty | {item.rentalDuration} {item.rateType}(s)</div>
-                        </div>
-                        <div style={{ flex: '2 1 120px' }}>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
-                           <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
+                  {returnFormData.delayedDays > 0 && (
+                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', color: '#EF4444', fontSize: '0.9rem' }}>
+                      <b>Delay Detected:</b> Equipment returned {returnFormData.delayedDays} day(s) late. Late fee auto-calculated.
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Item Return Checklist</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {(returnFormData.items || []).map((item, index) => (
+                        <div key={index} className="glass-card" style={{ padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+                          <div style={{ flex: '0 0 auto' }}>
+                            <input type="checkbox" checked={item.isReturned !== false} onChange={e => handleReturnItemChange(index, 'isReturned', e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                          </div>
+                          <div style={{ flex: '2 1 120px' }}>
+                            <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{item.productName}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.quantity} Qty | {item.rentalDuration} {item.rateType}(s)</div>
+                          </div>
+                          <div style={{ flex: '2 1 120px' }}>
+                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0 }}>Return Condition</label>
+                            <select className="form-select" value={item.returnCondition || ''} onChange={e => handleReturnItemChange(index, 'returnCondition', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
                               <option value="">-- Select --</option>
                               <option value="GOOD">GOOD</option>
                               <option value="BAD">BAD</option>
@@ -1067,113 +1067,113 @@ const RentalBills = () => {
                               <option value="DAMAGED">DAMAGED</option>
                               <option value="LOSS">LOSS</option>
                               <option value="STILL RENTING">STILL RENTING</option>
-                           </select>
+                            </select>
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
+                            <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                          </div>
+                          <div style={{ flex: '1 1 80px' }}>
+                            <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
+                            <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
+                          </div>
                         </div>
-                        <div style={{ flex: '1 1 80px' }}>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#F59E0B' }}>Late Chg (&#8377;)</label>
-                           <input type="number" className="form-input" value={item.itemLateCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLateCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
-                        </div>
-                        <div style={{ flex: '1 1 80px' }}>
-                           <label className="form-label" style={{ fontSize: '0.65rem', margin: 0, color: '#DC2626' }}>Loss Chg (&#8377;)</label>
-                           <input type="number" className="form-input" value={item.itemLossCharge || 0} onChange={e => handleReturnItemChange(index, 'itemLossCharge', e.target.value)} style={{ padding: '0.35rem', fontSize: '0.8rem' }} />
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Equipment Returned By</label>
-                    <input type="text" className="form-input" value={returnFormData.returnedBy || ''} onChange={e => setReturnFormData({...returnFormData, returnedBy: e.target.value})} placeholder="Customer Name..." />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Equipment Returned By</label>
+                      <input type="text" className="form-input" value={returnFormData.returnedBy || ''} onChange={e => setReturnFormData({ ...returnFormData, returnedBy: e.target.value })} placeholder="Customer Name..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">General Condition Note</label>
+                      <input type="text" className="form-input" value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({ ...returnFormData, conditionReturn: e.target.value })} placeholder="e.g. Good, Minor Scratches" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Status (Auto-calculated)</label>
+                      <select className="form-select" disabled value={returnFormData.status || 'Returned Completely'} onChange={e => setReturnFormData({ ...returnFormData, status: e.target.value })}>
+                        <option value="Returned Completely">Returned Completely</option>
+                        <option value="Partially Returned">Partially Returned</option>
+                        <option value="Returned">Returned</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Return Issued By</label>
+                      <select className="form-select" value={returnFormData.returnIssuedBy || ''} onChange={e => setReturnFormData({ ...returnFormData, returnIssuedBy: e.target.value })}>
+                        <option value="">Select Member...</option>
+                        {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">General Condition Note</label>
-                    <input type="text" className="form-input" value={returnFormData.conditionReturn || ''} onChange={e => setReturnFormData({...returnFormData, conditionReturn: e.target.value})} placeholder="e.g. Good, Minor Scratches" />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Status (Auto-calculated)</label>
-                    <select className="form-select" disabled value={returnFormData.status || 'Returned Completely'} onChange={e => setReturnFormData({...returnFormData, status: e.target.value})}>
-                      <option value="Returned Completely">Returned Completely</option>
-                      <option value="Partially Returned">Partially Returned</option>
-                      <option value="Returned">Returned</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Return Issued By</label>
-                    <select className="form-select" value={returnFormData.returnIssuedBy || ''} onChange={e => setReturnFormData({...returnFormData, returnIssuedBy: e.target.value})}>
-                      <option value="">Select Member...</option>
-                      {members.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
-                    </select>
-                  </div>
-                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ color: '#F59E0B' }}>Late Chg (&#8377;)</label>
-                    <input type="number" className="form-input" value={returnFormData.lateCharge || 0} onChange={e => setReturnFormData({...returnFormData, lateCharge: e.target.value})} />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-body)', padding: '1rem', borderRadius: '8px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ color: '#F59E0B' }}>Late Chg (&#8377;)</label>
+                      <input type="number" className="form-input" value={returnFormData.lateCharge || 0} onChange={e => setReturnFormData({ ...returnFormData, lateCharge: e.target.value })} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ color: '#EF4444' }}>Damage (&#8377;)</label>
+                      <input type="number" className="form-input" value={returnFormData.damageCharge || 0} onChange={e => setReturnFormData({ ...returnFormData, damageCharge: e.target.value })} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ color: '#DC2626' }}>Loss (&#8377;)</label>
+                      <input type="number" className="form-input" value={returnFormData.lossCharge || 0} onChange={e => setReturnFormData({ ...returnFormData, lossCharge: e.target.value })} />
+                    </div>
                   </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ color: '#EF4444' }}>Damage (&#8377;)</label>
-                    <input type="number" className="form-input" value={returnFormData.damageCharge || 0} onChange={e => setReturnFormData({...returnFormData, damageCharge: e.target.value})} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ color: '#DC2626' }}>Loss (&#8377;)</label>
-                    <input type="number" className="form-input" value={returnFormData.lossCharge || 0} onChange={e => setReturnFormData({...returnFormData, lossCharge: e.target.value})} />
-                  </div>
-                </div>
 
-                <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                   <input type="checkbox" id="showTerms" checked={returnFormData.showTermsOnReturn || false} onChange={e => setReturnFormData({...returnFormData, showTermsOnReturn: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                   <label htmlFor="showTerms" style={{ fontSize: '0.85rem', cursor: 'pointer' }}>Print Terms & Conditions on Return Bill</label>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>Save & Generate Return Bill</button>
-                  <button
-                    type="button"
-                    className="btn-secondary-glass hide-on-desktop"
-                    onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
-                  >
-                    <Eye size={16} /> View Live Return Bill Preview
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* Live PDF Preview Side */}
-          {returnRentalId && returnFormData && (
-            <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
-              <div className="rental-preview-card">
-                <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Return Bill Preview</b>
-                    <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
+                  <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="showTerms" checked={returnFormData.showTermsOnReturn || false} onChange={e => setReturnFormData({ ...returnFormData, showTermsOnReturn: e.target.checked })} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <label htmlFor="showTerms" style={{ fontSize: '0.85rem', cursor: 'pointer' }}>Print Terms & Conditions on Return Bill</label>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Terms omitted</span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>Save & Generate Return Bill</button>
                     <button
                       type="button"
                       className="btn-secondary-glass hide-on-desktop"
-                      onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
                     >
-                      <RefreshCcw size={13} /> Edit
+                      <Eye size={16} /> View Live Return Bill Preview
                     </button>
                   </div>
-                </div>
-                <div className="rental-preview-scroll">
-                  <div className="rental-preview-content">
-                    {renderPreviewDocument({ ...returnFormData, subTotal: getTotals(returnFormData, returnFormData.items).subTotal, taxAmount: getTotals(returnFormData, returnFormData.items).taxAmount, balanceAmount: getTotals(returnFormData, returnFormData.items).balanceAmount }, previewTheme)}
+                </form>
+              )}
+            </div>
+
+            {/* Live PDF Preview Side */}
+            {returnRentalId && returnFormData && (
+              <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
+                <div className="rental-preview-card">
+                  <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Return Bill Preview</b>
+                      <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Terms omitted</span>
+                      <button
+                        type="button"
+                        className="btn-secondary-glass hide-on-desktop"
+                        onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <RefreshCcw size={13} /> Edit
+                      </button>
+                    </div>
+                  </div>
+                  <div className="rental-preview-scroll">
+                    <div className="rental-preview-content">
+                      {renderPreviewDocument({ ...returnFormData, subTotal: getTotals(returnFormData, returnFormData.items).subTotal, taxAmount: getTotals(returnFormData, returnFormData.items).taxAmount, balanceAmount: getTotals(returnFormData, returnFormData.items).balanceAmount }, previewTheme)}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {activeView === 'list' && (
@@ -1231,7 +1231,7 @@ const RentalBills = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
                 <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: r.status === 'Active' ? 'rgba(234,179,8,0.2)' : r.status === 'Returned' ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.1)', color: r.status === 'Active' ? '#EAB308' : r.status === 'Returned' ? '#22C55E' : 'var(--text-muted)' }}>{r.status}</span>
                 {r.status === 'Active' && (
-                  <button className="btn-secondary-glass" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => { 
+                  <button className="btn-secondary-glass" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
                     resetForm();
                     setActiveView('return');
                     handleReturnCustomerChange(r.customer?._id || r.customer);

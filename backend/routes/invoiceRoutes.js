@@ -100,7 +100,7 @@ router.put('/:id', protect, async (req, res) => {
       taxAmount,
       discount,
       totalAmount,
-      combinedTotal: combinedTotal !== undefined ? combinedTotal : 0,
+      combinedTotals: combinedTotals || {},
       notes,
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,

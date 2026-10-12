@@ -4,6 +4,9 @@ import { downloadElementAsPdf } from '../utils/downloadHelper';
 import api from '../utils/api';
 import { useProgram } from '../context/ProgramContext';
 import { Edit2, Printer, Plus, X, Eye, Trash2, FileText, Search, CheckCircle2, Download, Settings } from 'lucide-react';
+import EstimationEntryTable from '../components/EstimationEntryTable';
+import CombinedBillTableBody from '../components/CombinedBillTable';
+import { calculateBillTotals, synchronizeItemSections } from '../utils/combinedBillHelper';
 
 const Quotations = () => {
   const [quotations, setQuotations] = useState([]);
@@ -109,6 +112,13 @@ const Quotations = () => {
 
   const handleEdit = (q) => {
     setEditingId(q._id);
+    let loadedTotals = {};
+    if (q.combinedTotals) {
+      loadedTotals = q.combinedTotals instanceof Map
+        ? Object.fromEntries(q.combinedTotals)
+        : { ...q.combinedTotals };
+    }
+
     setFormData({
       customer: q.customer?._id || q.customer,
       notes: q.notes || '',
@@ -118,31 +128,101 @@ const Quotations = () => {
       showPaymentTerms: q.showPaymentTerms !== undefined ? q.showPaymentTerms : true,
       showSignature: q.showSignature !== undefined ? q.showSignature : true,
       showFooter: q.showFooter !== undefined ? q.showFooter : true,
-      combinedTotals: q.combinedTotals || {},
+      combinedTotals: loadedTotals,
       footerText: q.footerText !== undefined ? q.footerText : (selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP'),
       theme: q.theme || 'classic',
       date: q.createdAt ? new Date(q.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       quotationNumber: q.quotationNumber || ''
     });
-    setItems(q.items.map(item => ({
+
+    const parsedItems = (q.items || []).map(item => ({
       ...item,
-      product: item.product?._id || item.product
-    })));
+      product: item.product?._id || item.product,
+      isCombinedMode: Boolean(item.isCombinedMode),
+      combinedSectionId: item.combinedSectionId || null,
+      isNewSectionStart: Boolean(item.isNewSectionStart)
+    }));
+    setItems(synchronizeItemSections(parsedItems));
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const addItem = () => {
-    let prevSectionId = null;
-    if (items.length > 0 && items[items.length - 1].isCombinedMode) {
-      prevSectionId = items[items.length - 1].combinedSectionId;
-    }
-    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0, isCombinedMode: false, autoCalculate: true, combinedSectionId: null }]);
+    const newItems = [...items, { 
+      product: '', 
+      productName: '', 
+      description: '', 
+      price: 0, 
+      quantity: 1, 
+      unit: 'Units', 
+      taxPercentage: 0, 
+      total: 0, 
+      isCombinedMode: false, 
+      autoCalculate: true, 
+      combinedSectionId: null,
+      isNewSectionStart: false
+    }];
+    setItems(synchronizeItemSections(newItems));
   };
 
   const addNewCombinedSection = () => {
-    const newSectionId = `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setItems([...items, { product: '', productName: '', description: '', price: 0, quantity: 1, unit: 'Units', taxPercentage: 0, total: 0, isCombinedMode: true, autoCalculate: true, combinedSectionId: newSectionId }]);
+    const newSectionId = `sec-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`;
+    const newItems = [...items, { 
+      product: '', 
+      productName: '', 
+      description: '', 
+      price: 0, 
+      quantity: 1, 
+      unit: 'Units', 
+      taxPercentage: 0, 
+      total: 0, 
+      isCombinedMode: true, 
+      autoCalculate: true, 
+      combinedSectionId: newSectionId,
+      isNewSectionStart: true
+    }];
+    setItems(synchronizeItemSections(newItems));
+  };
+
+  const handleToggleCombine = (index, checked) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...newItems[index],
+      isCombinedMode: checked,
+      isNewSectionStart: false
+    };
+    setItems(synchronizeItemSections(newItems));
+  };
+
+  const handleSplitSection = (index) => {
+    const newItems = [...items];
+    const newSectionId = `sec-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`;
+    newItems[index] = {
+      ...newItems[index],
+      isCombinedMode: true,
+      combinedSectionId: newSectionId,
+      isNewSectionStart: true
+    };
+    setItems(synchronizeItemSections(newItems));
+  };
+
+  const handleMergeSection = (index) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...newItems[index],
+      isNewSectionStart: false
+    };
+    setItems(synchronizeItemSections(newItems));
+  };
+
+  const handleCombinedTotalChange = (sectionId, value) => {
+    setFormData(prev => ({
+      ...prev,
+      combinedTotals: {
+        ...(prev.combinedTotals || {}),
+        [sectionId]: value
+      }
+    }));
   };
 
   const updateItem = (index, field, value) => {
@@ -150,49 +230,37 @@ const Quotations = () => {
     if (field === 'product') {
       const prod = products.find(p => p._id === value || p.productName === value);
       if (prod) {
-        newItems[index] = { ...newItems[index], product: prod._id, productName: prod.productName, price: prod.price, taxPercentage: prod.taxPercentage || 0 };
+        newItems[index] = { 
+          ...newItems[index], 
+          product: prod._id, 
+          productName: prod.productName, 
+          price: prod.price, 
+          taxPercentage: prod.taxPercentage || 0 
+        };
       } else {
         newItems[index] = { ...newItems[index], product: '', productName: value };
       }
     } else {
       newItems[index][field] = value;
     }
-    const isCombinedMode = field === 'isCombinedMode' ? value : (newItems[index].isCombinedMode || false);
-    
-    if (isCombinedMode) {
-      newItems[index].price = 0;
-      newItems[index].total = 0;
-      if (!newItems[index].combinedSectionId) {
-        let prevSectionId = null;
-        for (let i = index - 1; i >= 0; i--) {
-          if (newItems[i].isCombinedMode && newItems[i].combinedSectionId) {
-            prevSectionId = newItems[i].combinedSectionId;
-            break;
-          }
-        }
-        newItems[index].combinedSectionId = prevSectionId || `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      }
-    } else {
-      newItems[index].combinedSectionId = null;
+
+    if (field === 'quantity' || field === 'price' || field === 'autoCalculate') {
       const shouldCalculate = newItems[index].autoCalculate !== false;
-      newItems[index].total = shouldCalculate
-        ? Number(newItems[index].price) * Number(newItems[index].quantity)
-        : Number(newItems[index].price);
+      const qty = Number(newItems[index].quantity) || 0;
+      const price = Number(newItems[index].price) || 0;
+      newItems[index].total = shouldCalculate ? qty * price : price;
     }
+
     setItems(newItems);
   };
 
-  const removeItem = (index) => { setItems(items.filter((_, i) => i !== index)); };
+  const removeItem = (index) => {
+    const remaining = items.filter((_, i) => i !== index);
+    setItems(synchronizeItemSections(remaining));
+  };
 
   const getTotals = () => {
-    let individualTotal = items.reduce((acc, item) => item.isCombinedMode ? acc : acc + item.total, 0);
-    let combinedSectionsSum = Object.values(formData.combinedTotals || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
-    let subTotal = individualTotal + combinedSectionsSum;
-    let taxAmount = formData.showTax
-      ? items.reduce((acc, item) => item.isCombinedMode ? acc : acc + (item.total * Number(item.taxPercentage || 0) / 100), 0)
-      : 0;
-    let totalAmount = subTotal + taxAmount;
-    return { subTotal, taxAmount, totalAmount };
+    return calculateBillTotals(items, formData.combinedTotals, formData.showTax);
   };
 
   const handleSubmit = async (e) => {
@@ -200,7 +268,15 @@ const Quotations = () => {
     if (items.length === 0) return alert('Please add at least one item');
     
     const { subTotal, taxAmount, totalAmount } = getTotals();
-    const payload = { ...formData, items, subTotal, taxAmount, discount: 0, totalAmount };
+    const payload = { 
+      ...formData, 
+      items, 
+      subTotal, 
+      taxAmount, 
+      discount: 0, 
+      totalAmount,
+      combinedTotals: formData.combinedTotals || {}
+    };
     
     try {
       if (editingId) {
@@ -259,23 +335,13 @@ const Quotations = () => {
                 <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem', borderRadius: '0 6px 6px 0' }}>Amount</th>
               </tr>
             </thead>
-            <tbody>
-              {itemsList.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
-                  <td style={{ padding: '0.65rem', fontSize: '0.775rem', color: '#64748B' }}>{String(idx + 1).padStart(2, '0')}</td>
-                  <td style={{ padding: '0.65rem', fontSize: '0.825rem', fontWeight: '700', color: '#0F172A' }}>{item.productName || 'Item'}</td>
-                  <td style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit || 'Pcs'}</td>
-                  <td style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.825rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()}`}</td>
-                  <td style={{ padding: '0.65rem', textAlign: 'right', fontWeight: '800', fontSize: '0.825rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
-                </tr>
-              ))}
-              {docData.combinedTotal > 0 && (
-                <tr style={{ background: '#F1F5F9', borderTop: '2px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                  <td colSpan="4" style={{ padding: '0.85rem 0.65rem', textAlign: 'right', fontWeight: '800', fontSize: '0.85rem', color: '#475569' }}>Combined Items Total</td>
-                  <td style={{ padding: '0.85rem 0.65rem', textAlign: 'right', fontWeight: '900', fontSize: '0.9rem', color: '#0F172A' }}>&#8377;{(docData.combinedTotal || 0).toLocaleString()}</td>
-                </tr>
-              )}
-            </tbody>
+            <CombinedBillTableBody
+              items={itemsList}
+              combinedTotals={docData.combinedTotals || {}}
+              theme="modern"
+              tableBorderColor="#E2E8F0"
+              textColor="#0F172A"
+            />
           </table>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
@@ -332,23 +398,13 @@ const Quotations = () => {
                 <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>AMOUNT</th>
               </tr>
             </thead>
-            <tbody>
-              {itemsList.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #CBD5E1' }}>
-                  <td style={{ padding: '0.6rem', fontSize: '0.775rem', fontWeight: '700' }}>{idx + 1}</td>
-                  <td style={{ padding: '0.6rem', fontSize: '0.825rem', fontWeight: '800', color: '#0F172A' }}>{item.productName || 'Item'}</td>
-                  <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.825rem' }}>{item.quantity} {item.unit || 'Pcs'}</td>
-                  <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.825rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()}`}</td>
-                  <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.825rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
-                </tr>
-              ))}
-              {docData.combinedTotal > 0 && (
-                <tr style={{ background: '#F8FAFC', borderTop: '2px solid #0F172A', borderBottom: '1px solid #CBD5E1' }}>
-                  <td colSpan="4" style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.85rem', color: '#0F172A' }}>COMBINED ITEMS TOTAL</td>
-                  <td style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '900', fontSize: '0.95rem', color: '#0F172A' }}>&#8377;{(docData.combinedTotal || 0).toLocaleString()}</td>
-                </tr>
-              )}
-            </tbody>
+            <CombinedBillTableBody
+              items={itemsList}
+              combinedTotals={docData.combinedTotals || {}}
+              theme="executive"
+              tableBorderColor="#CBD5E1"
+              textColor="#0F172A"
+            />
           </table>
 
           <div style={{ textAlign: 'right', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '2px solid #0F172A' }}>
@@ -406,31 +462,13 @@ const Quotations = () => {
               <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Total</th>
             </tr>
           </thead>
-          <tbody>
-            {itemsList.map((item, idx) => {
-              const isLastInSection = item.isCombinedMode && (idx === itemsList.length - 1 || itemsList[idx + 1].combinedSectionId !== item.combinedSectionId);
-              return (
-                <React.Fragment key={idx}>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#94a3b8' }}>{String(idx + 1).padStart(2, '0')}</td>
-                    <td style={{ padding: '0.6rem', fontSize: '0.85rem' }}>
-                      <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.productName || 'Item'}</div>
-                      {item.description && <div style={{ fontSize: '11px', color: '#64748b' }}>{item.description}</div>}
-                    </td>
-                    <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.unit === 'Kg' ? 'Kg' : 'Pcs'}</td>
-                    <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.price || 0).toLocaleString()}`}</td>
-                    <td style={{ padding: '0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.85rem' }}>{item.isCombinedMode ? '-' : `\u20B9${(item.total || 0).toLocaleString()}`}</td>
-                  </tr>
-                  {isLastInSection && (
-                    <tr style={{ background: '#f8fafc', borderTop: '2px solid #cbd5e1' }}>
-                      <td colSpan="4" style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '700', fontSize: '0.9rem', color: '#475569' }}>Total</td>
-                      <td style={{ padding: '0.85rem 0.6rem', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: '#0f172a' }}>&#8377;{(Number(docData.combinedTotals?.[item.combinedSectionId]) || 0).toLocaleString()}</td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
+          <CombinedBillTableBody
+            items={itemsList}
+            combinedTotals={docData.combinedTotals || {}}
+            theme="classic"
+            tableBorderColor="#f1f5f9"
+            textColor="#0f172a"
+          />
         </table>
 
         <div className="total-section" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -557,6 +595,7 @@ const Quotations = () => {
   const livePreviewData = {
     customer: customers.find(c => c._id === formData.customer),
     items: items,
+    combinedTotals: formData.combinedTotals || {},
     subTotal: totals.subTotal,
     taxAmount: totals.taxAmount,
     totalAmount: totals.totalAmount,
@@ -653,117 +692,28 @@ const Quotations = () => {
                 </div>
               </div>
 
-              {/* Items */}
+              {/* Estimation Entry (Settings) */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span className="form-label">Line Items</span>
-                  <button type="button" className="btn-secondary-glass" onClick={addItem} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
-                    + Add Item
-                  </button>
+                  <span className="form-label" style={{ margin: 0, fontSize: '0.9rem', fontWeight: '800' }}>
+                    Estimation Entry (Settings)
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  {items.map((item, index) => {
-                    const isLastInSection = item.isCombinedMode && (index === items.length - 1 || items[index + 1].combinedSectionId !== item.combinedSectionId);
-                    
-                    return (
-                      <div key={index}>
-                        <div className="glass-card" style={{ padding: '0.85rem', position: 'relative' }}>
-                          <button 
-                            type="button" 
-                            onClick={() => removeItem(index)} 
-                            style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}
-                          >
-                            <X size={15} />
-                          </button>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.65rem' }}>
-                            <div>
-                              <label className="form-label">Item / Service</label>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                required 
-                                value={item.productName} 
-                                onChange={e => updateItem(index, 'product', e.target.value)} 
-                                list="product-list-quote" 
-                                placeholder="Name..." 
-                              />
-                            </div>
-                            <div>
-                              <label className="form-label">Qty</label>
-                              <input 
-                                type="number" 
-                                className="form-input" 
-                                required 
-                                value={item.quantity} 
-                                onChange={e => updateItem(index, 'quantity', e.target.value)} 
-                              />
-                            </div>
-                            <div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <label className="form-label">{item.isCombinedMode ? 'Included' : 'Price / Pc (\u20B9)'}</label>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                  {!item.isCombinedMode && (
-                                    <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                      <input 
-                                        type="checkbox" 
-                                        checked={item.autoCalculate !== false} 
-                                        onChange={e => updateItem(index, 'autoCalculate', e.target.checked)} 
-                                      />
-                                      Per Pc
-                                    </label>
-                                  )}
-                                  <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={item.isCombinedMode || false} 
-                                      onChange={e => updateItem(index, 'isCombinedMode', e.target.checked)} 
-                                    />
-                                    Combined Mode
-                                  </label>
-                                </div>
-                              </div>
-                              {!item.isCombinedMode ? (
-                                <input 
-                                  type="number" 
-                                  className="form-input" 
-                                  required 
-                                  value={item.price} 
-                                  onChange={e => updateItem(index, 'price', e.target.value)} 
-                                />
-                              ) : (
-                                <div style={{ height: '38px', background: 'var(--glass-bg)', borderRadius: '6px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', padding: '0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                  See Combined Total
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {isLastInSection && (
-                          <div className="glass-card" style={{ padding: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem', background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.2)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <label className="form-label" style={{ margin: 0, color: '#D97706', fontWeight: '800' }}>Combined Total Amount (\u20B9)</label>
-                              <input 
-                                type="number" 
-                                className="form-input" 
-                                style={{ width: '200px', fontWeight: '800', textAlign: 'right', fontSize: '1.1rem' }}
-                                value={formData.combinedTotals[item.combinedSectionId] || ''}
-                                onChange={(e) => setFormData({ 
-                                  ...formData, 
-                                  combinedTotals: { ...formData.combinedTotals, [item.combinedSectionId]: e.target.value } 
-                                })}
-                                placeholder="0.00"
-                                required
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <EstimationEntryTable
+                  items={items}
+                  combinedTotals={formData.combinedTotals || {}}
+                  products={products}
+                  dataListId="product-list-quote"
+                  onUpdateItem={updateItem}
+                  onAddItem={addItem}
+                  onAddNewCombinedSection={addNewCombinedSection}
+                  onRemoveItem={removeItem}
+                  onToggleCombine={handleToggleCombine}
+                  onSplitSection={handleSplitSection}
+                  onMergeSection={handleMergeSection}
+                  onCombinedTotalChange={handleCombinedTotalChange}
+                />
               </div>
 
               {/* Design & Tax Settings */}
