@@ -447,6 +447,61 @@ select option {
   }
 }
 
+/* Elements that should only appear on mobile/tablet viewports */
+@media screen and (min-width: 1025px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
+/* Responsive Live Bill Preview Card */
+.rental-preview-card {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  background: #FFFFFF;
+  position: sticky;
+  top: 1rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--glass-border);
+}
+
+.rental-preview-scroll {
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  background: #FFFFFF;
+  width: 100%;
+}
+
+.rental-preview-content {
+  min-width: 580px;
+}
+
+@media screen and (min-width: 1025px) {
+  .rental-preview-content {
+    min-width: 0;
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.6%;
+    margin-bottom: -15%;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .rental-preview-card {
+    position: static;
+    max-height: none;
+    width: 100%;
+  }
+  .rental-preview-content {
+    min-width: 520px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   header {
     padding: 0.65rem 0.85rem !important;

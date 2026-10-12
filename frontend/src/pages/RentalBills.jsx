@@ -16,6 +16,7 @@ const RentalBills = () => {
   const [previewTheme, setPreviewTheme] = useState('classic');
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [mobileTab, setMobileTab] = useState('editor'); // 'editor' | 'preview'
   
   // State for new rental
   const [formData, setFormData] = useState({});
@@ -123,6 +124,7 @@ const RentalBills = () => {
     setItems([]);
     setEditingId(null);
     setActiveView('list');
+    setMobileTab('editor');
     
     // Reset return form too
     setReturnCustomer('');
@@ -132,6 +134,7 @@ const RentalBills = () => {
 
   const handleEdit = (r) => {
     setEditingId(r._id);
+    setMobileTab('editor');
     setFormData({
       ...r,
       customer: r.customer?._id || r.customer,
@@ -667,9 +670,61 @@ const RentalBills = () => {
       </div>
 
       {activeView === 'new' && (
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div className="glass-panel" style={{ padding: '1.75rem', flex: '1' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
+        <div>
+          {/* Mobile Tab Switcher */}
+          <div className="hide-on-desktop" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+            <button
+              type="button"
+              onClick={() => setMobileTab('editor')}
+              style={{
+                flex: 1,
+                padding: '0.65rem',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: mobileTab === 'editor' ? 'var(--primary)' : 'transparent',
+                color: mobileTab === 'editor' ? '#FFFFFF' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Edit2 size={15} /> Bill Form
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('preview')}
+              style={{
+                flex: 1,
+                padding: '0.65rem',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: mobileTab === 'preview' ? 'var(--primary)' : 'transparent',
+                color: mobileTab === 'preview' ? '#FFFFFF' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Eye size={15} /> Live Preview
+              <span style={{ fontSize: '0.65rem', background: mobileTab === 'preview' ? 'rgba(255,255,255,0.25)' : '#22c55e', color: '#FFF', padding: '1px 6px', borderRadius: '10px', marginLeft: '4px' }}>
+                &#8377;{getTotals().balanceAmount}
+              </span>
+            </button>
+          </div>
+
+          <div className="grid-12">
+            <div className={`glass-panel col-span-6 ${mobileTab !== 'editor' ? 'hide-on-mobile' : ''}`} style={{ padding: '1.75rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem' }}>{editingId ? 'Edit Rental Bill' : 'New Rental Bill'}</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
               <div className="form-group">
@@ -843,32 +898,108 @@ const RentalBills = () => {
               </div>
             </div>
 
-            <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button type="submit" className="btn-gradient" style={{ width: '100%' }}>Save Rental Bill</button>
+              <button
+                type="button"
+                className="btn-secondary-glass hide-on-desktop"
+                onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
+              >
+                <Eye size={16} /> View Live Bill Preview (&#8377;{getTotals().balanceAmount})
+              </button>
             </div>
           </form>
         </div>
         
         {/* Live PDF Preview Side */}
-        <div style={{ flex: '1', borderRadius: '18px', overflow: 'hidden', boxShadow: 'var(--shadow-card)', background: '#FFF', position: 'sticky', top: '1rem', maxHeight: '90vh', overflowY: 'auto' }}>
-          <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-            <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Bill Preview</b>
-            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Real-time updates</span>
-          </div>
-          <div style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%', marginBottom: '-15%' }}>
-             {renderPreviewDocument({ ...formData, customer: customers.find(c => c._id === formData.customer) || {}, items: items, subTotal: getTotals().subTotal, taxAmount: getTotals().taxAmount, balanceAmount: getTotals().balanceAmount, totalAmount: getTotals().totalAmount }, previewTheme)}
+        <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
+          <div className="rental-preview-card">
+            <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Bill Preview</b>
+                <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Real-time updates</span>
+                <button
+                  type="button"
+                  className="btn-secondary-glass hide-on-desktop"
+                  onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Edit2 size={13} /> Edit
+                </button>
+              </div>
+            </div>
+            <div className="rental-preview-scroll">
+              <div className="rental-preview-content">
+                {renderPreviewDocument({ ...formData, customer: customers.find(c => c._id === formData.customer) || {}, items: items, subTotal: getTotals().subTotal, taxAmount: getTotals().taxAmount, balanceAmount: getTotals().balanceAmount, totalAmount: getTotals().totalAmount }, previewTheme)}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      )}
+    </div>
+    )}
 
       {activeView === 'return' && (
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          {/* Form Side */}
-          <div className="glass-panel" style={{ padding: '1.75rem', flex: '1' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <RefreshCcw size={20} /> Create Return Bill
-            </h2>
+        <div>
+          {returnRentalId && returnFormData && (
+            <div className="hide-on-desktop" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <button
+                type="button"
+                onClick={() => setMobileTab('editor')}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  background: mobileTab === 'editor' ? 'var(--primary)' : 'transparent',
+                  color: mobileTab === 'editor' ? '#FFFFFF' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <RefreshCcw size={15} /> Return Form
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab('preview')}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  background: mobileTab === 'preview' ? 'var(--primary)' : 'transparent',
+                  color: mobileTab === 'preview' ? '#FFFFFF' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Eye size={15} /> Live Return Preview
+              </button>
+            </div>
+          )}
+
+          <div className="grid-12">
+            {/* Form Side */}
+            <div className={`glass-panel col-span-6 ${mobileTab !== 'editor' ? 'hide-on-mobile' : ''}`} style={{ padding: '1.75rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1.25rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <RefreshCcw size={20} /> Create Return Bill
+              </h2>
             
             <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="form-label">1. Select Customer</label>
@@ -997,24 +1128,52 @@ const RentalBills = () => {
                    <label htmlFor="showTerms" style={{ fontSize: '0.85rem', cursor: 'pointer' }}>Print Terms & Conditions on Return Bill</label>
                 </div>
 
-                <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>Save & Generate Return Bill</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button type="submit" className="btn-gradient" style={{ width: '100%', padding: '0.85rem' }}>Save & Generate Return Bill</button>
+                  <button
+                    type="button"
+                    className="btn-secondary-glass hide-on-desktop"
+                    onClick={() => { setMobileTab('preview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0.75rem' }}
+                  >
+                    <Eye size={16} /> View Live Return Bill Preview
+                  </button>
+                </div>
               </form>
             )}
           </div>
 
           {/* Live PDF Preview Side */}
           {returnRentalId && returnFormData && (
-            <div style={{ flex: '1', borderRadius: '18px', overflow: 'hidden', boxShadow: 'var(--shadow-card)', background: '#FFF' }}>
-              <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Return Bill Preview</b>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Terms automatically omitted</span>
-              </div>
-              <div style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%', marginBottom: '-15%' }}>
-                 {renderPreviewDocument({ ...returnFormData, subTotal: getTotals(returnFormData, returnFormData.items).subTotal, taxAmount: getTotals(returnFormData, returnFormData.items).taxAmount, balanceAmount: getTotals(returnFormData, returnFormData.items).balanceAmount }, previewTheme)}
+            <div className={`col-span-6 ${mobileTab !== 'preview' ? 'hide-on-mobile' : ''}`}>
+              <div className="rental-preview-card">
+                <div style={{ padding: '0.75rem 1rem', background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <b style={{ fontSize: '0.85rem', color: '#475569' }}>Live Return Bill Preview</b>
+                    <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#fff', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>LIVE</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Terms omitted</span>
+                    <button
+                      type="button"
+                      className="btn-secondary-glass hide-on-desktop"
+                      onClick={() => { setMobileTab('editor'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <RefreshCcw size={13} /> Edit
+                    </button>
+                  </div>
+                </div>
+                <div className="rental-preview-scroll">
+                  <div className="rental-preview-content">
+                    {renderPreviewDocument({ ...returnFormData, subTotal: getTotals(returnFormData, returnFormData.items).subTotal, taxAmount: getTotals(returnFormData, returnFormData.items).taxAmount, balanceAmount: getTotals(returnFormData, returnFormData.items).balanceAmount }, previewTheme)}
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
+      </div>
       )}
 
       {activeView === 'list' && (
