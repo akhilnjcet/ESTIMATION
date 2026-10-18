@@ -24,11 +24,12 @@ const Invoices = () => {
     notes: '', 
     terms: '',
     showTerms: true,
-    showTax: true,
+    showTax: false,
     showPaymentTerms: true,
     showSignature: true,
     showFooter: true,
     enableUnitPrice: true,
+    enableQuantity: true,
     footerText: '',
     theme: 'classic',
     date: new Date().toISOString().split('T')[0],
@@ -96,11 +97,12 @@ const Invoices = () => {
       notes: '', 
       terms: selectedProgram?.defaultTerms || '',
       showTerms: selectedProgram?.showTermsByDefault !== undefined ? selectedProgram.showTermsByDefault : true,
-      showTax: true,
+      showTax: false,
       showPaymentTerms: true,
       showSignature: true,
       showFooter: true,
       enableUnitPrice: true,
+      enableQuantity: true,
       combinedTotals: {},
       footerText: selectedProgram?.footerText || 'This is a computer generated invoice.\nThank you for your business! | Powered by Krishna ERP',
       theme: 'classic',
@@ -126,11 +128,12 @@ const Invoices = () => {
       notes: inv.notes || '',
       terms: inv.terms || '',
       showTerms: inv.showTerms !== undefined ? inv.showTerms : true,
-      showTax: inv.showTax !== undefined ? inv.showTax : true,
+      showTax: Boolean(inv.showTax),
       showPaymentTerms: inv.showPaymentTerms !== undefined ? inv.showPaymentTerms : true,
       showSignature: inv.showSignature !== undefined ? inv.showSignature : true,
       showFooter: inv.showFooter !== undefined ? inv.showFooter : true,
       enableUnitPrice: inv.enableUnitPrice !== undefined ? inv.enableUnitPrice : true,
+      enableQuantity: inv.enableQuantity !== undefined ? inv.enableQuantity : true,
       combinedTotals: loadedTotals,
       footerText: inv.footerText !== undefined ? inv.footerText : (selectedProgram?.footerText || 'This is a computer generated invoice.\nThank you for your business! | Powered by Krishna ERP'),
       theme: inv.theme || 'classic',
@@ -249,7 +252,8 @@ const Invoices = () => {
 
     if (field === 'quantity' || field === 'price' || field === 'autoCalculate' || field === 'total') {
       const shouldCalculate = newItems[index].autoCalculate !== false;
-      const qty = Number(newItems[index].quantity) || 0;
+      const hasQty = newItems[index].quantity !== undefined && newItems[index].quantity !== null && newItems[index].quantity !== '' && Number(newItems[index].quantity) > 0;
+      const qty = hasQty ? Number(newItems[index].quantity) : 1;
       const price = Number(newItems[index].price) || 0;
       if (field === 'total') {
         newItems[index].total = value;
@@ -277,6 +281,7 @@ const Invoices = () => {
     const { subTotal, taxAmount, totalAmount } = getTotals();
     const sanitizedItems = items.map(item => ({
       ...item,
+      quantity: (item.quantity !== '' && item.quantity !== undefined) ? Number(item.quantity) : 1,
       price: item.price !== '' && item.price !== undefined ? Number(item.price) : 0,
       total: item.total !== '' && item.total !== undefined ? Number(item.total) : 0
     }));
@@ -289,6 +294,7 @@ const Invoices = () => {
       discount: 0, 
       totalAmount,
       enableUnitPrice: formData.enableUnitPrice !== false,
+      enableQuantity: formData.enableQuantity !== false,
       combinedTotals: formData.combinedTotals || {}
     };
     
@@ -322,9 +328,11 @@ const Invoices = () => {
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ display: 'inline-block', background: 'rgba(255, 255, 255, 0.2)', padding: '0.3rem 0.85rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
-                Modern Tax Invoice
+                {docData.showTax ? 'Modern Tax Invoice' : 'Modern Invoice'}
               </span>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textTransform: 'uppercase' }}>TAX INVOICE</h1>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textTransform: 'uppercase' }}>
+                {docData.showTax ? 'TAX INVOICE' : 'INVOICE'}
+              </h1>
               <p style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0.3rem 0 0 0' }}>#{docData.invoiceNumber || 'DRAFT'}</p>
               <p style={{ fontSize: '0.75rem', margin: '0.15rem 0 0 0', opacity: 0.85 }}>Date: {new Date(docData.createdAt || docData.date || Date.now()).toLocaleDateString('en-GB')}</p>
             </div>
@@ -351,7 +359,9 @@ const Invoices = () => {
               <tr style={{ background: '#1E293B', color: '#FFFFFF' }}>
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem', borderRadius: '6px 0 0 6px' }}>#</th>
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem' }}>Item & Service</th>
-                <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty</th>
+                {docData.enableQuantity !== false && (
+                  <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty</th>
+                )}
                 {docData.enableUnitPrice !== false && (
                   <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem' }}>Price</th>
                 )}
@@ -362,6 +372,7 @@ const Invoices = () => {
               items={itemsList}
               combinedTotals={docData.combinedTotals || {}}
               enableUnitPrice={docData.enableUnitPrice !== false}
+              enableQuantity={docData.enableQuantity !== false}
               theme="modern"
               tableBorderColor="#E2E8F0"
               textColor="#0F172A"
@@ -399,7 +410,7 @@ const Invoices = () => {
 
           <div style={{ background: '#0F172A', color: '#FFFFFF', padding: '0.75rem 1.25rem', marginTop: '1.25rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1 style={{ fontSize: '1.3rem', fontWeight: '900', color: '#F59E0B', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Georgia, serif' }}>
-              OFFICIAL TAX INVOICE
+              {docData.showTax ? 'OFFICIAL TAX INVOICE' : 'OFFICIAL INVOICE'}
             </h1>
             <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
               <span style={{ fontWeight: '800', color: '#FFFFFF' }}>INVOICE NO: #{docData.invoiceNumber || 'DRAFT'}</span>
@@ -420,7 +431,9 @@ const Invoices = () => {
               <tr style={{ background: '#0F172A', color: '#F59E0B' }}>
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>SR</th>
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>ITEM DESCRIPTION</th>
-                <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
+                {docData.enableQuantity !== false && (
+                  <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
+                )}
                 {docData.enableUnitPrice !== false && (
                   <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>PRICE</th>
                 )}
@@ -431,6 +444,7 @@ const Invoices = () => {
               items={itemsList}
               combinedTotals={docData.combinedTotals || {}}
               enableUnitPrice={docData.enableUnitPrice !== false}
+              enableQuantity={docData.enableQuantity !== false}
               theme="executive"
               tableBorderColor="#CBD5E1"
               textColor="#0F172A"
@@ -463,7 +477,9 @@ const Invoices = () => {
           
           <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '15px' }}>
             <div>
-              <h2 style={{ margin: 0, color: '#0f172a', fontSize: '24px', fontWeight: '900', letterSpacing: '2px' }}>TAX INVOICE</h2>
+              <h2 style={{ margin: 0, color: '#0f172a', fontSize: '24px', fontWeight: '900', letterSpacing: '2px' }}>
+                {docData.showTax ? 'TAX INVOICE' : 'INVOICE'}
+              </h2>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontSize: '13px', color: '#334155' }}>
@@ -494,7 +510,9 @@ const Invoices = () => {
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Sr.</th>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Item Description</th>
-              <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem' }}>Qty</th>
+              {docData.enableQuantity !== false && (
+                <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem' }}>Qty</th>
+              )}
               {docData.enableUnitPrice !== false && (
                 <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Unit Price</th>
               )}
@@ -505,6 +523,7 @@ const Invoices = () => {
             items={itemsList}
             combinedTotals={docData.combinedTotals || {}}
             enableUnitPrice={docData.enableUnitPrice !== false}
+            enableQuantity={docData.enableQuantity !== false}
             theme="classic"
             tableBorderColor="#f1f5f9"
             textColor="#0f172a"
@@ -512,7 +531,7 @@ const Invoices = () => {
         </table>
 
         <div className="total-section" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          {docData.showTax !== false && (
+          {Boolean(docData.showTax) && (
             <>
               <div style={{ display: 'flex', gap: '2rem', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
                 <span style={{ color: '#64748b' }}>Sub Total</span>
@@ -525,7 +544,7 @@ const Invoices = () => {
             </>
           )}
           <div style={{ display: 'flex', gap: '2rem', fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)', borderTop: '2px solid #3b82f6', paddingTop: '0.5rem' }}>
-            <span>Grand Total</span>
+            <span>Total</span>
             <span>&#8377;{(docData.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
@@ -669,9 +688,9 @@ const Invoices = () => {
         <div>
           <h1 className="page-title">
             <Receipt size={26} style={{ color: 'var(--primary)' }} />
-            Tax Invoices & Billing
+            Invoices & Billing
           </h1>
-          <p className="page-subtitle">Manage, create, and print professional GST invoices</p>
+          <p className="page-subtitle">Manage, create, and print professional invoices</p>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -751,15 +770,26 @@ const Invoices = () => {
                   <span className="form-label" style={{ margin: 0, fontSize: '0.9rem', fontWeight: '800' }}>
                     Invoice Entry (Settings)
                   </span>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={formData.enableUnitPrice !== false}
-                      onChange={(e) => setFormData({ ...formData, enableUnitPrice: e.target.checked })}
-                      style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
-                    />
-                    Enable Unit Price
-                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.enableQuantity !== false}
+                        onChange={(e) => setFormData({ ...formData, enableQuantity: e.target.checked })}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
+                      />
+                      Enable Quantity
+                    </label>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.enableUnitPrice !== false}
+                        onChange={(e) => setFormData({ ...formData, enableUnitPrice: e.target.checked })}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
+                      />
+                      Enable Unit Price
+                    </label>
+                  </div>
                 </div>
 
                 <EstimationEntryTable
@@ -769,6 +799,8 @@ const Invoices = () => {
                   dataListId="product-list-inv"
                   enableUnitPrice={formData.enableUnitPrice !== false}
                   onToggleEnableUnitPrice={(val) => setFormData(prev => ({ ...prev, enableUnitPrice: val }))}
+                  enableQuantity={formData.enableQuantity !== false}
+                  onToggleEnableQuantity={(val) => setFormData(prev => ({ ...prev, enableQuantity: val }))}
                   onUpdateItem={updateItem}
                   onAddItem={addItem}
                   onAddNewCombinedSection={addNewCombinedSection}
@@ -804,6 +836,14 @@ const Invoices = () => {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
+                        checked={formData.enableQuantity !== false}
+                        onChange={(e) => setFormData({ ...formData, enableQuantity: e.target.checked })}
+                      />
+                      Include Quantity in Print
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input 
+                        type="checkbox" 
                         checked={formData.enableUnitPrice !== false}
                         onChange={(e) => setFormData({ ...formData, enableUnitPrice: e.target.checked })}
                       />
@@ -812,7 +852,7 @@ const Invoices = () => {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 
-                        checked={formData.showTax !== false}
+                        checked={Boolean(formData.showTax)}
                         onChange={(e) => setFormData({ ...formData, showTax: e.target.checked })}
                       />
                       Include Tax Info in Print
@@ -971,7 +1011,7 @@ const Invoices = () => {
             {filteredInvoices.length === 0 && (
               <tr>
                 <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  No tax invoices recorded yet.
+                  No invoices recorded yet.
                 </td>
               </tr>
             )}

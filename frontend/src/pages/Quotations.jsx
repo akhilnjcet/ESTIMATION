@@ -29,6 +29,7 @@ const Quotations = () => {
     showSignature: true,
     showFooter: true,
     enableUnitPrice: true,
+    enableQuantity: true,
     footerText: '',
     theme: 'classic',
     date: new Date().toISOString().split('T')[0],
@@ -101,6 +102,7 @@ const Quotations = () => {
       showSignature: true,
       showFooter: true,
       enableUnitPrice: true,
+      enableQuantity: true,
       combinedTotals: {},
       footerText: selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP',
       theme: 'classic',
@@ -131,6 +133,7 @@ const Quotations = () => {
       showSignature: q.showSignature !== undefined ? q.showSignature : true,
       showFooter: q.showFooter !== undefined ? q.showFooter : true,
       enableUnitPrice: q.enableUnitPrice !== undefined ? q.enableUnitPrice : true,
+      enableQuantity: q.enableQuantity !== undefined ? q.enableQuantity : true,
       combinedTotals: loadedTotals,
       footerText: q.footerText !== undefined ? q.footerText : (selectedProgram?.footerText || 'This is a computer generated quotation.\nThank you for your interest! | Powered by Krishna ERP'),
       theme: q.theme || 'classic',
@@ -249,7 +252,8 @@ const Quotations = () => {
 
     if (field === 'quantity' || field === 'price' || field === 'autoCalculate' || field === 'total') {
       const shouldCalculate = newItems[index].autoCalculate !== false;
-      const qty = Number(newItems[index].quantity) || 0;
+      const hasQty = newItems[index].quantity !== undefined && newItems[index].quantity !== null && newItems[index].quantity !== '' && Number(newItems[index].quantity) > 0;
+      const qty = hasQty ? Number(newItems[index].quantity) : 1;
       const price = Number(newItems[index].price) || 0;
       if (field === 'total') {
         newItems[index].total = value;
@@ -277,6 +281,7 @@ const Quotations = () => {
     const { subTotal, taxAmount, totalAmount } = getTotals();
     const sanitizedItems = items.map(item => ({
       ...item,
+      quantity: (item.quantity !== '' && item.quantity !== undefined) ? Number(item.quantity) : 1,
       price: item.price !== '' && item.price !== undefined ? Number(item.price) : 0,
       total: item.total !== '' && item.total !== undefined ? Number(item.total) : 0
     }));
@@ -289,6 +294,7 @@ const Quotations = () => {
       discount: 0, 
       totalAmount,
       enableUnitPrice: formData.enableUnitPrice !== false,
+      enableQuantity: formData.enableQuantity !== false,
       combinedTotals: formData.combinedTotals || {}
     };
     
@@ -344,7 +350,9 @@ const Quotations = () => {
               <tr style={{ background: '#1E293B', color: '#FFFFFF' }}>
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem', borderRadius: '6px 0 0 6px' }}>#</th>
                 <th style={{ padding: '0.65rem', textAlign: 'left', fontSize: '0.725rem' }}>Item & Service</th>
-                <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty</th>
+                {docData.enableQuantity !== false && (
+                  <th style={{ padding: '0.65rem', textAlign: 'center', fontSize: '0.725rem' }}>Qty</th>
+                )}
                 {docData.enableUnitPrice !== false && (
                   <th style={{ padding: '0.65rem', textAlign: 'right', fontSize: '0.725rem' }}>Rate</th>
                 )}
@@ -355,6 +363,7 @@ const Quotations = () => {
               items={itemsList}
               combinedTotals={docData.combinedTotals || {}}
               enableUnitPrice={docData.enableUnitPrice !== false}
+              enableQuantity={docData.enableQuantity !== false}
               theme="modern"
               tableBorderColor="#E2E8F0"
               textColor="#0F172A"
@@ -410,7 +419,9 @@ const Quotations = () => {
               <tr style={{ background: '#0F172A', color: '#F59E0B' }}>
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>SR</th>
                 <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.725rem', fontWeight: '800' }}>ITEM DESCRIPTION</th>
-                <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
+                {docData.enableQuantity !== false && (
+                  <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.725rem', fontWeight: '800' }}>QTY</th>
+                )}
                 {docData.enableUnitPrice !== false && (
                   <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.725rem', fontWeight: '800' }}>RATE</th>
                 )}
@@ -421,6 +432,7 @@ const Quotations = () => {
               items={itemsList}
               combinedTotals={docData.combinedTotals || {}}
               enableUnitPrice={docData.enableUnitPrice !== false}
+              enableQuantity={docData.enableQuantity !== false}
               theme="executive"
               tableBorderColor="#CBD5E1"
               textColor="#0F172A"
@@ -477,7 +489,9 @@ const Quotations = () => {
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Sr.</th>
               <th style={{ padding: '0.6rem', textAlign: 'left', fontSize: '0.75rem' }}>Item Description</th>
-              <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem' }}>Qty</th>
+              {docData.enableQuantity !== false && (
+                <th style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem' }}>Qty</th>
+              )}
               {docData.enableUnitPrice !== false && (
                 <th style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.75rem' }}>Rate</th>
               )}
@@ -488,6 +502,7 @@ const Quotations = () => {
             items={itemsList}
             combinedTotals={docData.combinedTotals || {}}
             enableUnitPrice={docData.enableUnitPrice !== false}
+            enableQuantity={docData.enableQuantity !== false}
             theme="classic"
             tableBorderColor="#f1f5f9"
             textColor="#0f172a"
@@ -721,15 +736,26 @@ const Quotations = () => {
                   <span className="form-label" style={{ margin: 0, fontSize: '0.9rem', fontWeight: '800' }}>
                     Estimation Entry (Settings)
                   </span>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={formData.enableUnitPrice !== false}
-                      onChange={(e) => setFormData({ ...formData, enableUnitPrice: e.target.checked })}
-                      style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
-                    />
-                    Enable Unit Price
-                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.enableQuantity !== false}
+                        onChange={(e) => setFormData({ ...formData, enableQuantity: e.target.checked })}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
+                      />
+                      Enable Quantity
+                    </label>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)', background: 'var(--card-bg, rgba(255,255,255,0.05))', padding: '0.3rem 0.65rem', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.enableUnitPrice !== false}
+                        onChange={(e) => setFormData({ ...formData, enableUnitPrice: e.target.checked })}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--primary, #3B82F6)' }}
+                      />
+                      Enable Unit Price
+                    </label>
+                  </div>
                 </div>
 
                 <EstimationEntryTable
@@ -739,6 +765,8 @@ const Quotations = () => {
                   dataListId="product-list-quote"
                   enableUnitPrice={formData.enableUnitPrice !== false}
                   onToggleEnableUnitPrice={(val) => setFormData(prev => ({ ...prev, enableUnitPrice: val }))}
+                  enableQuantity={formData.enableQuantity !== false}
+                  onToggleEnableQuantity={(val) => setFormData(prev => ({ ...prev, enableQuantity: val }))}
                   onUpdateItem={updateItem}
                   onAddItem={addItem}
                   onAddNewCombinedSection={addNewCombinedSection}
@@ -771,6 +799,14 @@ const Quotations = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.enableQuantity !== false}
+                        onChange={(e) => setFormData({ ...formData, enableQuantity: e.target.checked })}
+                      />
+                      Include Quantity in Print
+                    </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.775rem', fontWeight: '700', cursor: 'pointer', color: 'var(--text-primary)' }}>
                       <input 
                         type="checkbox" 

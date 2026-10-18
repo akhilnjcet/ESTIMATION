@@ -20,7 +20,7 @@ router.post('/', protect, async (req, res) => {
     console.log('POST /invoices - BODY:', JSON.stringify(req.body, null, 2));
     if (!req.programId) return res.status(400).json({ message: 'No program selected' });
 
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, combinedTotals, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, enableUnitPrice, footerText, theme, invoiceNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, combinedTotals, notes, terms, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, enableUnitPrice, enableQuantity, footerText, theme, invoiceNumber } = req.body;
 
     let finalInvoiceNumber = invoiceNumber;
     if (!finalInvoiceNumber || finalInvoiceNumber.trim() === '') {
@@ -40,7 +40,8 @@ router.post('/', protect, async (req, res) => {
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
       ...item,
-      product: (item.product && item.product !== '') ? item.product : null
+      product: (item.product && item.product !== '') ? item.product : null,
+      quantity: (item.quantity !== '' && item.quantity !== undefined) ? Number(item.quantity) : 1
     }));
 
     const invoice = new Invoice({
@@ -56,11 +57,12 @@ router.post('/', protect, async (req, res) => {
       notes,
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,
-      showTax: showTax !== undefined ? showTax : true,
+      showTax: showTax !== undefined ? showTax : false,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
       showFooter: showFooter !== undefined ? showFooter : true,
       enableUnitPrice: enableUnitPrice !== undefined ? enableUnitPrice : true,
+      enableQuantity: enableQuantity !== undefined ? enableQuantity : true,
       footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       createdAt: date || new Date()
@@ -86,12 +88,13 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     console.log('PUT /invoices - BODY:', JSON.stringify(req.body, null, 2));
-    const { customer, items, subTotal, taxAmount, discount, totalAmount, combinedTotals, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, enableUnitPrice, footerText, theme, invoiceNumber } = req.body;
+    const { customer, items, subTotal, taxAmount, discount, totalAmount, combinedTotals, notes, terms, status, date, showTerms, showTax, showPaymentTerms, showSignature, showFooter, enableUnitPrice, enableQuantity, footerText, theme, invoiceNumber } = req.body;
     
     // Sanitize items: convert empty product strings to null to avoid CastError
     const sanitizedItems = items.map(item => ({
       ...item,
-      product: (item.product && item.product !== '') ? item.product : null
+      product: (item.product && item.product !== '') ? item.product : null,
+      quantity: (item.quantity !== '' && item.quantity !== undefined) ? Number(item.quantity) : 1
     }));
 
     const updateData = { 
@@ -105,11 +108,12 @@ router.put('/:id', protect, async (req, res) => {
       notes,
       terms,
       showTerms: showTerms !== undefined ? showTerms : true,
-      showTax: showTax !== undefined ? showTax : true,
+      showTax: showTax !== undefined ? showTax : false,
       showPaymentTerms: showPaymentTerms !== undefined ? showPaymentTerms : true,
       showSignature: showSignature !== undefined ? showSignature : true,
       showFooter: showFooter !== undefined ? showFooter : true,
       enableUnitPrice: enableUnitPrice !== undefined ? enableUnitPrice : true,
+      enableQuantity: enableQuantity !== undefined ? enableQuantity : true,
       footerText: footerText !== undefined ? footerText : "",
       theme: theme || 'classic',
       status

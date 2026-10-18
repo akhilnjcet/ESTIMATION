@@ -13,6 +13,8 @@ const EstimationEntryTable = ({
   dataListId = 'product-list-quote',
   enableUnitPrice = true,
   onToggleEnableUnitPrice,
+  enableQuantity = true,
+  onToggleEnableQuantity,
   onUpdateItem,
   onAddItem,
   onAddNewCombinedSection,
@@ -45,8 +47,23 @@ const EstimationEntryTable = ({
               <th style={{ padding: '0.65rem 0.75rem', fontSize: '0.75rem', fontWeight: '800' }}>
                 Item Description
               </th>
-              <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '90px', fontSize: '0.75rem', fontWeight: '800' }}>
-                Qty
+              <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '105px', fontSize: '0.75rem', fontWeight: '800' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                  <span style={{ color: enableQuantity ? '#ffffff' : 'var(--text-muted)' }}>Qty</span>
+                  {onToggleEnableQuantity && (
+                    <label 
+                      title={enableQuantity ? "Quantity enabled (Click to disable)" : "Quantity disabled (Click to enable)"}
+                      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(enableQuantity)}
+                        onChange={(e) => onToggleEnableQuantity(e.target.checked)}
+                        style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: '#3B82F6' }}
+                      />
+                    </label>
+                  )}
+                </div>
               </th>
               <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right', width: '150px', fontSize: '0.75rem', fontWeight: '800' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.45rem' }}>
@@ -129,16 +146,35 @@ const EstimationEntryTable = ({
 
                     {/* Qty */}
                     <td style={{ padding: '0.5rem 0.5rem', textAlign: 'center' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        step="any"
-                        className="form-input"
-                        style={{ width: '75px', textAlign: 'center', fontSize: '0.85rem', padding: '0.45rem 0.4rem', margin: '0 auto' }}
-                        required
-                        value={meta.quantity ?? ''}
-                        onChange={(e) => onUpdateItem(index, 'quantity', e.target.value)}
-                      />
+                      {!enableQuantity ? (
+                        <div 
+                          style={{ 
+                            padding: '0.45rem 0.4rem', 
+                            background: 'rgba(255, 255, 255, 0.02)', 
+                            borderRadius: '6px', 
+                            color: 'var(--text-muted)', 
+                            textAlign: 'center',
+                            fontSize: '0.8rem',
+                            border: '1px dashed var(--glass-border)',
+                            width: '75px',
+                            margin: '0 auto'
+                          }}
+                          title="Quantity is optional and currently disabled"
+                        >
+                          —
+                        </div>
+                      ) : (
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          className="form-input"
+                          style={{ width: '75px', textAlign: 'center', fontSize: '0.85rem', padding: '0.45rem 0.4rem', margin: '0 auto' }}
+                          value={meta.quantity ?? ''}
+                          onChange={(e) => onUpdateItem(index, 'quantity', e.target.value)}
+                          placeholder="1"
+                        />
+                      )}
                     </td>
 
                     {/* Unit Price (₹) */}

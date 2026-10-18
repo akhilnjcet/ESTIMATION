@@ -17,7 +17,8 @@ export const computeItemSectionMeta = (items = [], combinedTotals = {}) => {
     const isCombined = Boolean(item.isCombinedMode);
 
     if (!isCombined) {
-      const qty = Number(item.quantity) || 0;
+      const hasQty = item.quantity !== undefined && item.quantity !== null && item.quantity !== '' && Number(item.quantity) > 0;
+      const qty = hasQty ? Number(item.quantity) : 1;
       const price = Number(item.price) || 0;
       const hasDirectTotal = item.total !== undefined && item.total !== null && item.total !== '';
       const directTotal = hasDirectTotal ? Number(item.total) : null;
@@ -108,7 +109,8 @@ export const calculateBillTotals = (items = [], combinedTotals = {}, showTax = f
 
   (items || []).forEach(item => {
     if (!item.isCombinedMode) {
-      const qty = Number(item.quantity) || 0;
+      const hasQty = item.quantity !== undefined && item.quantity !== null && item.quantity !== '' && Number(item.quantity) > 0;
+      const qty = hasQty ? Number(item.quantity) : 1;
       const price = Number(item.price) || 0;
       const hasDirectTotal = item.total !== undefined && item.total !== null && item.total !== '';
       const directTotal = hasDirectTotal ? Number(item.total) : null;

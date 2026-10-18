@@ -17,7 +17,8 @@ export const CombinedBillTableBody = ({
   tableBorderColor = '#e2e8f0',
   textColor = '#0f172a',
   zebraBg = true,
-  enableUnitPrice = true
+  enableUnitPrice = true,
+  enableQuantity = true
 }) => {
   const sectionMeta = computeItemSectionMeta(items, combinedTotals);
 
@@ -70,18 +71,20 @@ export const CombinedBillTableBody = ({
               )}
             </td>
 
-            {/* Qty */}
-            <td 
-              style={{ 
-                padding: '0.65rem 0.6rem', 
-                textAlign: 'center', 
-                fontSize: '0.85rem',
-                color: textColor,
-                verticalAlign: 'middle'
-              }}
-            >
-              {meta.quantity} {unitLabel}
-            </td>
+            {/* Qty - Only if enableQuantity !== false */}
+            {enableQuantity !== false && (
+              <td 
+                style={{ 
+                  padding: '0.65rem 0.6rem', 
+                  textAlign: 'center', 
+                  fontSize: '0.85rem',
+                  color: textColor,
+                  verticalAlign: 'middle'
+                }}
+              >
+                {meta.quantity ? `${meta.quantity} ${unitLabel}` : '—'}
+              </td>
+            )}
 
             {/* Rate / Unit Price (₹) - Only if enableUnitPrice !== false */}
             {enableUnitPrice !== false && (

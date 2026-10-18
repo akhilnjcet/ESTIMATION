@@ -12,7 +12,7 @@ const itemSchema = new mongoose.Schema({
   description: String,
   quantity: {
     type: Number,
-    required: true
+    default: 1
   },
   unit: {
     type: String,
@@ -111,6 +111,10 @@ const quotationSchema = new mongoose.Schema({
     default: true
   },
   enableUnitPrice: {
+    type: Boolean,
+    default: true
+  },
+  enableQuantity: {
     type: Boolean,
     default: true
   },
