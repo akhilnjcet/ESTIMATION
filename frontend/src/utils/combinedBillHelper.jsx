@@ -19,7 +19,11 @@ export const computeItemSectionMeta = (items = [], combinedTotals = {}) => {
     if (!isCombined) {
       const qty = Number(item.quantity) || 0;
       const price = Number(item.price) || 0;
-      const calculatedTotal = item.autoCalculate !== false ? qty * price : price;
+      const hasDirectTotal = item.total !== undefined && item.total !== null && item.total !== '';
+      const directTotal = hasDirectTotal ? Number(item.total) : null;
+      const calculatedTotal = price > 0
+        ? (item.autoCalculate !== false ? qty * price : price)
+        : (directTotal !== null ? directTotal : 0);
 
       metaList.push({
         ...item,
@@ -30,8 +34,8 @@ export const computeItemSectionMeta = (items = [], combinedTotals = {}) => {
         sectionRowCount: 1,
         isSectionFollower: false,
         combinedAmount: null,
-        displayPrice: price,
-        displayTotal: item.total !== undefined && item.total !== null ? Number(item.total) : calculatedTotal
+        displayPrice: price > 0 ? price : null,
+        displayTotal: directTotal !== null && price === 0 ? directTotal : calculatedTotal
       });
       i++;
     } else {
@@ -106,7 +110,12 @@ export const calculateBillTotals = (items = [], combinedTotals = {}, showTax = f
     if (!item.isCombinedMode) {
       const qty = Number(item.quantity) || 0;
       const price = Number(item.price) || 0;
-      const itemTotal = item.autoCalculate !== false ? qty * price : (Number(item.total) || price);
+      const hasDirectTotal = item.total !== undefined && item.total !== null && item.total !== '';
+      const directTotal = hasDirectTotal ? Number(item.total) : null;
+      const itemTotal = price > 0
+        ? (item.autoCalculate !== false ? qty * price : (directTotal !== null ? directTotal : price))
+        : (directTotal !== null ? directTotal : 0);
+
       individualTotal += itemTotal;
 
       if (showTax && item.taxPercentage) {

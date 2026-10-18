@@ -110,6 +110,10 @@ const quotationSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  enableUnitPrice: {
+    type: Boolean,
+    default: true
+  },
   footerText: {
     type: String
   },

@@ -34,6 +34,7 @@ const invoiceSchema = new mongoose.Schema({
   showPaymentTerms: { type: Boolean, default: true },
   showSignature: { type: Boolean, default: true },
   showFooter: { type: Boolean, default: true },
+  enableUnitPrice: { type: Boolean, default: true },
   theme: { type: String, default: 'classic' },
   status: { type: String, default: 'Unpaid' },
   paymentStatus: { type: String, default: 'Unpaid' }

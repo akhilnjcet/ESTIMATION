@@ -11,6 +11,8 @@ const EstimationEntryTable = ({
   combinedTotals = {},
   products = [],
   dataListId = 'product-list-quote',
+  enableUnitPrice = true,
+  onToggleEnableUnitPrice,
   onUpdateItem,
   onAddItem,
   onAddNewCombinedSection,
@@ -46,14 +48,29 @@ const EstimationEntryTable = ({
               <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '90px', fontSize: '0.75rem', fontWeight: '800' }}>
                 Qty
               </th>
-              <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right', width: '130px', fontSize: '0.75rem', fontWeight: '800' }}>
-                Unit Price (₹)
+              <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right', width: '150px', fontSize: '0.75rem', fontWeight: '800' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.45rem' }}>
+                  <span style={{ color: enableUnitPrice ? '#ffffff' : 'var(--text-muted)' }}>Unit Price (₹)</span>
+                  {onToggleEnableUnitPrice && (
+                    <label 
+                      title={enableUnitPrice ? "Unit Price enabled (Click to disable)" : "Unit Price disabled (Click to enable)"}
+                      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(enableUnitPrice)}
+                        onChange={(e) => onToggleEnableUnitPrice(e.target.checked)}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#3B82F6' }}
+                      />
+                    </label>
+                  )}
+                </div>
               </th>
               <th style={{ padding: '0.65rem 0.75rem', textAlign: 'center', width: '180px', fontSize: '0.75rem', fontWeight: '800', background: 'rgba(217, 119, 6, 0.15)', color: '#FBBF24' }}>
                 Combine with other items
               </th>
               <th style={{ padding: '0.65rem 0.75rem', textAlign: 'center', width: '170px', fontSize: '0.75rem', fontWeight: '800', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399' }}>
-                Combined Amount (₹)
+                {enableUnitPrice ? 'Combined Amount (₹)' : 'Total Amount (₹)'}
               </th>
               <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '50px', fontSize: '0.75rem', fontWeight: '800' }}>
                 &nbsp;
@@ -126,7 +143,22 @@ const EstimationEntryTable = ({
 
                     {/* Unit Price (₹) */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
-                      {meta.isCombined ? (
+                      {!enableUnitPrice ? (
+                        <div 
+                          style={{ 
+                            padding: '0.45rem 0.65rem', 
+                            background: 'rgba(255, 255, 255, 0.02)', 
+                            borderRadius: '6px', 
+                            color: 'var(--text-muted)', 
+                            textAlign: 'center',
+                            fontSize: '0.8rem',
+                            border: '1px dashed var(--glass-border)'
+                          }}
+                          title="Unit price is optional and currently disabled"
+                        >
+                          —
+                        </div>
+                      ) : meta.isCombined ? (
                         <div 
                           style={{ 
                             padding: '0.45rem 0.65rem', 
@@ -148,7 +180,6 @@ const EstimationEntryTable = ({
                           step="any"
                           className="form-input"
                           style={{ width: '100%', textAlign: 'right', fontSize: '0.85rem', padding: '0.45rem 0.65rem', fontWeight: '700' }}
-                          required
                           value={meta.price ?? ''}
                           onChange={(e) => onUpdateItem(index, 'price', e.target.value)}
                           placeholder="0.00"
@@ -272,8 +303,32 @@ const EstimationEntryTable = ({
                         </td>
                       ) : null /* follower rows covered by rowSpan */
                     ) : (
-                      <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                        —
+                      <td style={{ padding: '0.45rem 0.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        {!enableUnitPrice ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            className="form-input"
+                            style={{
+                              width: '110px',
+                              textAlign: 'center',
+                              fontWeight: '700',
+                              fontSize: '0.85rem',
+                              padding: '0.45rem 0.5rem',
+                              margin: '0 auto',
+                              color: '#10B981',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              background: 'rgba(16, 185, 129, 0.05)'
+                            }}
+                            placeholder="0.00"
+                            value={meta.total ?? ''}
+                            onChange={(e) => onUpdateItem(index, 'total', e.target.value)}
+                            title="Direct item amount (Unit price disabled)"
+                          />
+                        ) : (
+                          '—'
+                        )}
                       </td>
                     )}
 

@@ -16,7 +16,8 @@ export const CombinedBillTableBody = ({
   theme = 'classic',
   tableBorderColor = '#e2e8f0',
   textColor = '#0f172a',
-  zebraBg = true
+  zebraBg = true,
+  enableUnitPrice = true
 }) => {
   const sectionMeta = computeItemSectionMeta(items, combinedTotals);
 
@@ -82,21 +83,25 @@ export const CombinedBillTableBody = ({
               {meta.quantity} {unitLabel}
             </td>
 
-            {/* Rate / Unit Price (₹) */}
-            <td 
-              style={{ 
-                padding: '0.65rem 0.6rem', 
-                textAlign: 'right', 
-                fontSize: '0.85rem',
-                color: textColor,
-                verticalAlign: 'middle'
-              }}
-            >
-              {meta.isCombined 
-                ? '—' 
-                : `\u20B9${Number(meta.displayPrice || 0).toLocaleString()}`
-              }
-            </td>
+            {/* Rate / Unit Price (₹) - Only if enableUnitPrice !== false */}
+            {enableUnitPrice !== false && (
+              <td 
+                style={{ 
+                  padding: '0.65rem 0.6rem', 
+                  textAlign: 'right', 
+                  fontSize: '0.85rem',
+                  color: textColor,
+                  verticalAlign: 'middle'
+                }}
+              >
+                {meta.isCombined 
+                  ? '—' 
+                  : (meta.displayPrice !== null && meta.displayPrice !== undefined && Number(meta.displayPrice) > 0
+                      ? `\u20B9${Number(meta.displayPrice).toLocaleString()}`
+                      : '—')
+                }
+              </td>
+            )}
 
             {/* Total (₹) */}
             {meta.isCombined ? (
