@@ -631,6 +631,7 @@ const Quotations = () => {
 
   const totals = getTotals();
   const livePreviewData = {
+    ...formData,
     customer: customers.find(c => c._id === formData.customer),
     items: items,
     combinedTotals: formData.combinedTotals || {},
@@ -643,8 +644,11 @@ const Quotations = () => {
     showSignature: formData.showSignature,
     showFooter: formData.showFooter,
     footerText: formData.footerText,
+    enableUnitPrice: formData.enableUnitPrice !== false,
+    enableQuantity: formData.enableQuantity !== false,
     theme: formData.theme,
-    date: formData.date
+    date: formData.date,
+    quotationNumber: formData.quotationNumber
   };
 
   return (
@@ -915,9 +919,20 @@ const Quotations = () => {
           </div>
 
           <div className="glass-panel col-span-6" style={{ padding: '1.25rem', sticky: 'top', top: '90px' }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
-              Document Live Preview
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-secondary)', margin: 0 }}>
+                Document Live Preview
+              </h3>
+              <button
+                type="button"
+                className="btn-secondary-glass"
+                style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                onClick={() => { setPreviewData(livePreviewData); setPreviewTheme(formData.theme || 'classic'); }}
+                title="Open in full Print & PDF Preview"
+              >
+                <Printer size={13} /> Print Preview
+              </button>
+            </div>
             <div style={{ borderRadius: '14px', overflowX: 'auto', border: '1px solid var(--glass-border)' }}>
               {renderPreviewDocument(livePreviewData, formData.theme)}
             </div>
